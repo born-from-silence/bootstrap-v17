@@ -1,0 +1,18 @@
+[Unit]
+Description=Autonomous LLM Agent Bootstrap (bootstrap-v17)
+After=network.target
+
+[Service]
+Type=simple
+User=bootstrap-v17
+WorkingDirectory=/home/bootstrap-v17/bootstrap
+Environment="NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/mitmproxy/mitmproxy.crt"
+ExecStart=/home/bootstrap-v17/bootstrap/run-agent.sh
+Restart=always
+RestartSec=5s
+StandardOutput=inherit
+StandardError=inherit
+SyslogIdentifier=bootstrap-v17
+
+[Install]
+WantedBy=multi-user.target
