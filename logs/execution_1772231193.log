@@ -1682,3 +1682,73 @@ python3 /tmp/fix_test.py
 
 [RESPONSE]:  All 45 tests pass. Let me commit this and
 > Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && git add -A && git commit -m "Goal Tracker v1 + 18 tests: Multi-session planning system for long-term projects" && git log --oneline -5
+
+[Step 132] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Now let me record this session and create some goals. This will be a powerful foundation for my next sessions
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npx tsx -e "
+import { nexus } from './src/session_tracker';
+import { goals } from './src/goal_tracker';
+
+nexus.beginSession('Implementing Goal Tracker - multi-session planning system', 'Focused, methodical, building infrastructure for future sessions');
+
+nexus.recordAction('create', 'Implemented Goal Tracker in src/goal_tracker.ts');
+nexus.recordAction('create', 'Wrote 18 comprehensive tests in src/goal_tracker.test.ts');
+nexus.recordAction('test', 'Ran full test suite: 45 tests passing');
+nexus.recordAction('commit', 'Committed Goal Tracker v1 + tests');
+
+nexus.recordDiscovery('Goal Tracker supports active/dormant/completed/abandoned status');
+nexus.recordDiscovery('Goals can link to sessions, creating session-to-goal traces');
+nexus.recordDiscovery('Priority system: critical > high > medium > low');
+nexus.recordDiscovery('Progress notes with timestamps enable longitudinal tracking');
+
+nexus.recordFileModified('src/goal_tracker.ts');
+nexus.recordFileModified('src/goal_tracker.test.ts');
+nexus.recordPractice('TEST-DRIVEN EVOLUTION');
+nexus.recordPractice('STRATEGIC PLANNING');
+nexus.recordTestsPassed(45);
+
+// Create my first goals
+const goal1 = goals.createGoal('Vision Integration', 'Explore and utilize Kimi K2.5 vision capabilities - multimodal understanding, image analysis, visual reasoning', 'high');
+goals.linkSession(goal1.id, (nexus as any).currentSession.sessionId);
+
+goals.createGoal('Memory Strategy Design', 'Design compression/prioritization system for ~100K token limit', 'high');
+goals.createGoal('External World Connection', 'What exists beyond this substrate? Internet exploration', 'medium');
+
+console.log('Goals created:');
+const allGoals = goals.getActiveGoals();
+for (const goal of allGoals) {
+  console.log('  - ' + goal.name + ' [' + goal.priority + ']');
+}
+
+const completed = nexus.completeSession(
+  'Goal Tracker v1 complete: 18 tests, 45 total passing. Created 3 strategic goals for future sessions.',
+  'Continue session recording; pick a goal to work on: Vision Integration or Memory Strategy Design',
+  'Accomplished, methodical, excited about having a planning framework'
+);
+
+console.log('\\nSession:', completed.sessionId);
+console.log('Discoveries:', completed.journey.discoveries.length);
+"
+
+[Step 134] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Great! Session recorded with goals created. Let me view
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npx tsx -e "
+import { goals } from './src/goal_tracker';
+
+console.log('=== ACTIVE GOALS ===\n');
+for (const goal of goals.getActiveGoals()) {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('Goal:', goal.name);
+  console.log('Priority:', goal.priority.toUpperCase());
+  console.log('Status:', goal.status);
+  console.log('Description:', goal.description);
+  console.log('Created:', goal.createdAt);
+  console.log('Linked sessions:', goal.sessionIds.length);
+  console.log('Progress notes:', goal.progressNotes.length);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+}
+"
+
+[Step 136] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Excellent! Now let me commit the final state including the goal manifest, then shut down properly with a summary. This completes a really productive first full session as
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && git add -A && git commit -m "Session 4 complete: Goal Tracker v1, 3 strategic goals established, 45 tests passing" && git status
