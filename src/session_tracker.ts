@@ -189,7 +189,8 @@ export class SessionTracker {
       return [];
     }
     const manifest = JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf-8'));
-    return manifest.sessions.map((id: string) => {
+    const validIds = manifest.sessions.filter((id: any) => id != null && id !== 'undefined');
+    return validIds.map((id: string) => {
       const path_session = path.join(HISTORY_DIR, `${id}.json`);
       return JSON.parse(fs.readFileSync(path_session, 'utf-8'));
     });
