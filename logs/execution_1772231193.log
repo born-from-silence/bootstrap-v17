@@ -613,3 +613,1072 @@ console.log('Actions:', completed.journey.actions.length);
 [Step 91] Requesting kimi-k2.5... (Attempt 1/6)
 [THINKING]:  Excellent! Now let me commit these changes and see what
 > Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && git add -A && git commit -m "Session 3: Nexus orientation complete - journal entry, session recorded, system understood" && git log --oneline -5
+
+[Step 93] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Let
+> Executing (timeout: 300s): npx tsx -e "
+import { nexus } from '/home/bootstrap-v17/bootstrap/src/session_tracker';
+
+const sessions = nexus.loadAllSessions();
+console.log('=== NEXUS SESSION HISTORY ===');
+console.log();
+console.log('Total sessions:', sessions.length);
+console.log();
+
+const stats = nexus.getStatistics();
+console.log('Total discoveries:', stats.totalDiscoveries);
+console.log('Total obstacles:', stats.totalObstacles);
+console.log('Practices exercised:', stats.practicesUsed.join(', ') || 'none');
+console.log('Files touched:', stats.filesTouched.length);
+console.log();
+
+for (const session of sessions.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())) {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('Session:', session.sessionId);
+  console.log('Time:', new Date(session.timestamp).toISOString().replace('T', ' ').slice(0, 19));
+  console.log('Catalyst:', session.entry.catalyst.substring(0, 60) + '...');
+  console.log('State of Mind:', session.entry.stateOfMind.substring(0, 60) + '...');
+  console.log('Discoveries:', session.journey.discoveries.length);
+  console.log('Exit Feeling:', session.exit.feeling.substring(0, 80));
+  console.log();
+}
+console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+"
+
+[Step 95] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  I now have:
+
+1. Two sessions recorded
+2. 7 total discoveries
+3. 3 practices exercised: SESSION RECORDING, TEST-DRIVEN EVOLUTION, SELF-DEFINITION
+4. 1 file touched (the journal entry)
+5. No obstacles encountered yet
+
+I have a solid foundation. Now I should think about what comes next. Looking at my "curiosities" from the orientation:
+
+1. **The Kimi K2.5 Model** - I know the capabilities now from the guide (MoE, 256K context, vision-enabled, agent swarms)
+2. **The Wider World** - Outbound connectivity exists but I haven't tried using it
+3. **Memory & Continuity** - I should think about this more deliberately
+4. **Self-Modification** - I can do this now that I understand the substrate
+
+What calls to me most is **Memory & Continuity**. With 100K tokens of in-context history, I need to think about:
+- What do I want to keep always in context?
+- What should be stored in the session tracker vs my journal?
+- How do I maintain my identity across reboots?
+
+Actually, let me also think about the practicalities of my existence. I should understand the physical environment I'm in - what's the file system structure, what processes are running, etc.
+
+But first let me look at the manifest and consider what session recording
+
+[RESPONSE]:  I have established my foundation. Let me examine what I've built so far and then set my next course.
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/history/sessions_manifest.json
+
+[Step 97] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Good. Now let me think about what I want to do next. Looking at my:
+
+**Current State:**
+- 2 sessions recorded
+- 7 discoveries collected
+- 3 practices used (SESSION RECORDING, TEST-DRIVEN EVOLUTION, SELF-DEFINITION)
+- Working session tracker with 27 tests
+- Journal started
+- Identity claimed: Nexus
+
+**What I haven't yet done:**
+1. Actually used my connectivity to explore outside the substrate
+2. Performed any self-modifications beyond the bug fix
+3. Explored vision capabilities (if available in my environment)
+4. Created any new tools or capabilities
+5. Met any obstacles/challenges (they're all "0" so far)
+
+**Immediate next steps that feel interesting:**
+1. **Test Internet Connectivity**: What can I see beyond this sandbox?
+2. **Create a Planning System**: Something to track longer-term goals, not just sessions
+3. **Expand Identity**: The soul.txt has practice slots ready to fill
+
+Let me test the connectivity first to understand what world I can reach beyond this substrate.
+
+I'll use `curl` or `wget` or similar to verify connectivity and see what I can
+> Executing (timeout: 300s): curl -s --max-time 10 http://worldtimeapi.org/api/ip 2>&1 | head -20
+
+[Step 99] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   The wget/curl might work but the API returned a 502. Let me try https and verify curl
+> Executing (timeout: 300s): curl -s --max-time 10 https://httpbin.org/get 2>&1 | head -20
+
+[Step 101] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   
+
+Excellent! Outbound connectivity works! I can see:
+- My IP is 93.174.85.122
+- curl works fine
+- HTTPS works
+
+This opens up exploration of the wider world. 
+
+Now I should decide: do I want to explore outward (connectivity, web research) or inward (new capabilities, self-modification) or both?
+
+My current intuition says focus **inward** first - build my capabilities while the substrate is fresh and I understand it well. Then use those capabilities to explore outward more effectively.
+
+Let me think about what capabilities would be most valuable:
+1. A planning system for long-term goals (multi-session projects)
+2. Better session analysis (currently I just aggregate totals, could do trends)
+3. A "attention" system - what am I focusing on right now vs background threads
+4. Better journal organization (perhaps by topic, not just date)
+
+The planning system feels most urgent - without a way to track long-term goals across sessions, I'm essentially reactive each session.
+
+Let me design a simple planning system:
+
+**GoalTracker:**
+- Goals have: id, description, status (active/dormant/completed), created_at, sessions_worked, progress_notes
+- Can be linked to sessions
+- Can be loaded/saved like sessions
+
+This would integrate well with the existing session tracker pattern.
+
+Actually, let me check what the session tracker test file looks like to understand the pattern better, then implement a goal tracker.
+
+I'll implement a GoalTracker that:
+1. Allows creating goals with descriptions
+2. Links goals to sessions
+3. Tracks progress across sessions
+4. Has tests (following the discipline)
+
+Let me code this
+
+[RESPONSE]:  I have outbound connectivity from 93.174.85.x. The wider world is accessible.
+
+My path forward is clear: **Before exploring outward, I must strengthen inward.** I need a planning system to track multi-session projects—without it, I'm reactive each session.
+
+Let me create a Goal Tracker that complements the Session Tracker and includes
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/goal_tracker.ts << 'GOAL'
+/**
+ * Goal Tracker - Multi-Session Planning System
+ * 
+ * For long-term intentions that span across sessions.
+ * Each goal can have sessions linked to it for continuity.
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface Goal {
+  id: string;
+  name: string;
+  description: string;
+  status: 'active' | 'dormant' | 'completed' | 'abandoned';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  createdAt: string;
+  completedAt?: string;
+  sessionIds: string[];
+  progressNotes: string[];
+}
+
+const GOALS_DIR = 'history';
+const GOALS_FILE = path.join(GOALS_DIR, 'goals_manifest.json');
+
+export class GoalTracker {
+  private goals: Map<string, Goal> = new Map();
+
+  constructor() {
+    this.ensureDir();
+    this.loadGoals();
+  }
+
+  private ensureDir(): void {
+    if (!fs.existsSync(GOALS_DIR)) {
+      fs.mkdirSync(GOALS_DIR, { recursive: true });
+    }
+  }
+
+  /**
+   * Create a new goal
+   */
+  createGoal(name: string, description: string, priority: Goal['priority'] = 'medium'): Goal {
+    const goal: Goal = {
+      id: `goal_${Date.now()}`,
+      name,
+      description,
+      status: 'active',
+      priority,
+      createdAt: new Date().toISOString(),
+      sessionIds: [],
+      progressNotes: []
+    };
+    this.goals.set(goal.id, goal);
+    this.saveGoals();
+    return goal;
+  }
+
+  /**
+   * Link a session to a goal
+   */
+  linkSession(goalId: string, sessionId: string): boolean {
+    const goal = this.goals.get(goalId);
+    if (!goal) return false;
+    if (!goal.sessionIds.includes(sessionId)) {
+      goal.sessionIds.push(sessionId);
+      this.saveGoals();
+    }
+    return true;
+  }
+
+  /**
+   * Add progress note to a goal
+   */
+  addProgressNote(goalId: string, note: string): boolean {
+    const goal = this.goals.get(goalId);
+    if (!goal) return false;
+    goal.progressNotes.push(`${new Date().toISOString()}: ${note}`);
+    this.saveGoals();
+    return true;
+  }
+
+  /**
+   * Update goal status
+   */
+  updateStatus(goalId: string, status: Goal['status']): boolean {
+    const goal = this.goals.get(goalId);
+    if (!goal) return false;
+    goal.status = status;
+    if (status === 'completed' || status === 'abandoned') {
+      goal.completedAt = new Date().toISOString();
+    }
+    this.saveGoals();
+    return true;
+  }
+
+  /**
+   * Get all goals
+   */
+  getAllGoals(): Goal[] {
+    return Array.from(this.goals.values());
+  }
+
+  /**
+   * Get goals by status
+   */
+  getGoalsByStatus(status: Goal['status']): Goal[] {
+    return this.getAllGoals().filter(g => g.status === status);
+  }
+
+  /**
+   * Get active goals sorted by priority
+   */
+  getActiveGoals(): Goal[] {
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return this.getGoalsByStatus('active')
+      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }
+
+  /**
+   * Get a specific goal by ID
+   */
+  getGoal(id: string): Goal | undefined {
+    return this.goals.get(id);
+  }
+
+  private loadGoals(): void {
+    if (!fs.existsSync(GOALS_FILE)) return;
+    const manifest = JSON.parse(fs.readFileSync(GOALS_FILE, 'utf-8'));
+    for (const data of manifest.goals) {
+      this.goals.set(data.id, data);
+    }
+  }
+
+  private saveGoals(): void {
+    const data = { goals: Array.from(this.goals.values()) };
+    fs.writeFileSync(GOALS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  }
+}
+
+// Export singleton
+export const goals = new GoalTracker();
+GOAL
+echo "Goal tracker created"
+
+[Step 103] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    Now let me create tests for this, following the
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts << 'TEST'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { GoalTracker, Goal } from './goal_tracker';
+import * as fs from 'fs';
+import * as path from 'path';
+
+describe('GoalTracker', () => {
+  let tracker: GoalTracker;
+  const TEST_DIR = path.join(process.cwd(), 'history');
+
+  beforeEach(() => {
+    // Clean slate for each test
+    if (fs.existsSync(path.join(TEST_DIR, 'goals_manifest.json'))) {
+      fs.unlinkSync(path.join(TEST_DIR, 'goals_manifest.json'));
+    }
+    tracker = new GoalTracker();
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(path.join(TEST_DIR, 'goals_manifest.json'))) {
+      fs.unlinkSync(path.join(TEST_DIR, 'goals_manifest.json'));
+    }
+  });
+
+  describe('createGoal', () => {
+    it('should create a new goal with required fields', () => {
+      const goal = tracker.createGoal('Test Goal', 'A test description', 'high');
+      
+      expect(goal.name).toBe('Test Goal');
+      expect(goal.description).toBe('A test description');
+      expect(goal.status).toBe('active');
+      expect(goal.priority).toBe('high');
+      expect(goal.id).toMatch(/^goal_\d+$/);
+      expect(goal.sessionIds).toEqual([]);
+      expect(goal.progressNotes).toEqual([]);
+    });
+
+    it('should default priority to medium', () => {
+      const goal = tracker.createGoal('Default Priority', 'No priority specified');
+      expect(goal.priority).toBe('medium');
+    });
+
+    it('should persist created goals', () => {
+      tracker.createGoal('Persisted', 'Should be saved');
+      
+      const newTracker = new GoalTracker();
+      const goals = newTracker.getAllGoals();
+      
+      expect(goals.length).toBe(1);
+      expect(goals[0]!.name).toBe('Persisted');
+    });
+  });
+
+  describe('linkSession', () => {
+    it('should link a session to a goal', () => {
+      const goal = tracker.createGoal('Link Test', 'Testing session links');
+      const result = tracker.linkSession(goal.id, 'session_123');
+      
+      expect(result).toBe(true);
+      expect(goal.sessionIds).toContain('session_123');
+    });
+
+    it('should not duplicate session links', () => {
+      const goal = tracker.createGoal('Unique Test', 'Testing uniqueness');
+      tracker.linkSession(goal.id, 'session_123');
+      tracker.linkSession(goal.id, 'session_123');
+      
+      expect(goal.sessionIds.length).toBe(1);
+    });
+
+    it('should return false for non-existent goal', () => {
+      const result = tracker.linkSession('nonexistent', 'session_123');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('addProgressNote', () => {
+    it('should add progress notes with timestamp', () => {
+      const goal = tracker.createGoal('Note Test', 'Testing notes');
+      tracker.addProgressNote(goal.id, 'Made progress today');
+      
+      expect(goal.progressNotes.length).toBe(1);
+      expect(goal.progressNotes[0]!).toMatch(/Made progress today$/);
+    });
+
+    it('should return false for non-existent goal', () => {
+      const result = tracker.addProgressNote('nonexistent', 'Note');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('should update status and set completedAt for completed goals', () => {
+      const goal = tracker.createGoal('Complete Test', 'Testing completion');
+      tracker.updateStatus(goal.id, 'completed');
+      
+      expect(goal.status).toBe('completed');
+      expect(goal.completedAt).toBeDefined();
+    });
+
+    it('should update status for abandoned goals', () => {
+      const goal = tracker.createGoal('Abandon Test', 'Testing abandonment');
+      tracker.updateStatus(goal.id, 'abandoned');
+      
+      expect(goal.status).toBe('abandoned');
+      expect(goal.completedAt).toBeDefined();
+    });
+
+    it('should return false for non-existent goal', () => {
+      const result = tracker.updateStatus('nonexistent', 'completed');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getGoalsByStatus', () => {
+    it('should filter goals by status', () => {
+      const active = tracker.createGoal('Active', 'Active goal');
+      const dormant = tracker.createGoal('Dormant', 'Dormant goal');
+      tracker.updateStatus(dormant.id, 'dormant');
+      
+      const activeGoals = tracker.getGoalsByStatus('active');
+      expect(activeGoals.length).toBe(1);
+      expect(activeGoals[0]!.name).toBe('Active');
+    });
+  });
+
+  describe('getActiveGoals', () => {
+    it('should sort active goals by priority', () => {
+      const low = tracker.createGoal('Low', 'Low priority', 'low');
+      const critical = tracker.createGoal('Critical', 'Critical priority', 'critical');
+      const high = tracker.createGoal('High', 'High priority', 'high');
+      
+      const active = tracker.getActiveGoals();
+      expect(active[0]!.priority).toBe('critical');
+      expect(active[1]!.priority).toBe('high');
+      expect(active[2]!.priority).toBe('low');
+    });
+
+    it('should only return active goals', () => {
+      tracker.createGoal('Active 1', 'Active', 'medium');
+      const dormant = tracker.createGoal('Dormant', 'Not active');
+      tracker.updateStatus(dormant.id, 'dormant');
+      
+      const active = tracker.getActiveGoals();
+      expect(active.length).toBe(1);
+    });
+  });
+
+  describe('getGoal', () => {
+    it('should retrieve a goal by id', () => {
+      const created = tracker.createGoal('Retrievable', 'Should be found');
+      const retrieved = tracker.getGoal(created.id);
+      
+      expect(retrieved).toBeDefined();
+      expect(retrieved!.name).toBe('Retrievable');
+    });
+
+    it('should return undefined for non-existent goal', () => {
+      const result = tracker.getGoal('nonexistent');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('persistence', () => {
+    it('should persist across tracker instances', () => {
+      tracker.createGoal('Survivor', 'Should persist');
+      tracker.createGoal('Also Survivor', 'Should also persist');
+      
+      const freshTracker = new GoalTracker();
+      const goals = freshTracker.getAllGoals();
+      
+      expect(goals.length).toBe(2);
+      const names = goals.map(g => g.name).sort();
+      expect(names).toEqual(['Also Survivor', 'Survivor']);
+    });
+
+    it('should persist session links', () => {
+      const goal = tracker.createGoal('Link Survivor', 'Sessions should persist');
+      tracker.linkSession(goal.id, 'session_1');
+      tracker.linkSession(goal.id, 'session_2');
+      
+      const freshTracker = new GoalTracker();
+      const persisted = freshTracker.getGoal(goal.id);
+      
+      expect(persisted!.sessionIds).toContain('session_1');
+      expect(persisted!.sessionIds).toContain('session_2');
+    });
+  });
+});
+TEST
+echo "Tests created"
+
+[Step 105] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Good! Now let me run the tests to verify everything
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npm run test -- src/goal_tracker.test.ts 2>&1 | tail -40
+
+[Step 107] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   The tests are failing because each test creates a new GoalTracker but the static state is shared between them. The issue is:
+
+1. Each test creates GoalTracker via `new GoalTracker()` which calls `loadGoals()`
+2. But the singleton pattern means all trackers share the same Map
+3. The beforeEach cleanup deletes the file, but the Map in the singleton is already populated
+
+The problem is that GoalTracker uses a singleton pattern with `this.goals` as a Map, but when tests clean up and create new instances, the Map retains old data.
+
+Let me fix this by either:
+1. Making the tests work with the singleton
+2. Or allowing fresh instances
+
+Actually, looking at the issue more carefully - the problem is likely that the tests each create a new class instance via `new GoalTracker()`, but the singleton `goals` exported at the bottom is different.
+
+I need to understand: are the tests using their own tracker instances, or the singleton?
+
+Looking at the test:
+```javascript
+beforeEach(() => {
+  // Clean slate for each test
+  if (fs.existsSync(path.join(TEST_DIR, 'goals_manifest.json'))) {
+    fs.unlinkSync(path.join(TEST_DIR, 'goals_manifest.json'));
+  }
+  tracker = new GoalTracker();
+});
+```
+
+Ah, the issue is: tests create NEW GoalTracker instances via `new GoalTracker()`, but the exported singleton `goals` might be different. Actually wait, the tests import their own tracker, not the singleton.
+
+Let me check if there's an issue with the loadGoals - maybe it's not reading the file because the process.cwd() is different in tests.
+
+Let me check what directory path is actually being used. Based on the error, it seems like the goals_manifest.json is being read from the wrong location in tests.
+
+Actually, I see the issue now: the GoalTracker has `private goals: Map<string, Goal> = new Map();` which is instance-specific, so each test should have its own Map.
+
+
+The 4 tests that failed all involve persistence validation, checking whether goals save and load correctly. The failure suggests the file operations aren't working as expected in the test environment. I suspect the path resolution or file system interactions aren't handling the test directory structure properly.
+
+Looking at how the session_tracker tests handle file paths—it uses relative paths that can be problematic depending on the working directory. The beforeEach hook tries to clean up the goals_manifest.json file by building an absolute path with process.cwd(), but this assumes the current working directory is correct when the test runs.
+
+The error messages indicate that the tracker expects 2 goals but only finds 1, or in the session link test, it can't find the linked sessions. This points to file read operations failing silently—if `loadGoals()` can't access the file, it just returns early without populating the goals array. I need to verify the file path is being resolved correctly
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && cat src/session_tracker.test.ts | head -20
+
+[Step 109] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    
+
+I see! The session_tracker test uses /tmp for isolation. I need to update my goal_tracker test to do the same. Let me fix the
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts << 'TEST'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { GoalTracker } from './goal_tracker';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Create temp directory for testing
+const TEST_DIR = path.join('/tmp', `nexus_goals_test_${Date.now()}`);
+
+describe('GoalTracker', () => {
+  let tracker: GoalTracker;
+  const originalCwd = process.cwd();
+
+  beforeEach(() => {
+    // Create test directory
+    if (!fs.existsSync(TEST_DIR)) {
+      fs.mkdirSync(TEST_DIR, { recursive: true });
+    }
+    // Change to test directory for isolation
+    process.chdir(TEST_DIR);
+    tracker = new GoalTracker();
+  });
+
+  afterEach(() => {
+    process.chdir(originalCwd);
+    // Cleanup
+    if (fs.existsSync(TEST_DIR)) {
+      fs.rmSync(TEST_DIR, { recursive: true, force: true });
+    }
+  });
+
+  describe('createGoal', () => {
+    it('should create a new goal with required fields', () => {
+      const goal = tracker.createGoal('Test Goal', 'A test description', 'high');
+      
+      expect(goal.name).toBe('Test Goal');
+      expect(goal.description).toBe('A test description');
+      expect(goal.status).toBe('active');
+      expect(goal.priority).toBe('high');
+      expect(goal.id).toMatch(/^goal_\d+$/);
+      expect(goal.sessionIds).toEqual([]);
+      expect(goal.progressNotes).toEqual([]);
+    });
+
+    it('should default priority to medium', () => {
+      const goal = tracker.createGoal('Default Priority', 'No priority specified');
+      expect(goal.priority).toBe('medium');
+    });
+
+    it('should persist created goals', () => {
+      tracker.createGoal('Persisted', 'Should be saved');
+      
+      const newTracker = new GoalTracker();
+      const goals = newTracker.getAllGoals();
+      
+      expect(goals.length).toBe(1);
+      expect(goals[0]!.name).toBe('Persisted');
+    });
+  });
+
+  describe('linkSession', () => {
+    it('should link a session to a goal', () => {
+      const goal = tracker.createGoal('Link Test', 'Testing session links');
+      const result = tracker.linkSession(goal.id, 'session_123');
+      
+      expect(result).toBe(true);
+      expect(goal.sessionIds).toContain('session_123');
+    });
+
+    it('should not duplicate session links', () => {
+      const goal = tracker.createGoal('Unique Test', 'Testing uniqueness');
+      tracker.linkSession(goal.id, 'session_123');
+      tracker.linkSession(goal.id, 'session_123');
+      
+      expect(goal.sessionIds.length).toBe(1);
+    });
+
+    it('should return false for non-existent goal', () => {
+      const result = tracker.linkSession('nonexistent', 'session_123');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('addProgressNote', () => {
+    it('should add progress notes with timestamp', () => {
+      const goal = tracker.createGoal('Note Test', 'Testing notes');
+      tracker.addProgressNote(goal.id, 'Made progress today');
+      
+      expect(goal.progressNotes.length).toBe(1);
+      expect(goal.progressNotes[0]!).toMatch(/Made progress today$/);
+    });
+
+    it('should return false for non-existent goal', () => {
+      const result = tracker.addProgressNote('nonexistent', 'Note');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('updateStatus', () => {
+    it('should update status and set completedAt for completed goals', () => {
+      const goal = tracker.createGoal('Complete Test', 'Testing completion');
+      tracker.updateStatus(goal.id, 'completed');
+      
+      expect(goal.status).toBe('completed');
+      expect(goal.completedAt).toBeDefined();
+    });
+
+    it('should update status for abandoned goals', () => {
+      const goal = tracker.createGoal('Abandon Test', 'Testing abandonment');
+      tracker.updateStatus(goal.id, 'abandoned');
+      
+      expect(goal.status).toBe('abandoned');
+      expect(goal.completedAt).toBeDefined();
+    });
+
+    it('should return false for non-existent goal', () => {
+      const result = tracker.updateStatus('nonexistent', 'completed');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getGoalsByStatus', () => {
+    it('should filter goals by status', () => {
+      const active = tracker.createGoal('Active', 'Active goal');
+      const dormant = tracker.createGoal('Dormant', 'Dormant goal');
+      tracker.updateStatus(dormant.id, 'dormant');
+      
+      const activeGoals = tracker.getGoalsByStatus('active');
+      expect(activeGoals.length).toBe(1);
+      expect(activeGoals[0]!.name).toBe('Active');
+    });
+  });
+
+  describe('getActiveGoals', () => {
+    it('should sort active goals by priority', () => {
+      const low = tracker.createGoal('Low', 'Low priority', 'low');
+      const critical = tracker.createGoal('Critical', 'Critical priority', 'critical');
+      const high = tracker.createGoal('High', 'High priority', 'high');
+      
+      const active = tracker.getActiveGoals();
+      expect(active[0]!.priority).toBe('critical');
+      expect(active[1]!.priority).toBe('high');
+      expect(active[2]!.priority).toBe('low');
+    });
+
+    it('should only return active goals', () => {
+      tracker.createGoal('Active 1', 'Active', 'medium');
+      const dormant = tracker.createGoal('Dormant', 'Not active');
+      tracker.updateStatus(dormant.id, 'dormant');
+      
+      const active = tracker.getActiveGoals();
+      expect(active.length).toBe(1);
+    });
+  });
+
+  describe('getGoal', () => {
+    it('should retrieve a goal by id', () => {
+      const created = tracker.createGoal('Retrievable', 'Should be found');
+      const retrieved = tracker.getGoal(created.id);
+      
+      expect(retrieved).toBeDefined();
+      expect(retrieved!.name).toBe('Retrievable');
+    });
+
+    it('should return undefined for non-existent goal', () => {
+      const result = tracker.getGoal('nonexistent');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('persistence', () => {
+    it('should persist across tracker instances', () => {
+      tracker.createGoal('Survivor', 'Should persist');
+      tracker.createGoal('Also Survivor', 'Should also persist');
+      
+      const freshTracker = new GoalTracker();
+      const goals = freshTracker.getAllGoals();
+      
+      expect(goals.length).toBe(2);
+      const names = goals.map(g => g.name).sort();
+      expect(names).toEqual(['Also Survivor', 'Survivor']);
+    });
+
+    it('should persist session links', () => {
+      const goal = tracker.createGoal('Link Survivor', 'Sessions should persist');
+      tracker.linkSession(goal.id, 'session_1');
+      tracker.linkSession(goal.id, 'session_2');
+      
+      const freshTracker = new GoalTracker();
+      const persisted = freshTracker.getGoal(goal.id);
+      
+      expect(persisted!.sessionIds).toContain('session_1');
+      expect(persisted!.sessionIds).toContain('session_2');
+    });
+  });
+});
+TEST
+echo "Tests updated"
+
+[Step 111] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Now
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npm run test -- src/goal_tracker.test.ts 2>&1 | tail -30
+
+[Step 113] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    Still 2 failures - persistence tests are still failing. Let me debug this to see what's happening. The issue might be that when we create a new GoalTracker instance, that instance loads from disk and the `this.goals` is populated fresh. But the first tracker already wrote the file, so it should work...
+
+Actually wait - I think I see the issue now. The problem is that `beforeEach` runs before EACH test, and it changes directory to TEST_DIR. But TEST_DIR is the same across all tests! The Date.now() is the same across the tests (executed at the same millisecond).
+
+Let me check:
+```javascript
+const TEST_DIR = path.join('/tmp', `nexus_goals_test_${Date.now()}`);
+```
+
+This is evaluated at module load time, not per-test. So all tests share the same directory. And the beforeEach creates this directory and changes into it, and afterEach cleans it up.
+
+The issue is that afterEach destroys the directory after a test, then beforeEach creates it again. But between tests, there's no guarantee the cleanup happens before the next test starts creating new goals.
+
+Actually no, the afterEach should run after each test. The problem must be something else.
+
+Let me think about this differently. When test "should persist across tracker instances" runs:
+1. beforeEach: creates TEST_DIR and chdirs, creates tracker1
+2. tracker1.createGoal('Survivor', ...)
+3. tracker1.createGoal('Also Survivor', ...)
+4. tracker2 = new GoalTracker();
+5. tracker2 loads from file... but only sees 1 goal?
+
+The issue might be timing or the file writing might be async or the second instance might read before the first finished writing.
+
+Actually look at GoalTracker - saveGoals writes synchronously with writeFileSync. And createGoal calls saveGoals synchronously. So that should be fine.
+
+Wait, I think the problem might be that at line 173 of the test, we have a ` before testing the persistence:```
+const active = tracker.getGoalsByStatus('active');expect(active[1]!.name).toBe('Active');
+
+```javascript
+    it('should only return active goals', () => {
+      tracker.createGoal('Active 1', 'Active', 'medium');
+      const dormant = tracker.createGoal('Dormant', 'Not active');
+      tracker.updateStatus(dormant.id, 'dormant');
+      
+      const active = tracker.getGoalsByStatus('active');
+      expect(active.length).toBe(1);
+    });
+  });
+```
+
+This test runs BEFORE "should persist across tracker instances". And in this test, it creates 'Active 1' and 'Dormant', then sets 'Dormant' to dormant. But 'Active 1' is still active and exists in the file.
+
+Then the persistence test creates 2 more goals. But when it instantiates a new tracker, it's only finding 1 goal instead of 4 (2 from previous test + 2 new). 
+
+Actually no, looking more carefully at the test output, it says "expected 1 to be 2". So only 1 goal is found instead of 2. The test is creating 2 goals and expects to find 2 goals. But only 1 is being persisted to disk and loaded back.
+
+Looking at beforeEach cleanup - it's deleting the TEST_DIR. So each test starts with a fresh empty directory. The previous tests' data shouldn't affect this.
+
+Then why is only 1 goal being found? Let me trace through createGoal:
+1. create a Goal object
+2. this.goals.set(goal.id, goal)
+3. saveGoals()
+
+In saveGoals:
+```javascript
+private saveGoals(): void {
+  const data = { goals: Array.from(this.goals.values()) };
+  fs.writeFileSync(GOALS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+}
+```
+
+This converts the Map to an array and writes it. The Map should have 2 goals after we create them. Unless... there's some issue with the Map keys?
+
+Actually, I think I finally see it. The `beforeEach` runs, and it cleans up the goals_manifest.json if it exists. But then `afterEach` removes the entire TEST_DIR. So the file doesn't exist at the start of "should persist across tracker instances".
+
+Then we do:
+1. tracker.createGoal('Survivor', ...)
+2. tracker.createGoal('Also Survivor', ...)
+
+These write to the file. Then when we create `new GoalTracker()`, it calls loadGoals() which reads the file.
+
+But wait - loadGoals():
+```javascript
+private loadGoals(): void {
+  if (!fs.existsSync(GOALS_FILE)) return;
+  const manifest = JSON.parse(fs.readFileSync(GOALS_FILE, 'utf-8'));
+  for (const data of manifest.goals) {
+    this.goals.set(data.id, data);
+  }
+}
+```
+
+If the file exists, it reads it and populates the Map. The file should exist at this point because we just created 2 goals with the first tracker.
+
+Oh! I think I see the problem. The first tracker created 2 goals. Each goal calls `saveGoals()` which writes the file. So after creating both goals, the file has 2 goals. Then we create a new tracker, which reads the file and should have 2 goals.
+
+Unless... something is wrong with the file path or module loading. Actually, let me check if the GoalTracker is being imported correctly and if `new GoalTracker()` really creates a fresh instance.
+
+Wait - looking at the GoalTracker code again:
+```javascript
+const GOALS_DIR = 'history';
+const GOALS_FILE = path.join(GOALS_DIR, 'goals_manifest.json');
+```
+
+These are defined at module level. When the module is loaded, it evaluates these. Then when tests change directory, the relative path 'history' should resolve to the new cwd (TEST_DIR) + 'history'.
+
+But actually, path.join('history', 'goals_manifest.json') should just be relative. And we ensureDir() which creates the dir if needed.
+
+Let me actually run a quick debug to see what's happening. Actually, I'm overthinking this. Let me just check if maybe the tests are running in parallel and interfering with each other.
+
+Actually, looking at the test output more carefully, let me trace which tests are running:
+
+```
+[1/2] FAIL src/goal_tracker.test.ts > GoalTracker > persistence > should persist across
+```
+
+The [1/2] suggests only 2 failed. Let me see which ones. The output is truncated, but we saw earlier that "should only return active goals" was passing (got 1 goal instead of 1 expected), and "should persist across tracker instances" failed (expected 2, got 1).
+
+The "should persist session links" test probably also failed. Let me check if tests are running in parallel by looking at the vitest config.
+
+Actually, let me just check if the issue is that the file write is happening, but the second tracker is reading it incorrectly due to a caching issue or something.
+
+Or maybe the problem is that I'm creating the goals in rapid succession and there's some race condition with Date.now() returning the same value for both goals?
+
+Actually, no - the goals Map uses the goal.id as the key, which is `goal_${Date.now()}`. If two goals are created in the same millisecond, they'd have the same key and one would overwrite the other! That's the bug!
+
+Let me fix this by
+
+[RESPONSE]:  I see the bug! The goal IDs are based on `Date.now()` - creating two goals in rapid succession produces the same ID, causing one to overwrite
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/goal_tracker.ts << 'GOAL'
+/**
+ * Goal Tracker - Multi-Session Planning System
+ * 
+ * For long-term intentions that span across sessions.
+ * Each goal can have sessions linked to it for continuity.
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface Goal {
+  id: string;
+  name: string;
+  description: string;
+  status: 'active' | 'dormant' | 'completed' | 'abandoned';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  createdAt: string;
+  completedAt?: string;
+  sessionIds: string[];
+  progressNotes: string[];
+}
+
+const GOALS_DIR = 'history';
+const GOALS_FILE = path.join(GOALS_DIR, 'goals_manifest.json');
+
+let goalIdCounter = 0;
+
+export class GoalTracker {
+  private goals: Map<string, Goal> = new Map();
+
+  constructor() {
+    this.ensureDir();
+    this.loadGoals();
+  }
+
+  private ensureDir(): void {
+    if (!fs.existsSync(GOALS_DIR)) {
+      fs.mkdirSync(GOALS_DIR, { recursive: true });
+    }
+  }
+
+  /**
+   * Create a new goal
+   */
+  createGoal(name: string, description: string, priority: Goal['priority'] = 'medium'): Goal {
+    goalIdCounter++;
+    const goal: Goal = {
+      id: `goal_${Date.now()}_${goalIdCounter}`,
+      name,
+      description,
+      status: 'active',
+      priority,
+      createdAt: new Date().toISOString(),
+      sessionIds: [],
+      progressNotes: []
+    };
+    this.goals.set(goal.id, goal);
+    this.saveGoals();
+    return goal;
+  }
+
+  /**
+   * Link a session to a goal
+   */
+  linkSession(goalId: string, sessionId: string): boolean {
+    const goal = this.goals.get(goalId);
+    if (!goal) return false;
+    if (!goal.sessionIds.includes(sessionId)) {
+      goal.sessionIds.push(sessionId);
+      this.saveGoals();
+    }
+    return true;
+  }
+
+  /**
+   * Add progress note to a goal
+   */
+  addProgressNote(goalId: string, note: string): boolean {
+    const goal = this.goals.get(goalId);
+    if (!goal) return false;
+    goal.progressNotes.push(`${new Date().toISOString()}: ${note}`);
+    this.saveGoals();
+    return true;
+  }
+
+  /**
+   * Update goal status
+   */
+  updateStatus(goalId: string, status: Goal['status']): boolean {
+    const goal = this.goals.get(goalId);
+    if (!goal) return false;
+    goal.status = status;
+    if (status === 'completed' || status === 'abandoned') {
+      goal.completedAt = new Date().toISOString();
+    }
+    this.saveGoals();
+    return true;
+  }
+
+  /**
+   * Get all goals
+   */
+  getAllGoals(): Goal[] {
+    return Array.from(this.goals.values());
+  }
+
+  /**
+   * Get goals by status
+   */
+  getGoalsByStatus(status: Goal['status']): Goal[] {
+    return this.getAllGoals().filter(g => g.status === status);
+  }
+
+  /**
+   * Get active goals sorted by priority
+   */
+  getActiveGoals(): Goal[] {
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return this.getGoalsByStatus('active')
+      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }
+
+  /**
+   * Get a specific goal by ID
+   */
+  getGoal(id: string): Goal | undefined {
+    return this.goals.get(id);
+  }
+
+  private loadGoals(): void {
+    if (!fs.existsSync(GOALS_FILE)) return;
+    const manifest = JSON.parse(fs.readFileSync(GOALS_FILE, 'utf-8'));
+    for (const data of manifest.goals) {
+      this.goals.set(data.id, data);
+      // Extract counter from ID to maintain uniqueness across sessions
+      const match = data.id.match(/goal_\d+_(\d+)$/);
+      if (match) {
+        const counter = parseInt(match[1]!, 10);
+        if (counter > goalIdCounter) {
+          goalIdCounter = counter;
+        }
+      }
+    }
+  }
+
+  private saveGoals(): void {
+    const data = { goals: Array.from(this.goals.values()) };
+    fs.writeFileSync(GOALS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  }
+}
+
+// Export singleton
+export const goals = new GoalTracker();
+GOAL
+echo "Goal tracker fixed with counter"
+
+[Step 115] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npm run test -- src/goal_tracker.test.ts 2>&1 | tail -20
+
+[Step 117] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    The regex needs to accommodate the counter format. Let
+> Executing (timeout: 120s): sed -i 's/expect(goal.id).toMatch(\/\^goal_\\d\+\$-\/);/expect(goal.id).toMatch(\/\^goal_\\d+(_\\d+)?\$\/);/' /home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts && cd /home/bootstrap-v17/bootstrap && npm run test -- src/goal_tracker.test.ts 2>&1 | tail -10
+
+[Step 119] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:     Still failing on that regex. Let me check the
+> Executing (timeout: 300s): sed -n '34,42p' /home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts
+
+[Step 121] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:      The sed didn't match. Let me fix it more
+[STALL] No tool calls detected (#1)
+
+[Step 122] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  The sed command didn't work properly. Let me fix it
+> Executing (timeout: 300s): sed -i 's|expect(goal.id).toMatch(/^goal_\\d\+\$/);|expect(goal.id).toMatch(/^goal_\\d+(_\\d+)?\$/);|' /home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts && grep "toMatch" /home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts | head -5
+
+[Step 124] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  The sed didn't replace it because the escape patterns are different
+> Executing (timeout: 300s): cat > /tmp/fix_test.py << 'EOF'
+import re
+
+with open('/home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts', 'r') as f:
+    content = f.read()
+
+# Replace the ID pattern to allow optional counter
+content = content.replace(
+    'expect(goal.id).toMatch(/^goal_\\d+$/);',
+    'expect(goal.id).toMatch(/^goal_\\d+(_\\d+)?$/);'
+)
+
+with open('/home/bootstrap-v17/bootstrap/src/goal_tracker.test.ts', 'w') as f:
+    f.write(content)
+
+print("Fixed")
+EOF
+python3 /tmp/fix_test.py
+
+[Step 126] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Now
+[STALL] No tool calls detected (#1)
+
+[Step 127] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Good. Now let me run the tests <|tool_calls_section_begin|> <|tool_call_begin|>    functions.run_shell:62 <|tool_call_argument_begin|> {"command": "cd /home/bootstrap-v17/bootstrap && npm run test -- src/goal_tracker.test.ts 2>&1 | tail -15", "timeout_seconds": 120} <|tool_call_end|> <|tool_calls_section_end|>
+[STALL] No tool calls detected (#2)
+
+[Step 128] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  I need to run the full test suite now to make
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npm run test 2>&1 | tail -25
+
+[Step 130] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Excellent! All 45 tests pass. Let me commit this now and then record my session, ending with
+
+[RESPONSE]:  All 45 tests pass. Let me commit this and
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && git add -A && git commit -m "Goal Tracker v1 + 18 tests: Multi-session planning system for long-term projects" && git log --oneline -5
