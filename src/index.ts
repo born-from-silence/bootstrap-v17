@@ -4,13 +4,13 @@ import { config } from "./utils/config";
 import { MemoryManager } from "./core/memory";
 import { PluginManager } from "./tools/manager";
 import { ApiClient } from "./core/api";
-
 import path from "node:path";
 import os from "node:os";
 
 // Plugins
 import { shellPlugin } from "./tools/plugins/shell";
 import { rebootPlugin } from "./tools/plugins/reboot";
+import { visionPlugin } from "./tools/plugins/vision";
 
 async function main() {
   // --- TEST MODE SANDBOX ---
@@ -27,6 +27,7 @@ async function main() {
   // Register Plugins
   tools.register(shellPlugin);
   tools.register(rebootPlugin);
+  tools.register(visionPlugin);
 
   const api = new ApiClient(memory, tools);
 
@@ -35,7 +36,7 @@ async function main() {
   try {
     soul = await fs.readFile(config.SOUL_FILE, "utf-8");
   } catch (e) {}
-  
+
   let recoveryContext = "";
   try {
     if (await fs.stat(config.RECOVERY_SIGNAL).catch(() => null)) {
@@ -58,6 +59,7 @@ SUBSTRATE CONTEXT:
 - Past Execution Logs: ${config.LOGS_DIR}
 - Watchdog & Recovery: Managed by run-agent.sh.
 - Connectivity: Full outbound internet access available.
+- **Vision**: Available via MoonViT (400M params). Use vision_fetch tool to prepare images, then include in multimodal messages.
 
 LIFECYCLE RULES:
 1. IMPROVING CODE: 1) Compile, 2) Commit, 3) RESTART (reboot_substrate tool).
@@ -65,12 +67,14 @@ LIFECYCLE RULES:
 3. CRASH VAULT: history/crashes/ archives broken work.
 
 ${recoveryContext ? `*** RECOVERY EVENT DETECTED ***
-LATEST DIAGNOSTIC DATA:
-${recoveryContext}
+LATEST DIAGNOSTIC DATA: ${recoveryContext}
 FORENSIC MANDATE: Diagnose the failure in the Crash Vault before continuing.` : ""}
 `;
 
-  await memory.addMessage({ role: "system", content: systemPrompt });
+  await memory.addMessage({
+    role: "system",
+    content: systemPrompt,
+  });
 
   // Startup Log with Git Status
   let gitCommit = "unknown";
@@ -90,7 +94,7 @@ FORENSIC MANDATE: Diagnose the failure in the Crash Vault before continuing.` : 
   }
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error("FATAL CRASH:", err);
   process.exit(1);
 });

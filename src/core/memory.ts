@@ -2,9 +2,25 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "../utils/config";
 
+// Content types for multimodal messages
+export interface TextContent {
+  type: "text";
+  text: string;
+}
+
+export interface ImageContent {
+  type: "image_url";
+  image_url: {
+    url: string;
+    detail?: "low" | "high" | "auto";
+  };
+}
+
+export type ContentPart = TextContent | ImageContent;
+
 export interface Message {
   role: "system" | "user" | "assistant" | "tool";
-  content?: string | null;
+  content?: string | ContentPart[] | null;
   reasoning_content?: string | null;
   tool_calls?: any[];
   tool_call_id?: string;
@@ -42,6 +58,24 @@ export class MemoryManager {
   }
 
   /**
+   * Add a multimodal message with image content
+   */
+  async addImageMessage(imageUrl: string, text?: string, detail: "low" | "high" | "auto" = "auto") {
+    const content: ContentPart[] = [
+      { type: "image_url", image_url: { url: imageUrl, detail } }
+    ];
+    
+    if (text) {
+      content.unshift({ type: "text", text });
+    }
+
+    await this.addMessage({
+      role: "user",
+      content
+    });
+  }
+
+  /**
    * Surgical Memory Rewind: Removes the last assistant message and everything after it.
    */
   async rewind() {
@@ -53,6 +87,7 @@ export class MemoryManager {
         break;
       }
     }
+
     // Re-calculate token count after rewind
     this.currentTokens = this.messages.reduce((sum, m) => sum + this.estimateTokens(JSON.stringify(m)), 0);
     await this.save();
@@ -88,6 +123,7 @@ export class MemoryManager {
     const pruned = [systemMessage, ...historyToKeep];
     this.messages = pruned; // Update in-memory state
     this.currentTokens = currentTokens; // Update tracked token count
+
     await fs.writeFile(this.sessionFile, JSON.stringify(pruned, null, 2));
   }
 
