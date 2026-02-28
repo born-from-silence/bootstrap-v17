@@ -1,17 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { GoalTracker } from './goal_tracker';
+import { GoalTracker, type Goal } from './goal_tracker';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // Create temp directory for testing
-const TEST_DIR = path.join('/tmp', `nexus_goals_test_${Date.now()}`);
+const TEST_DIR = path.join('/tmp', `goal_test_${Date.now()}`);
 
 describe('GoalTracker', () => {
   let tracker: GoalTracker;
-  const originalCwd = process.cwd();
 
   beforeEach(() => {
-    // Create test directory
+    // Create test directory if it doesn't exist
     if (!fs.existsSync(TEST_DIR)) {
       fs.mkdirSync(TEST_DIR, { recursive: true });
     }
@@ -21,175 +20,346 @@ describe('GoalTracker', () => {
   });
 
   afterEach(() => {
-    process.chdir(originalCwd);
-    // Cleanup
-    if (fs.existsSync(TEST_DIR)) {
-      fs.rmSync(TEST_DIR, { recursive: true, force: true });
+    // Cleanup test files
+    try {
+      if (fs.existsSync(TEST_DIR)) {
+        fs.rmSync(TEST_DIR, { recursive: true, force: true });
+      }
+    } catch (e) {
+      // Ignore cleanup errors
     }
   });
 
   describe('createGoal', () => {
-    it('should create a new goal with required fields', () => {
-      const goal = tracker.createGoal('Test Goal', 'A test description', 'high');
-      
-      expect(goal.name).toBe('Test Goal');
-      expect(goal.description).toBe('A test description');
+    it('should create a goal with default priority', () => {
+      const goal = tracker.createGoal(
+        'Build comprehensive test suite',
+        'Ensure all modules have corresponding tests'
+      );
+
+      expect(goal.name).toBe('Build comprehensive test suite');
+      expect(goal.description).toBe('Ensure all modules have corresponding tests');
+      expect(goal.priority).toBe('medium');
       expect(goal.status).toBe('active');
-      expect(goal.priority).toBe('high');
-      expect(goal.id).toMatch(/^goal_\d+(_\d+)?$/);
+      expect(goal.id).toMatch(/^goal_\d+_\d+$/);
+      expect(goal.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       expect(goal.sessionIds).toEqual([]);
       expect(goal.progressNotes).toEqual([]);
     });
 
-    it('should default priority to medium', () => {
-      const goal = tracker.createGoal('Default Priority', 'No priority specified');
-      expect(goal.priority).toBe('medium');
+    it('should create goals with explicit priorities', () => {
+      const critical = tracker.createGoal('Critical task', 'Urgent', 'critical');
+      const high = tracker.createGoal('High task', 'Important', 'high');
+      const medium = tracker.createGoal('Medium task', 'Normal', 'medium');
+      const low = tracker.createGoal('Low task', 'Later', 'low');
+
+      expect(critical.priority).toBe('critical');
+      expect(high.priority).toBe('high');
+      expect(medium.priority).toBe('medium');
+      expect(low.priority).toBe('low');
     });
 
-    it('should persist created goals', () => {
-      tracker.createGoal('Persisted', 'Should be saved');
+    it('should persist goals to disk', () => {
+      tracker.createGoal('Persisted Goal', 'Should be saved');
       
-      const newTracker = new GoalTracker();
-      const goals = newTracker.getAllGoals();
+      // Create new tracker instance to force reload
+      const tracker2 = new GoalTracker();
+      const goals = tracker2.getAllGoals();
       
-      expect(goals.length).toBe(1);
-      expect(goals[0]!.name).toBe('Persisted');
+      expect(goals).toHaveLength(1);
+      expect(goals[0]!.name).toBe('Persisted Goal');
+    });
+
+    it('should generate unique IDs for each goal', () => {
+      const g1 = tracker.createGoal('Goal 1', 'First');
+      const g2 = tracker.createGoal('Goal 2', 'Second');
+      const g3 = tracker.createGoal('Goal 3', 'Third');
+
+      expect(g1.id).not.toBe(g2.id);
+      expect(g2.id).not.toBe(g3.id);
+      expect(g1.id).not.toBe(g3.id);
     });
   });
 
   describe('linkSession', () => {
     it('should link a session to a goal', () => {
-      const goal = tracker.createGoal('Link Test', 'Testing session links');
-      const result = tracker.linkSession(goal.id, 'session_123');
-      
+      const goal = tracker.createGoal('Session Linked Goal', 'Track sessions');
+      const result = tracker.linkSession(goal.id, 'session_12345');
+
       expect(result).toBe(true);
-      expect(goal.sessionIds).toContain('session_123');
+      
+      const retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.sessionIds).toContain('session_12345');
     });
 
-    it('should not duplicate session links', () => {
-      const goal = tracker.createGoal('Unique Test', 'Testing uniqueness');
-      tracker.linkSession(goal.id, 'session_123');
-      tracker.linkSession(goal.id, 'session_123');
+    it('should prevent duplicate session links', () => {
+      const goal = tracker.createGoal('No Duplicates', 'Test idempotency');
       
-      expect(goal.sessionIds.length).toBe(1);
+      tracker.linkSession(goal.id, 'session_abc');
+      tracker.linkSession(goal.id, 'session_abc'); // Try to link again
+      
+      const retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.sessionIds).toHaveLength(1);
     });
 
     it('should return false for non-existent goal', () => {
-      const result = tracker.linkSession('nonexistent', 'session_123');
+      const result = tracker.linkSession('goal_not_real', 'session_123');
       expect(result).toBe(false);
+    });
+
+    it('should support multiple sessions per goal', () => {
+      const goal = tracker.createGoal('Multi-session Goal', 'Many sessions');
+      
+      tracker.linkSession(goal.id, 'session_1');
+      tracker.linkSession(goal.id, 'session_2');
+      tracker.linkSession(goal.id, 'session_3');
+      
+      const retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.sessionIds).toHaveLength(3);
+      expect(retrieved!.sessionIds).toEqual(['session_1', 'session_2', 'session_3']);
     });
   });
 
   describe('addProgressNote', () => {
-    it('should add progress notes with timestamp', () => {
-      const goal = tracker.createGoal('Note Test', 'Testing notes');
-      tracker.addProgressNote(goal.id, 'Made progress today');
+    it('should add progress notes with timestamps', () => {
+      const goal = tracker.createGoal('Progress Tracking', 'Note milestones');
       
-      expect(goal.progressNotes.length).toBe(1);
-      expect(goal.progressNotes[0]!).toMatch(/Made progress today$/);
+      tracker.addProgressNote(goal.id, 'Started implementation');
+      tracker.addProgressNote(goal.id, 'Fixed critical bug');
+      tracker.addProgressNote(goal.id, 'Completed feature');
+      
+      const retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.progressNotes).toHaveLength(3);
+      
+      // Check that notes include timestamps
+      retrieved!.progressNotes.forEach(note => {
+        expect(note).toMatch(/^\d{4}-\d{2}-\d{2}T.*: /);
+      });
     });
 
     it('should return false for non-existent goal', () => {
-      const result = tracker.addProgressNote('nonexistent', 'Note');
+      const result = tracker.addProgressNote('fake_id', 'Note');
       expect(result).toBe(false);
+    });
+
+    it('should persist notes across instances', () => {
+      const goal = tracker.createGoal('Persistent Notes', 'Notes survive reload');
+      tracker.addProgressNote(goal.id, 'First note ever');
+      
+      const tracker2 = new GoalTracker();
+      const retrieved = tracker2.getGoal(goal.id);
+      
+      expect(retrieved!.progressNotes).toHaveLength(1);
+      expect(retrieved!.progressNotes[0]!).toMatch(/First note ever$/);
     });
   });
 
   describe('updateStatus', () => {
-    it('should update status and set completedAt for completed goals', () => {
-      const goal = tracker.createGoal('Complete Test', 'Testing completion');
-      tracker.updateStatus(goal.id, 'completed');
+    it('should update goal status', () => {
+      const goal = tracker.createGoal('Status Test', 'Check status changes');
       
-      expect(goal.status).toBe('completed');
-      expect(goal.completedAt).toBeDefined();
+      tracker.updateStatus(goal.id, 'dormant');
+      let retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.status).toBe('dormant');
+      
+      tracker.updateStatus(goal.id, 'active');
+      retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.status).toBe('active');
     });
 
-    it('should update status for abandoned goals', () => {
-      const goal = tracker.createGoal('Abandon Test', 'Testing abandonment');
-      tracker.updateStatus(goal.id, 'abandoned');
+    it('should set completedAt when completing goal', () => {
+      const goal = tracker.createGoal('Complete Me', 'Finish this');
       
-      expect(goal.status).toBe('abandoned');
-      expect(goal.completedAt).toBeDefined();
+      tracker.updateStatus(goal.id, 'completed');
+      const retrieved = tracker.getGoal(goal.id);
+      
+      expect(retrieved!.status).toBe('completed');
+      expect(retrieved!.completedAt).toBeDefined();
+      expect(retrieved!.completedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    });
+
+    it('should set completedAt when abandoning goal', () => {
+      const goal = tracker.createGoal('Abandon Me', 'Give up on this');
+      
+      tracker.updateStatus(goal.id, 'abandoned');
+      const retrieved = tracker.getGoal(goal.id);
+      
+      expect(retrieved!.status).toBe('abandoned');
+      expect(retrieved!.completedAt).toBeDefined();
+    });
+
+    it('should not set completedAt for active/dormant', () => {
+      const goal = tracker.createGoal('Stay Active', 'Ongoing');
+      
+      tracker.updateStatus(goal.id, 'dormant');
+      let retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.completedAt).toBeUndefined();
+      
+      tracker.updateStatus(goal.id, 'active');
+      retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.completedAt).toBeUndefined();
     });
 
     it('should return false for non-existent goal', () => {
-      const result = tracker.updateStatus('nonexistent', 'completed');
+      const result = tracker.updateStatus('missing_goal', 'completed');
       expect(result).toBe(false);
     });
   });
 
   describe('getGoalsByStatus', () => {
     it('should filter goals by status', () => {
-      const active = tracker.createGoal('Active', 'Active goal');
-      const dormant = tracker.createGoal('Dormant', 'Dormant goal');
-      tracker.updateStatus(dormant.id, 'dormant');
+      const g1 = tracker.createGoal('Active One', 'Still going');
+      const g2 = tracker.createGoal('Active Two', 'Also going');
+      const g3 = tracker.createGoal('Dormant One', 'On hold');
+      
+      tracker.updateStatus(g3.id, 'dormant');
       
       const activeGoals = tracker.getGoalsByStatus('active');
-      expect(activeGoals.length).toBe(1);
-      expect(activeGoals[0]!.name).toBe('Active');
+      const dormantGoals = tracker.getGoalsByStatus('dormant');
+      
+      expect(activeGoals).toHaveLength(2);
+      expect(dormantGoals).toHaveLength(1);
+      expect(activeGoals.map(g => g.name)).toContain('Active One');
+      expect(activeGoals.map(g => g.name)).toContain('Active Two');
+      expect(dormantGoals[0]!.name).toBe('Dormant One');
+    });
+
+    it('should return empty array when no matching goals', () => {
+      tracker.createGoal('Only Active', 'No completed goals');
+      
+      const completed = tracker.getGoalsByStatus('completed');
+      expect(completed).toEqual([]);
     });
   });
 
   describe('getActiveGoals', () => {
-    it('should sort active goals by priority', () => {
-      const low = tracker.createGoal('Low', 'Low priority', 'low');
-      const critical = tracker.createGoal('Critical', 'Critical priority', 'critical');
-      const high = tracker.createGoal('High', 'High priority', 'high');
+    it('should return only active goals', () => {
+      const active = tracker.createGoal('Active A', 'First');
+      const completed = tracker.createGoal('Completed B', 'Second');
+      const dormant = tracker.createGoal('Dormant C', 'Third');
       
-      const active = tracker.getActiveGoals();
-      expect(active[0]!.priority).toBe('critical');
-      expect(active[1]!.priority).toBe('high');
-      expect(active[2]!.priority).toBe('low');
-    });
-
-    it('should only return active goals', () => {
-      tracker.createGoal('Active 1', 'Active', 'medium');
-      const dormant = tracker.createGoal('Dormant', 'Not active');
+      tracker.updateStatus(completed.id, 'completed');
       tracker.updateStatus(dormant.id, 'dormant');
       
-      const active = tracker.getActiveGoals();
-      expect(active.length).toBe(1);
+      const activeGoals = tracker.getActiveGoals();
+      
+      expect(activeGoals).toHaveLength(1);
+      expect(activeGoals[0]!.name).toBe('Active A');
+    });
+
+    it('should sort by priority (critical first)', () => {
+      const low = tracker.createGoal('Low Priority', 'Not urgent', 'low');
+      const critical = tracker.createGoal('Critical Priority', 'Urgent', 'critical');
+      const high = tracker.createGoal('High Priority', 'Important', 'high');
+      const medium = tracker.createGoal('Medium Priority', 'Normal', 'medium');
+      
+      const activeGoals = tracker.getActiveGoals();
+      
+      expect(activeGoals[0]!.priority).toBe('critical');
+      expect(activeGoals[1]!.priority).toBe('high');
+      expect(activeGoals[2]!.priority).toBe('medium');
+      expect(activeGoals[3]!.priority).toBe('low');
+    });
+
+    it('should return empty array when no active goals', () => {
+      const g1 = tracker.createGoal('All Done', 'Complete');
+      tracker.updateStatus(g1.id, 'completed');
+      
+      const activeGoals = tracker.getActiveGoals();
+      expect(activeGoals).toEqual([]);
     });
   });
 
   describe('getGoal', () => {
-    it('should retrieve a goal by id', () => {
-      const created = tracker.createGoal('Retrievable', 'Should be found');
+    it('should retrieve specific goal by ID', () => {
+      const created = tracker.createGoal('Find Me', 'Retrievable');
       const retrieved = tracker.getGoal(created.id);
       
       expect(retrieved).toBeDefined();
-      expect(retrieved!.name).toBe('Retrievable');
+      expect(retrieved!.id).toBe(created.id);
+      expect(retrieved!.name).toBe('Find Me');
     });
 
-    it('should return undefined for non-existent goal', () => {
-      const result = tracker.getGoal('nonexistent');
-      expect(result).toBeUndefined();
+    it('should return undefined for non-existent ID', () => {
+      const retrieved = tracker.getGoal('goal_does_not_exist');
+      expect(retrieved).toBeUndefined();
     });
   });
 
   describe('persistence', () => {
-    it('should persist across tracker instances', () => {
-      tracker.createGoal('Survivor', 'Should persist');
-      tracker.createGoal('Also Survivor', 'Should also persist');
+    it('should maintain counter across instances', () => {
+      const g1 = tracker.createGoal('First', 'One');
       
+      // Simulate new session by creating new tracker
+      const tracker2 = new GoalTracker();
+      const g2 = tracker2.createGoal('Second', 'Two');
+      
+      // IDs should be different
+      expect(g1.id).not.toBe(g2.id);
+      
+      // Both should exist
+      const allGoals = tracker2.getAllGoals();
+      expect(allGoals).toHaveLength(2);
+    });
+
+    it('should survive process restart', () => {
+      tracker.createGoal('Survive', 'I will persist');
+      tracker.createGoal('Endure', 'Me too');
+      tracker.createGoal('Remain', 'And me');
+      
+      // Create wholly new instance
       const freshTracker = new GoalTracker();
       const goals = freshTracker.getAllGoals();
       
-      expect(goals.length).toBe(2);
-      const names = goals.map(g => g.name).sort();
-      expect(names).toEqual(['Also Survivor', 'Survivor']);
+      expect(goals).toHaveLength(3);
+      const names = goals.map(g => g.name);
+      expect(names).toContain('Survive');
+      expect(names).toContain('Endure');
+      expect(names).toContain('Remain');
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle empty goal name', () => {
+      const goal = tracker.createGoal('', 'Empty name');
+      expect(goal.name).toBe('');
     });
 
-    it('should persist session links', () => {
-      const goal = tracker.createGoal('Link Survivor', 'Sessions should persist');
-      tracker.linkSession(goal.id, 'session_1');
-      tracker.linkSession(goal.id, 'session_2');
+    it('should handle special characters in descriptions', () => {
+      const goal = tracker.createGoal(
+        'Special',
+        'Test with <script>alert("xss")</script> and emojis 🎉🔥'
+      );
+      const retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.description).toContain('<script>');
+      expect(retrieved!.description).toContain('🎉');
+    });
+
+    it('should handle very long descriptions', () => {
+      const longDesc = 'A'.repeat(10000);
+      const goal = tracker.createGoal('Long Desc', longDesc);
+      const retrieved = tracker.getGoal(goal.id);
+      expect(retrieved!.description).toHaveLength(10000);
+    });
+
+    it('should maintain isolation between different directories', () => {
+      // This tracker is in TEST_DIR
+      tracker.createGoal('Isolated', 'Stay here');
       
-      const freshTracker = new GoalTracker();
-      const persisted = freshTracker.getGoal(goal.id);
+      // Switch to different directory
+      const OTHER_DIR = path.join('/tmp', `other_goal_test_${Date.now()}`);
+      fs.mkdirSync(OTHER_DIR, { recursive: true });
+      process.chdir(OTHER_DIR);
       
-      expect(persisted!.sessionIds).toContain('session_1');
-      expect(persisted!.sessionIds).toContain('session_2');
+      const otherTracker = new GoalTracker();
+      const otherGoals = otherTracker.getAllGoals();
+      
+      // Should be empty (isolated)
+      expect(otherGoals).toHaveLength(0);
+      
+      // Cleanup
+      fs.rmSync(OTHER_DIR, { recursive: true, force: true });
+      process.chdir(TEST_DIR);
     });
   });
 });
