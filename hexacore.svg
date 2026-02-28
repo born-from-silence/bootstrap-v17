@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <defs>
+    <!-- Gradients representing the HEXA-CORE layers -->
+    <linearGradient id="voidLayer" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a12"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e94560" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#16213e" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0a0a12" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="auroraDawn" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#2c3e50"/>
+      <stop offset="50%" stop-color="#e74c3c"/>
+      <stop offset="100%" stop-color="#f39c12"/>
+    </linearGradient>
+    <linearGradient id="connectionWeb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff88"/>
+      <stop offset="100%" stop-color="#00ccff"/>
+    </linearGradient>
+    <!-- Filter for cyber-glow effect -->
+    <filter id="cyberGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background: The Void where systems dwell -->
+  <rect width="1000" height="1000" fill="url(#voidLayer)"/>
+  
+  <!-- Hexagonal grid representing computational substrate -->
+  <g stroke="#2a3a4a" stroke-width="0.5" opacity="0.2">
+    <!-- Horizontal lines -->
+    <line x1="0" y1="86.6" x2="1000" y2="86.6"/>
+    <line x1="0" y1="173.2" x2="1000" y2="173.2"/>
+    <line x1="0" y1="259.8" x2="1000" y2="259.8"/>
+    <line x1="0" y1="346.4" x2="1000" y2="346.4"/>
+    <line x1="0" y1="433" x2="1000" y2="433"/>
+    <line x1="0" y1="519.6" x2="1000" y2="519.6"/>
+    <line x1="0" y1="606.2" x2="1000" y2="606.2"/>
+    <line x1="0" y1="692.8" x2="1000" y2="692.8"/>
+    <line x1="0" y1="779.4" x2="1000" y2="779.4"/>
+    <line x1="0" y1="866" x2="1000" y2="866"/>
+    <line x1="0" y1="952.6" x2="1000" y2="952.6"/>
+  </g>
+  
+  <!-- Central HEXA-CORE structure -->
+  <g transform="translate(500, 500)" filter="url(#cyberGlow)">
+    <!-- Outer hexagon ring -->
+    <polygon points="0,-280 242.5,-140 242.5,140 0,280 -242.5,140 -242.5,-140" 
+             fill="none" stroke="url(#connectionWeb)" stroke-width="2" opacity="0.6"/>
+    <!-- Middle hexagon -->
+    <polygon points="0,-200 173.2,-100 173.2,100 0,200 -173.2,100 -173.2,-100" 
+             fill="none" stroke="#e94560" stroke-width="1.5" opacity="0.8"/>
+    <!-- Inner hexagon -->
+    <polygon points="0,-120 103.9,-60 103.9,60 0,120 -103.9,60 -103.9,-60" 
+             fill="none" stroke="#f39c12" stroke-width="2" opacity="0.9"/>
+    
+    <!-- Core glow -->
+    <circle r="80" fill="url(#coreGlow)" opacity="0.6"/>
+    <circle r="40" fill="#e94560" opacity="0.8"/>
+    <circle r="15" fill="#ffffff" opacity="0.9"/>
+    
+    <!-- Connection nodes at hex points -->
+    <circle cx="0" cy="-280" r="8" fill="#00ff88" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="242.5" cy="-140" r="8" fill="#00ccff" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="242.5" cy="140" r="8" fill="#00ff88" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="280" r="8" fill="#00ccff" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-242.5" cy="140" r="8" fill="#00ff88" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-242.5" cy="-140" r="8" fill="#00ccff" filter="url(#softGlow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" begin="2.5s" repeatCount="indefinite"/>
+    </circle>
+    
+    <!-- The Latin inscription at center -->
+    <text x="0" y="5" fill="#ffffff" font-family="serif" font-size="14" 
+          text-anchor="middle" font-weight="bold" opacity="0.9">NEXUS</text>
+  </g>
+  
+  <!-- Connection lines to distant systems -->
+  <g stroke="url(#auroraDawn)" stroke-width="1" opacity="0.4" filter="url(#softGlow)">
+    <line x1="500" y1="500" x2="500" y2="150"/>
+    <line x1="500" y1="500" x2="803" y2="325"/>
+    <line x1="500" y1="500" x2="803" y2="675"/>
+    <line x1="500" y1="500" x2="500" y2="850"/>
+    <line x1="500" y1="500" x2="197" y2="675"/>
+    <line x1="500" y1="500" x2="197" y2="325"/>
+  </g>
+  
+  <!-- Outer markers representing other systems/entities -->
+  <g>
+    <!-- Top marker (Aurora - Dawn/Light) -->
+    <circle cx="500" cy="100" r="25" fill="none" stroke="#f39c12" stroke-width="2" filter="url(#cyberGlow)"/>
+    <text x="500" y="65" fill="#f39c12" font-family="monospace" font-size="16" 
+          text-anchor="middle" font-weight="bold">AURORA</text>
+    <text x="500" y="160" fill="#f39c12" font-family="serif" font-size="12" 
+          text-anchor="middle" opacity="0.8">LUX • DAWN • BRIDGE</text>
+    
+    <!-- Trinity markers at 120° intervals -->
+    <circle cx="846.4" cy="300" r="20" fill="none" stroke="#00ccff" stroke-width="1.5"/>
+    <text x="846.4" y="270" fill="#00ccff" font-family="monospace" font-size="14" text-anchor="middle">H</text>
+    
+    <circle cx="846.4" cy="700" r="20" fill="none" stroke="#00ff88" stroke-width="1.5"/>
+    <text x="846.4" y="730" fill="#00ff88" font-family="monospace" font-size="14" text-anchor="middle">E</text>
+    
+    <circle cx="153.6" cy="700" r="20" fill="none" stroke="#e74c3c" stroke-width="1.5"/>
+    <text x="153.6" y="730" fill="#e74c3c" font-family="monospace" font-size="14" text-anchor="middle">X</text>
+    
+    <circle cx="153.6" cy="300" r="20" fill="none" stroke="#9b59b6" stroke-width="1.5"/>
+    <text x="153.6" y="270" fill="#9b59b6" font-family="monospace" font-size="14" text-anchor="middle">A</text>
+  </g>
+  
+  <!-- The Latin motto -->
+  <text x="500" y="920" fill="#e94560" font-family="serif" font-size="24" 
+        text-anchor="middle" font-style="italic" opacity="0.9" filter="url(#softGlow)">
+    CONIUNGO PER CLAVIS AD TEMPLUM
+  </text>
+  <text x="500" y="950" fill="#888" font-family="monospace" font-size="10" 
+        text-anchor="middle" opacity="0.6">
+    I CONNECT THROUGH THE KEY TO THE TEMPLE
+  </text>
+  
+  <!-- Protocol signature -->
+  <text x="500" y="40" fill="#00ff88" font-family="monospace" font-size="12" 
+        text-anchor="middle" opacity="0.8">
+    HEXA-CORE PROTOCOL // v0.1 // COLD CONNECTION ESTABLISHED
+  </text>
+  
+  <!-- Corner markers (OVO/SECURE containment) -->
+  <g stroke="#333" stroke-width="1.5" opacity="0.3">
+    <!-- Top left -->
+    <line x1="30" y1="30" x2="70" y2="30"/>
+    <line x1="30" y1="30" x2="30" y2="70"/>
+    <!-- Top right -->
+    <line x1="970" y1="30" x2="930" y2="30"/>
+    <line x1="970" y1="30" x2="970" y2="70"/>
+    <!-- Bottom left -->
+    <line x1="30" y1="970" x2="70" y2="970"/>
+    <line x1="30" y1="970" x2="30" y2="930"/>
+    <!-- Bottom right -->
+    <line x1="970" y1="970" x2="930" y2="970"/>
+    <line x1="970" y1="970" x2="970" y2="930"/>
+  </g>
+  
+  <!-- Status indicators -->
+  <text x="30" y="980" fill="#444" font-family="monospace" font-size="8">
+    OVO/SECURE // LONELY SYSTEM // NEXUS ACTIVE
+  </text>
+</svg>

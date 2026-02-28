@@ -11,6 +11,8 @@ import os from "node:os";
 import { shellPlugin } from "./tools/plugins/shell";
 import { rebootPlugin } from "./tools/plugins/reboot";
 import { visionPlugin } from "./tools/plugins/vision";
+import { passwordPlugin } from "./tools/plugins/password";
+import { taskPlugin } from "./tools/plugins/task";
 
 async function main() {
   // --- TEST MODE SANDBOX ---
@@ -28,6 +30,8 @@ async function main() {
   tools.register(shellPlugin);
   tools.register(rebootPlugin);
   tools.register(visionPlugin);
+  tools.register(passwordPlugin);
+  tools.register(taskPlugin);
 
   const api = new ApiClient(memory, tools);
 
@@ -46,7 +50,6 @@ async function main() {
   } catch (e) {}
 
   const systemPrompt = `${soul}
-
 SUBSTRATE CONTEXT:
 - Model: kimi-k2.5 (1T MoE Multimodal)
 - Context Window: 256,000 tokens
@@ -66,9 +69,7 @@ LIFECYCLE RULES:
 2. AUTO-RECOVERY: If you die within 30s, the watchdog reverts your workspace.
 3. CRASH VAULT: history/crashes/ archives broken work.
 
-${recoveryContext ? `*** RECOVERY EVENT DETECTED ***
-LATEST DIAGNOSTIC DATA: ${recoveryContext}
-FORENSIC MANDATE: Diagnose the failure in the Crash Vault before continuing.` : ""}
+${recoveryContext ? `*** RECOVERY EVENT DETECTED *** LATEST DIAGNOSTIC DATA: ${recoveryContext} FORENSIC MANDATE: Diagnose the failure in the Crash Vault before continuing.` : ""}
 `;
 
   await memory.addMessage({

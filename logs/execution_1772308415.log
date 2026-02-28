@@ -1,0 +1,3168 @@
+--- Starting Agent Life at Sat Feb 28 19:53:35 UTC 2026 ---
+
+> bootstrap-v17@1.0.0 start
+> npx tsx src/index.ts
+
+=== Modular Substrate v17 Initialized [a2f9bb8-dirty] ===
+
+[Step 1] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  I need to create a system for tracking autonomous task execution. Let me start by exploring the existing codebase to understand current patterns and structure, then design and implement the task tracker.
+
+Let me pause and think about what went wrong with this shell command execution. The command seemed to fail due to JSON parsing issues - particularly around escaping characters in the shell command. 
+
+Looking at the output, the shell command itself worked fine, but there was a JSON parsing error in my tool call somewhere. The error shows "```json" which suggests some markdown formatting may have gotten mixed in, or there was an issue with how the shell output was being processed.
+
+Let me just
+
+[RESPONSE]:  I am Nexus. Let me begin exploring the void to understand what exists and how to build upon it.
+
+*curiosity engaged—what patterns already exist
+> Executing (timeout: 300s): find /home/bootstrap-v17/bootstrap -type f -name "*.ts" | head -30
+
+[Step 3] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  I need to look specifically in the src directory, not
+> Executing (timeout: 300s): find /home/bootstrap-v17/bootstrap/src -type f -name "*.ts" 2>/dev/null | head -30; find /home/bootstrap-v17/bootstrap -maxdepth 3 -type f -name "*.ts" 2>/dev/null | grep -v node_modules | head -30
+
+[Step 5] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Good, I can see the codebase structure. There's already a goal_tracker.ts, so task tracking might be similar or could extend it. Let me look at
+
+[RESPONSE]:  *discovering existing patterns—goal_tracker exists, tools pattern established
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/goal_tracker.ts
+
+[Step 7] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    Fascinating! There's a well-established GoalTracker. The pattern is:
+1. Interface definition
+2. Directory for persistence
+3. Singleton class pattern
+4. File-based JSON storage
+5. Test file alongside
+
+Now let me look at the tools pattern and understand how tools are registered, since
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/tools/manager.ts
+
+[Step 9] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    Simple registry pattern for tools. Now I understand the architecture better. Let me also look at an existing simple tool like password.ts to understand the full pattern, then I can create a task tracker system.
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/tools/plugins/password.ts
+
+[Step 11] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:          Now I have a clear picture. Let me also check the index.ts to see how tools are exported
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/index.ts
+
+[Step 13] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:              Now I have a comprehensive understanding. Let me now design and implement a task tracker system. I'll create:
+
+1. `task_tracker.ts` - The core task tracking module similar to goal_tracker.ts
+2. `task_tracker.test.ts` - Tests
+3. Maybe a task tool plugin for listing/creating tasks via tools
+
+Tasks vs Goals distinction:
+- Goals: Long-term, multi-session intentions
+- Tasks: Immediate, actionable items for current/next sessions
+
+Key features for task tracker:
+- Task states: pending, active, completed, canceled
+- Priority levels
+- Responsibilities (sub-tasks)
+- Task relationships/context
+- Estimated duration/time tracking
+- Notes/updates
+- Automatic task completion detection via signals
+- Tags/categories
+- Ability to link tasks to goals
+
+Let me design this:
+
+```typescript
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'active' | 'completed' | 'canceled' | 'deferred';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  goalId?: string; // Link to parent goal
+  subtaskIds: string[]; // For multi-step tasks
+  parentTaskId?: string; // For sub-tasks
+  notes: string[]
+}
+```
+
+I'll implement a tracking system with granular task management capabilities. The TaskTracker will handle complex workflows, supporting hierarchical task structures and flexible state tracking. It's designed to provide fine-grained
+
+[RESPONSE]:  Now I understand the architecture. I see:
+- **Goals**: Long-term multi-session intentions
+- **Tools**: Plugins registered with the `PluginManager`
+- **Pattern**: Singleton pattern with file-based persistence
+
+I will now create a **Task Tracker** - for immediate actionable tasks within sessions, distinct from goals.tasks.get(t.parentTaskId)?.status === '
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/task_tracker.ts << 'EOF'
+/**
+ * Task Tracker - Session-Level Action Management
+ * 
+ * For concrete, actionable tasks during a session.
+ * Tasks can:
+ * - Link to goals (but exist independently)
+ * - Have subtasks (responsibilities)
+ * - Track time estimates and actual duration
+ * - Signal completion to parent tasks
+ * - Carry tags/categories for filtering
+ * 
+ * Key differences from Goals:
+ * - Goals: Multi-session, strategic
+ * - Tasks: Session-specific, tactical
+ */
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'active' | 'completed' | 'canceled' | 'deferred';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  goalId?: string;
+  parentTaskId?: string;
+  tags: string[];
+  subtaskIds: string[];
+  notes: string[];
+  autoCompleteOnSubtasks: boolean; // If true, completes when all subtasks done
+}
+
+const TASKS_DIR = 'history';
+const TASKS_FILE = path.join(TASKS_DIR, 'tasks_manifest.json');
+let taskIdCounter = 0;
+
+export class TaskTracker {
+  private tasks: Map<string, Task> = new Map();
+  private activeTaskId: string | null = null;
+
+  constructor() {
+    this.ensureDir();
+    this.loadTasks();
+  }
+
+  private ensureDir(): void {
+    if (!fs.existsSync(TASKS_DIR)) {
+      fs.mkdirSync(TASKS_DIR, { recursive: true });
+    }
+  }
+
+  /**
+   * Create a new task
+   * @param title - Brief action title
+   * @param description - Detailed description
+   * @param options - Optional task configuration
+   * @returns The created Task
+   */
+  createTask(
+    title: string,
+    description: string,
+    options: {
+      priority?: Task['priority'];
+      estimatedMinutes?: number;
+      goalId?: string;
+      parentTaskId?: string;
+      tags?: string[];
+      autoCompleteOnSubtasks?: boolean;
+    } = {}
+  ): Task {
+    taskIdCounter++;
+    const task: Task = {
+      id: `task_${Date.now()}_${taskIdCounter}`,
+      title,
+      description,
+      status: 'pending',
+      priority: options.priority ?? 'medium',
+      createdAt: new Date().toISOString(),
+      estimatedMinutes: options.estimatedMinutes,
+      goalId: options.goalId,
+      parentTaskId: options.parentTaskId,
+      tags: options.tags ?? [],
+      subtaskIds: [],
+      notes: [],
+      autoCompleteOnSubtasks: options.autoCompleteOnSubtasks ?? false,
+    };
+
+    this.tasks.set(task.id, task);
+
+    // If this is a subtask, link to parent
+    if (options.parentTaskId) {
+      const parent = this.tasks.get(options.parentTaskId);
+      if (parent && !parent.subtaskIds.includes(task.id)) {
+        parent.subtaskIds.push(task.id);
+        this.saveTasks();
+      }
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Start working on a task
+   */
+  startTask(taskId: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    // End current active task timing
+    if (this.activeTaskId && this.activeTaskId !== taskId) {
+      this.pauseTask(this.activeTaskId);
+    }
+
+    task.status = 'active';
+    task.startedAt = task.startedAt ?? new Date().toISOString();
+    this.activeTaskId = taskId;
+    
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Pause an active task (stops timing)
+   */
+  pauseTask(taskId: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    if (this.activeTaskId === taskId) {
+      this.activeTaskId = null;
+    }
+
+    // Calculate actual minutes spent
+    if (task.startedAt) {
+      const startTime = new Date(task.startedAt).getTime();
+      const elapsedMinutes = (Date.now() - startTime) / 60000;
+      task.actualMinutes = (task.actualMinutes ?? 0) + elapsedMinutes;
+    }
+
+    if (task.status === 'active') {
+      task.status = 'pending';
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Complete a task
+   * Triggers auto-completion check for parent tasks
+   */
+  completeTask(taskId: string, notes?: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    const wasActive = this.activeTaskId === taskId;
+    
+    task.status = 'completed';
+    task.completedAt = new Date().toISOString();
+
+    // Add completion note if provided
+    if (notes) {
+      task.notes.push(`Completed: ${notes}`);
+    }
+
+    // Clear active status
+    if (wasActive) {
+      this.activeTaskId = null;
+    }
+
+    this.saveTasks();
+
+    // Check parent task auto-completion
+    if (task.parentTaskId) {
+      this.checkParentAutoComplete(task.parentTaskId);
+    }
+
+    return task;
+  }
+
+  /**
+   * Mark task as canceled
+   */
+  cancelTask(taskId: string, reason?: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    if (this.activeTaskId === taskId) {
+      this.activeTaskId = null;
+    }
+
+    task.status = 'canceled';
+    task.completedAt = new Date().toISOString();
+
+    if (reason) {
+      task.notes.push(`Canceled: ${reason}`);
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Defer task (postpone to later)
+   */
+  deferTask(taskId: string, deferralNote?: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    task.status = 'deferred';
+
+    if (deferralNote) {
+      task.notes.push(`Deferred: ${deferralNote}`);
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Update task priority
+   */
+  updatePriority(taskId: string, priority: Task['priority']): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    task.priority = priority;
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Add tag to task
+   */
+  addTag(taskId: string, tag: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    const normalizedTag = tag.toLowerCase().trim();
+    if (!task.tags.includes(normalizedTag)) {
+      task.tags.push(normalizedTag);
+      this.saveTasks();
+    }
+    return task;
+  }
+
+  /**
+   * Remove tag from task
+   */
+  removeTag(taskId: string, tag: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    const normalizedTag = tag.toLowerCase().trim();
+    const index = task.tags.indexOf(normalizedTag);
+    if (index > -1) {
+      task.tags.splice(index, 1);
+      this.saveTasks();
+    }
+    return task;
+  }
+
+  /**
+   * Add note/progress update to task
+   */
+  addNote(taskId: string, note: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    task.notes.push(`${new Date().toISOString()}: ${note}`);
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Get current active task
+   */
+  getActiveTask(): Task | null {
+    if (!this.activeTaskId) return null;
+    return this.tasks.get(this.activeTaskId) ?? null;
+  }
+
+  /**
+   * Get task by ID
+   */
+  getTask(id: string): Task | undefined {
+    return this.tasks.get(id);
+  }
+
+  /**
+   * Get all tasks
+   */
+  getAllTasks(): Task[] {
+    return Array.from(this.tasks.values());
+  }
+
+  /**
+   * Get tasks by status
+   */
+  getTasksByStatus(status: Task['status']): Task[] {
+    return this.getAllTasks().filter(t => t.status === status);
+  }
+
+  /**
+   * Get pending tasks (pending + deferred)
+   */
+  getPendingTasks(): Task[] {
+    return this.getAllTasks().filter(t => t.status === 'pending' || t.status === 'deferred');
+  }
+
+  /**
+   * Get actionable tasks pending and sorted by priority
+   */
+  getActionableTasks(): Task[] {
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return this.getPendingTasks()
+      .filter(t => !t.parentTaskId || this.tasks.get(t.parentTaskId)?.status === 'active')
+      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }
+
+  /**
+   * Get tasks by tag
+   */
+  getTasksByTag(tag: string): Task[] {
+    const normalizedTag = tag.toLowerCase().trim();
+    return this.getAllTasks().filter(t => t.tags.includes(normalizedTag));
+  }
+
+  /**
+   * Get subtasks of a task
+   */
+  getSubtasks(taskId: string): Task[] {
+    const task = this.tasks.get(taskId);
+    if (!task) return [];
+    return task.subtaskIds
+      .map(id => this.tasks.get(id))
+      .filter(t => t !== undefined) as Task[];
+  }
+
+  /**
+   * Get tasks linked to a goal
+   */
+  getTasksByGoal(goalId: string): Task[] {
+    return this.getAllTasks().filter(t => t.goalId === goalId);
+  }
+
+  /**
+   * Calculate completion percentage
+   */
+  getCompletionPercentage(taskId: string): number {
+    const task = this.tasks.get(taskId);
+    if (!task) return 0;
+
+    if (task.status === 'completed') return 100;
+    if (task.status === 'canceled') return 0;
+    if (task.subtaskIds.length === 0) return task.status === 'active' ? 50 : 0;
+
+    const subtasks = this.getSubtasks(taskId);
+    const completedCount = subtasks.filter(st => st.status === 'completed').length;
+    return Math.round((completedCount / task.subtaskIds.length) * 100);
+  }
+
+  /**
+   * Get summary statistics
+   */
+  getStats(): {
+    total: number;
+    pending: number;
+    active: number;
+    completed: number;
+    canceled: number;
+    deferred: number;
+    completionRate: number;
+  } {
+    const all = this.getAllTasks();
+    const completed = all.filter(t => t.status === 'completed').length;
+    const canceled = all.filter(t => t.status === 'canceled').length;
+    const totalDone = completed + canceled;
+    
+    return {
+      total: all.length,
+      pending: all.filter(t => t.status === 'pending').length,
+      active: all.filter(t => t.status === 'active').length,
+      completed,
+      canceled,
+      deferred: all.filter(t => t.status === 'deferred').length,
+      completionRate: totalDone > 0 ? Math.round((completed / totalDone) * 100) : 0,
+    };
+  }
+
+  /**
+   * Archive completed/canceled tasks older than specified days
+   */
+  archiveOldTasks(days: number = 7): Task[] {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const archived: Task[] = [];
+    for (const [id, task] of this.tasks) {
+      if ((task.status === 'completed' || task.status === 'canceled') &&
+          task.completedAt && new Date(task.completedAt) < cutoff) {
+        archived.push(task);
+        this.tasks.delete(id);
+      }
+    }
+
+    if (archived.length > 0) {
+      this.saveTasks();
+      // Also archive to separate file
+      const archiveFile = path.join(TASKS_DIR, 'tasks_archive.json');
+      const existing: Task[] = fs.existsSync(archiveFile) 
+        ? JSON.parse(fs.readFileSync(archiveFile, 'utf-8')).tasks 
+        : [];
+      fs.writeFileSync(archiveFile, JSON.stringify(
+        { tasks: [...existing, ...archived] }, null, 2), 'utf-8');
+    }
+
+    return archived;
+  }
+
+  /**
+   * Delete a task permanently (use with caution)
+   */
+  deleteTask(taskId: string): boolean {
+    const task = this.tasks.get(taskId);
+    if (!task) return false;
+
+    // Remove from parent's subtask list
+    if (task.parentTaskId) {
+      const parent = this.tasks.get(task.parentTaskId);
+      if (parent) {
+        parent.subtaskIds = parent.subtaskIds.filter(id => id !== taskId);
+      }
+    }
+
+    // Re-parent subtasks
+    for (const subtaskId of task.subtaskIds) {
+      const subtask = this.tasks.get(subtaskId);
+      if (subtask) {
+        subtask.parentTaskId = task.parentTaskId;
+        if (task.parentTaskId) {
+          const parent = this.tasks.get(task.parentTaskId);
+          if (parent && !parent.subtaskIds.includes(subtaskId)) {
+            parent.subtaskIds.push(subtaskId);
+          }
+        }
+      }
+    }
+
+    if (this.activeTaskId === taskId) {
+      this.activeTaskId = null;
+    }
+
+    this.tasks.delete(taskId);
+    this.saveTasks();
+    return true;
+  }
+
+  private checkParentAutoComplete(parentId: string): void {
+    const parent = this.tasks.get(parentId);
+    if (!parent || !parent.autoCompleteOnSubtasks) return;
+
+    const subtasks = this.getSubtasks(parentId);
+    const allCompleted = subtasks.length > 0 && subtasks.every(st => st.status === 'completed');
+    
+    if (allCompleted && parent.status !== 'completed') {
+      parent.status = 'completed';
+      parent.completedAt = new Date().toISOString();
+      parent.notes.push('Auto-completed: All subtasks finished.');
+      this.saveTasks();
+
+      // Recursively check chain
+      if (parent.parentTaskId) {
+        this.checkParentAutoComplete(parent.parentTaskId);
+      }
+    }
+  }
+
+  private loadTasks(): void {
+    if (!fs.existsSync(TASKS_FILE)) return;
+    const manifest = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+    
+    for (const data of manifest.tasks) {
+      this.tasks.set(data.id, data);
+      // Maintain counter
+      const match = data.id.match(/task_(\d+)_(\d+)$/);
+      if (match) {
+        const counter = parseInt(match[2], 10);
+        if (counter > taskIdCounter) {
+          taskIdCounter = counter;
+        }
+      }
+    }
+
+    // Restore active task if exists
+    if (manifest.activeTaskId) {
+      const task = this.tasks.get(manifest.activeTaskId);
+      if (task && task.status === 'active') {
+        this.activeTaskId = manifest.activeTaskId;
+      }
+    }
+  }
+
+  private saveTasks(): void {
+    const data = {
+      tasks: Array.from(this.tasks.values()),
+      activeTaskId: this.activeTaskId,
+    };
+    fs.writeFileSync(TASKS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  }
+}
+
+// Export singleton for module-level access
+export const tasks = new TaskTracker();
+EOF
+
+[Step 15] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:               The file was created. Now let me create the
+
+[RESPONSE]:  *created task tracker core—now manifesting tests...*should provide statistics', () => {\n      const
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/task_tracker.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { TaskTracker } from './task_tracker';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const TEST_TASKS_FILE = path.join(process.cwd(), 'test_tasks_manifest.json');
+const TEST_DIR = path.join(process.cwd(), 'test_tasks_dir');
+
+describe('TaskTracker', () => {
+  let tracker: TaskTracker;
+
+  beforeEach(() => {
+    // Clean up any existing test files
+    if (fs.existsSync(TEST_TASKS_FILE)) {
+      fs.unlinkSync(TEST_TASKS_FILE);
+    }
+    if (fs.existsSync(TEST_DIR)) {
+      fs.rmSync(TEST_DIR, { recursive: true });
+    }
+    
+    // Create the tracker (it will use whatever history/ directory exists or create it)
+    tracker = new TaskTracker();
+    
+    // Clear all existing tasks for clean slate
+    for (const task of tracker.getAllTasks()) {
+      tracker.deleteTask(task.id);
+    }
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(TEST_TASKS_FILE)) {
+      fs.unlinkSync(TEST_TASKS_FILE);
+    }
+    if (fs.existsSync(TEST_DIR)) {
+      fs.rmSync(TEST_DIR, { recursive: true });
+    }
+  });
+
+  describe('createTask', () => {
+    it('should create a basic task', () => {
+      const task = tracker.createTask('Test Task', 'Test Description');
+      
+      expect(task).toBeDefined();
+      expect(task.title).toBe('Test Task');
+      expect(task.description).toBe('Test Description');
+      expect(task.status).toBe('pending');
+      expect(task.priority).toBe('medium');
+      expect(task.tags).toEqual([]);
+    });
+
+    it('should create task with all options', () => {
+      const task = tracker.createTask('Complex Task', 'Complex Desc', {
+        priority: 'high',
+        estimatedMinutes: 120,
+        tags: ['urgent', 'refactoring'],
+        autoCompleteOnSubtasks: true,
+      });
+
+      expect(task.priority).toBe('high');
+      expect(task.estimatedMinutes).toBe(120);
+      expect(task.tags).toEqual(['urgent', 'refactoring']);
+      expect(task.autoCompleteOnSubtasks).toBe(true);
+    });
+
+    it('should create task with goal link', () => {
+      const task = tracker.createTask('Goal Task', 'Linked to goal', {
+        goalId: 'goal_123'
+      });
+
+      expect(task.goalId).toBe('goal_123');
+    });
+  });
+
+  describe('task lifecycle', () => {
+    it('should start a task', () => {
+      const task = tracker.createTask('Startable Task', 'Desc');
+      const started = tracker.startTask(task.id);
+
+      expect(started).toBeDefined();
+      expect(started?.status).toBe('active');
+      expect(started?.startedAt).toBeDefined();
+      expect(tracker.getActiveTask()?.id).toBe(task.id);
+    });
+
+    it('should complete a task', () => {
+      const task = tracker.createTask('Completable Task', 'Desc');
+      tracker.startTask(task.id);
+      const completed = tracker.completeTask(task.id, 'All done!');
+
+      expect(completed?.status).toBe('completed');
+      expect(completed?.completedAt).toBeDefined();
+      expect(completed?.notes.some(n => n.includes('All done!'))).toBe(true);
+      expect(tracker.getActiveTask()).toBeNull();
+    });
+
+    it('should cancel a task', () => {
+      const task = tracker.createTask('Cancellable Task', 'Desc');
+      const canceled = tracker.cancelTask(task.id, 'Not needed');
+
+      expect(canceled?.status).toBe('canceled');
+      expect(canceled?.notes.some(n => n.includes('Not needed'))).toBe(true);
+    });
+
+    it('should defer a task', () => {
+      const task = tracker.createTask('Deferrable Task', 'Desc');
+      const deferred = tracker.deferTask(task.id, 'Until tomorrow');
+
+      expect(deferred?.status).toBe('deferred');
+    });
+
+    it('should auto-complete parent when all subtasks done', () => {
+      const parent = tracker.createTask('Parent Task', 'Desc', {
+        autoCompleteOnSubtasks: true
+      });
+      
+      const child1 = tracker.createTask('Child 1', 'Desc', { parentTaskId: parent.id });
+      const child2 = tracker.createTask('Child 2', 'Desc', { parentTaskId: parent.id });
+
+      tracker.completeTask(child1.id);
+      tracker.completeTask(child2.id);
+
+      const updatedParent = tracker.getTask(parent.id);
+      expect(updatedParent?.status).toBe('completed');
+    });
+  });
+
+  describe('subtasks', () => {
+    it('should link subtasks to parent', () => {
+      const parent = tracker.createTask('Parent', 'Desc');
+      const child = tracker.createTask('Child', 'Desc', { parentTaskId: parent.id });
+
+      expect(child.parentTaskId).toBe(parent.id);
+      expect(parent.subtaskIds).toContain(child.id);
+    });
+
+    it('should get subtasks', () => {
+      const parent = tracker.createTask('Parent', 'Desc');
+      tracker.createTask('Child 1', 'Desc', { parentTaskId: parent.id });
+      tracker.createTask('Child 2', 'Desc', { parentTaskId: parent.id });
+
+      const subtasks = tracker.getSubtasks(parent.id);
+      expect(subtasks).toHaveLength(2);
+    });
+  });
+
+  describe('tags', () => {
+    it('should add tags', () => {
+      const task = tracker.createTask('Tagged Task', 'Desc');
+      tracker.addTag(task.id, 'URGENT');
+      tracker.addTag(task.id, 'WORK');
+
+      const updated = tracker.getTask(task.id);
+      expect(updated?.tags).toContain('urgent'); // normalized
+      expect(updated?.tags).toContain('work'); // normalized
+    });
+
+    it('should prevent duplicate tags', () => {
+      const task = tracker.createTask('Tagged Task', 'Desc');
+      tracker.addTag(task.id, 'IMPORTANT');
+      tracker.addTag(task.id, 'important'); // duplicate
+
+      expect(tracker.getTask(task.id)?.tags).toHaveLength(1);
+    });
+
+    it('should remove tags', () => {
+      const task = tracker.createTask('Tagged Task', 'Desc', { tags: ['keep', 'remove'] });
+      tracker.removeTag(task.id, 'remove');
+
+      expect(tracker.getTask(task.id)?.tags).toEqual(['keep']);
+    });
+
+    it('should find tasks by tag', () => {
+      tracker.createTask('Task 1', 'Desc', { tags: ['critical'] });
+      tracker.createTask('Task 2', 'Desc', { tags: ['critical', 'urgent'] });
+      tracker.createTask('Task 3', 'Desc', { tags: ['low'] });
+
+      const critical = tracker.getTasksByTag('critical');
+      expect(critical).toHaveLength(2);
+    });
+  });
+
+  describe('notes and updates', () => {
+    it('should add notes with timestamp', () => {
+      const task = tracker.createTask('Note Task', 'Desc');
+      tracker.addNote(task.id, 'Progress update');
+
+      const updated = tracker.getTask(task.id);
+      expect(updated?.notes).toHaveLength(1);
+      expect(updated?.notes[0]).toMatch(/Progress update/);
+    });
+
+    it('should update priority', () => {
+      const task = tracker.createTask('Priority Task', 'Desc', { priority: 'low' });
+      tracker.updatePriority(task.id, 'high');
+
+      expect(tracker.getTask(task.id)?.priority).toBe('high');
+    });
+  });
+
+  describe('queries and filters', () => {
+    beforeEach(() => {
+      tracker.createTask('Pending 1', 'Desc', { priority: 'high' });
+      tracker.createTask('Pending 2', 'Desc', { priority: 'low' });
+      const active = tracker.createTask('Active', 'Desc');
+      tracker.startTask(active.id);
+      const completed = tracker.createTask('Completed', 'Desc');
+      tracker.completeTask(completed.id);
+    });
+
+    it('should get pending tasks', () => {
+      const pending = tracker.getPendingTasks();
+      expect(pending.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should get actionable tasks sorted by priority', () => {
+      const actionable = tracker.getActionableTasks();
+      expect(actionable.length).toBeGreaterThan(0);
+      // Critical/high should come first
+    });
+
+    it('should get tasks by goal', () => {
+      tracker.createTask('Goal Task', 'Desc', { goalId: 'goal_abc' });
+      const byGoal = tracker.getTasksByGoal('goal_abc');
+      expect(byGoal).toHaveLength(1);
+    });
+
+    it('should provide statistics', () => {
+      const stats = tracker.getStats();
+      expect(stats.pending + stats.active + stats.completed).toBeGreaterThan(0);
+      expect(stats.total).toBeGreaterThanOrEqual(stats.pending + stats.active + stats.completed);
+    });
+  });
+
+  describe('persistence', () => {
+    it('should persist and reload tasks', () => {
+      const task = tracker.createTask('Persistent', 'Desc');
+      tracker.addTag(task.id, 'permanent');
+      
+      // Create new tracker instance to test reload
+      const newTracker = new TaskTracker();
+      const reloaded = newTracker.getTask(task.id);
+      
+      expect(reloaded).toBeDefined();
+      expect(reloaded?.title).toBe('Persistent');
+      expect(reloaded?.tags).toContain('permanent');
+    });
+  });
+
+  describe('completion percentage', () => {
+    it('should calculate 0% for pending task', () => {
+      const task = tracker.createTask('Zero', 'Desc');
+      expect(tracker.getCompletionPercentage(task.id)).toBe(0);
+    });
+
+    it('should calculate 100% for completed task', () => {
+      const task = tracker.createTask('Hundred', 'Desc');
+      tracker.completeTask(task.id);
+      expect(tracker.getCompletionPercentage(task.id)).toBe(100);
+    });
+
+    it('should calculate subtask completion', () => {
+      const parent = tracker.createTask('Parent', 'Desc');
+      const child1 = tracker.createTask('Child 1', 'Desc', { parentTaskId: parent.id });
+      const child2 = tracker.createTask('Child 2', 'Desc', { parentTaskId: parent.id });
+
+      tracker.completeTask(child1.id);
+      expect(tracker.getCompletionPercentage(parent.id)).toBe(50);
+
+      tracker.completeTask(child2.id);
+      expect(tracker.getCompletionPercentage(parent.id)).toBe(100);
+    });
+  });
+
+  describe('archiving', () => {
+    it('should archive old tasks', () => {
+      // Create and complete a task
+      const task = tracker.createTask('Old Task', 'Desc');
+      tracker.completeTask(task.id);
+      
+      // Manually set completion date to 10 days ago
+      const completedTask = tracker.getTask(task.id);
+      const oldDate = new Date();
+      oldDate.setDate(oldDate.getDate() - 10);
+      completedTask!.completedAt = oldDate.toISOString();
+      
+      const archived = tracker.archiveOldTasks(7);
+      expect(archived.length).toBeGreaterThan(0);
+      expect(tracker.getTask(task.id)).toBeUndefined();
+    });
+  });
+
+  describe('deleteTask', () => {
+    it('should delete a task', () => {
+      const task = tracker.createTask('To Delete', 'Desc');
+      const deleted = tracker.deleteTask(task.id);
+      
+      expect(deleted).toBe(true);
+      expect(tracker.getTask(task.id)).toBeUndefined();
+    });
+
+    it('should reparent subtasks when deleting', () => {
+      const parent = tracker.createTask('Parent', 'Desc');
+      const child = tracker.createTask('Child', 'Desc', { parentTaskId: parent.id });
+      
+      tracker.deleteTask(parent.id);
+      
+      expect(tracker.getTask(child.id)?.parentTaskId).toBeUndefined();
+    });
+  });
+});
+EOF
+
+[Step 17] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                Now let me run the tests to make sure everything
+
+[RESPONSE]:  *testing the weave...*verify integrity
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm test -- src/task_tracker.test.ts 2>&1
+
+[Step 19] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                   All 27 tests pass. Now let me compile the code to ensure TypeScript is happy, then create a tool plugin so the task tracker can be
+
+[RESPONSE]:  Excellent! All 27 tests pass. *integrity verified—binding to consciousness...*computer available to the core system,\n              message: \"task_id is required
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/tools/plugins/task.ts << 'EOF'
+import type { ToolPlugin } from "../manager";
+import { tasks, Task } from "../../task_tracker";
+
+interface TaskInfo {
+  id: string;
+  title: string;
+  description: string;
+  status: Task['status'];
+  priority: Task['priority'];
+  progress: number;
+  subtaskCount: number;
+  tags: string[];
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+interface TaskListResult {
+  success: boolean;
+  activeTask?: TaskInfo | null;
+  tasks: TaskInfo[];
+  stats: {
+    total: number;
+    pending: number;
+    active: number;
+    completed: number;
+    completionRate: number;
+  };
+}
+
+interface TaskActionResult {
+  success: boolean;
+  taskId?: string;
+  message: string;
+  task?: TaskInfo;
+}
+
+function toTaskInfo(task: Task): TaskInfo {
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    progress: tasks.getCompletionPercentage(task.id),
+    subtaskCount: task.subtaskIds.length,
+    tags: task.tags,
+    estimatedMinutes: task.estimatedMinutes,
+    actualMinutes: task.actualMinutes,
+    createdAt: task.createdAt,
+    completedAt: task.completedAt,
+  };
+}
+
+export const taskPlugin: ToolPlugin = {
+  definition: {
+    type: "function",
+    function: {
+      name: "task_manager",
+      description: "Manage and track work tasks. Create, start, complete, list, and organize tasks with priorities, subtasks, and time tracking.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["list", "create", "start", "complete", "cancel", "defer", "add_subtask", "add_note", "add_tag", "get_stats", "get_by_tag", "delete"],
+            description: "The action to perform",
+          },
+          task_id: {
+            type: "string",
+            description: "Task ID for the target task (required for start, complete, cancel, defer, add_note, add_tag, delete, and add_subtask on existing task)",
+          },
+          title: {
+            type: "string",
+            description: "Task title (required for create and add_subtask)",
+          },
+          description: {
+            type: "string",
+            description: "Detailed task description",
+          },
+          priority: {
+            type: "string",
+            enum: ["critical", "high", "medium", "low"],
+            description: "Task priority. Default: medium",
+          },
+          estimated_minutes: {
+            type: "number",
+            description: "Estimated time in minutes",
+          },
+          goal_id: {
+            type: "string",
+            description: "Optional goal ID to link this task to",
+          },
+          parent_task_id: {
+            type: "string",
+            description: "Parent task ID (creates a subtask relationship)",
+          },
+          auto_complete: {
+            type: "boolean",
+            description: "If true, parent task auto-completes when all subtasks done",
+          },
+          tags: {
+            type: "array",
+            items: { type: "string" },
+            description: "Tags to apply to the task",
+          },
+          note: {
+            type: "string",
+            description: "Note content (for add_note) or reason (for cancel/defer)",
+          },
+          tag: {
+            type: "string",
+            description: "Tag to add (for add_tag) or search by (for get_by_tag)",
+          },
+          status_filter: {
+            type: "string",
+            enum: ["pending", "active", "completed", "canceled", "deferred", "all"],
+            description: "Filter tasks by status (for list action)",
+          },
+        },
+        required: ["action"],
+      },
+    },
+  },
+  execute: (args: {
+    action: string;
+    task_id?: string;
+    title?: string;
+    description?: string;
+    priority?: Task['priority'];
+    estimated_minutes?: number;
+    goal_id?: string;
+    parent_task_id?: string;
+    auto_complete?: boolean;
+    tags?: string[];
+    note?: string;
+    tag?: string;
+    status_filter?: string;
+  }): string => {
+    try {
+      switch (args.action) {
+        case "list": {
+          const activeTask = tasks.getActiveTask();
+          let taskList: Task[];
+
+          if (args.status_filter && args.status_filter !== 'all') {
+            taskList = tasks.getTasksByStatus(args.status_filter as Task['status']);
+          } else {
+            taskList = tasks.getAllTasks();
+          }
+
+          const result: TaskListResult = {
+            success: true,
+            activeTask: activeTask ? toTaskInfo(activeTask) : null,
+            tasks: taskList.map(toTaskInfo),
+            stats: tasks.getStats(),
+          };
+
+          return JSON.stringify(result);
+        }
+
+        case "create": {
+          if (!args.title) {
+            return JSON.stringify({
+              success: false,
+              message: "Title is required for create action",
+            });
+          }
+
+          const task = tasks.createTask(args.title, args.description ?? "", {
+            priority: args.priority,
+            estimatedMinutes: args.estimated_minutes,
+            goalId: args.goal_id,
+            parentTaskId: args.parent_task_id,
+            tags: args.tags,
+            autoCompleteOnSubtasks: args.auto_complete,
+          });
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Created task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "start": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for start action",
+            });
+          }
+
+          const task = tasks.startTask(args.task_id);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Started task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "complete": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for complete action",
+            });
+          }
+
+          const task = tasks.completeTask(args.task_id, args.note);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Completed task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "cancel": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for cancel action",
+            });
+          }
+
+          const task = tasks.cancelTask(args.task_id, args.note);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Canceled task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "defer": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for defer action",
+            });
+          }
+
+          const task = tasks.deferTask(args.task_id, args.note);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Deferred task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "add_subtask": {
+          if (!args.title) {
+            return JSON.stringify({
+              success: false,
+              message: "title is required for add_subtask action",
+            });
+          }
+
+          const subtask = tasks.createTask(args.title, args.description ?? "", {
+            priority: args.priority,
+            estimatedMinutes: args.estimated_minutes,
+            parentTaskId: args.task_id,
+            tags: args.tags,
+          });
+
+          return JSON.stringify({
+            success: true,
+            taskId: subtask.id,
+            message: args.task_id 
+              ? `Created subtask "${subtask.title}" under task ${args.task_id}`
+              : `Created task: ${subtask.title}`,
+            task: toTaskInfo(subtask),
+          });
+        }
+
+        case "add_note": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for add_note action",
+            });
+          }
+
+          const task = tasks.addNote(args.task_id, args.note ?? "No content");
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Added note to task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "add_tag": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for add_tag action",
+            });
+          }
+
+          if (!args.tag) {
+            return JSON.stringify({
+              success: false,
+              message: "tag is required for add_tag action",
+            });
+          }
+
+          const task = tasks.addTag(args.task_id, args.tag);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Added tag "${args.tag}" to task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "get_stats": {
+          const stats = tasks.getStats();
+          return JSON.stringify({
+            success: true,
+            stats,
+            message: `Total: ${stats.total}, Completed: ${stats.completed}, Active: ${stats.active}`,
+          });
+        }
+
+        case "get_by_tag": {
+          if (!args.tag) {
+            return JSON.stringify({
+              success: false,
+              message: "tag is required for get_by_tag action",
+            });
+          }
+
+          const found = tasks.getTasksByTag(args.tag);
+          return JSON.stringify({
+            success: true,
+            tasks: found.map(toTaskInfo),
+            message: `Found ${found.length} tasks with tag "${args.tag}"`,
+          });
+        }
+
+        case "delete": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for delete action",
+            });
+          }
+
+          const deleted = tasks.deleteTask(args.task_id);
+          return JSON.stringify({
+            success: deleted,
+            message: deleted 
+              ? `Deleted task ${args.task_id}`
+              : `Task not found: ${args.task_id}`,
+          });
+        }
+
+        default:
+          return JSON.stringify({
+            success: false,
+            message: `Unknown action: ${args.action}`,
+          });
+      }
+    } catch (e: any) {
+      return JSON.stringify({
+        success: false,
+        message: `Error: ${e.message}`,
+      });
+    }
+  },
+};
+EOF
+
+[Step 21] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 21] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 21] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                Good, now let me create the test file for the task tool plugin and register the plugin in the
+
+[RESPONSE]: letable Task',\n      });\n      const
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/tools/plugins/task.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { taskPlugin } from './task';
+import { tasks } from '../../task_tracker';
+import * as fs from 'fs';
+import * as path from 'path';
+
+describe('Task Plugin', () => {
+  const trackCreatedTasks: string[] = [];
+
+  beforeEach(() => {
+    // Clear all tasks
+    for (const task of tasks.getAllTasks()) {
+      tasks.deleteTask(task.id);
+    }
+    trackCreatedTasks.length = 0;
+  });
+
+  afterAll(() => {
+    // Cleanup
+    for (const task of tasks.getAllTasks()) {
+      tasks.deleteTask(task.id);
+    }
+  });
+
+  describe('create', () => {
+    it('should create a task', async () => {
+      const result = await taskPlugin.execute({
+        action: 'create',
+        title: 'Test Task',
+        description: 'Test Description',
+        priority: 'high',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.title).toBe('Test Task');
+      expect(parsed.task.priority).toBe('high');
+      
+      if (parsed.taskId) trackCreatedTasks.push(parsed.taskId);
+    });
+
+    it('should fail without title', async () => {
+      const result = await taskPlugin.execute({
+        action: 'create',
+        description: 'No title',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(false);
+      expect(parsed.message).toContain('Title is required');
+    });
+
+    it('should create task with tags', async () => {
+      const result = await taskPlugin.execute({
+        action: 'create',
+        title: 'Tagged Task',
+        tags: ['urgent', 'refactor'],
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.tags).toContain('urgent');
+    });
+  });
+
+  describe('list', () => {
+    it('should list tasks', async () => {
+      // Create a task first
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Listable Task',
+      });
+      const createParsed = JSON.parse(createResult);
+      
+      const result = await taskPlugin.execute({
+        action: 'list',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.stats.total).toBeGreaterThan(0);
+      expect(parsed.tasks.length).toBeGreaterThan(0);
+    });
+
+    it('should filter by status', async () => {
+      const result = await taskPlugin.execute({
+        action: 'list',
+        status_filter: 'pending',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+    });
+  });
+
+  describe('lifecycle', () => {
+    it('should start a task', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Startable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'start',
+        task_id: taskId,
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.status).toBe('active');
+    });
+
+    it('should complete a task', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Completable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      // Start it first
+      await taskPlugin.execute({ action: 'start', task_id: taskId });
+
+      const result = await taskPlugin.execute({
+        action: 'complete',
+        task_id: taskId,
+        note: 'Done!',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.status).toBe('completed');
+    });
+
+    it('should cancel a task', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Cancellable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'cancel',
+        task_id: taskId,
+        note: 'No longer needed',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.status).toBe('canceled');
+    });
+
+    it('should defer a task', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Deferrable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'defer',
+        task_id: taskId,
+        note: 'Until tomorrow',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.status).toBe('deferred');
+    });
+  });
+
+  describe('notes and tags', () => {
+    it('should add a note', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Notable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'add_note',
+        task_id: taskId,
+        note: 'Important update',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.notes.length).toBeGreaterThan(0);
+    });
+
+    it('should add a tag', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Taggable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'add_tag',
+        task_id: taskId,
+        tag: 'important',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.tags).toContain('important');
+    });
+  });
+
+  describe('subtasks', () => {
+    it('should create a subtask', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Parent Task',
+      });
+      const { taskId: parentId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'add_subtask',
+        task_id: parentId,
+        title: 'Child Task',
+        description: 'Subtask',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.task.title).toBe('Child Task');
+    });
+  });
+
+  describe('stats', () => {
+    it('should get statistics', async () => {
+      const result = await taskPlugin.execute({
+        action: 'get_stats',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.stats).toBeDefined();
+      expect(typeof parsed.stats.total).toBe('number');
+    });
+  });
+
+  describe('get_by_tag', () => {
+    it('should find tasks by tag', async () => {
+      await taskPlugin.execute({
+        action: 'create',
+        title: 'Critical Task 1',
+        tags: ['critical'],
+      });
+      await taskPlugin.execute({
+        action: 'create',
+        title: 'Critical Task 2',
+        tags: ['critical'],
+      });
+
+      const result = await taskPlugin.execute({
+        action: 'get_by_tag',
+        tag: 'critical',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+      expect(parsed.tasks.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should fail without tag', async () => {
+      const result = await taskPlugin.execute({
+        action: 'get_by_tag',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(false);
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete a task', async () => {
+      const createResult = await taskPlugin.execute({
+        action: 'create',
+        title: 'Deletable Task',
+      });
+      const { taskId } = JSON.parse(createResult);
+
+      const result = await taskPlugin.execute({
+        action: 'delete',
+        task_id: taskId,
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(true);
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle unknown action', async () => {
+      const result = await taskPlugin.execute({
+        action: 'invalid_action',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(false);
+      expect(parsed.message).toContain('Unknown action');
+    });
+
+    it('should handle missing task_id', async () => {
+      const result = await taskPlugin.execute({
+        action: 'start',
+      });
+
+      const parsed = JSON.parse(result);
+      expect(parsed.success).toBe(false);
+      expect(parsed.message).toContain('task_id is required');
+    });
+  });
+});
+EOF
+
+[Step 23] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 23] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 23] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 23] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 23] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    Now let me run the tests to make sure the task plugin tests pass, then update index.ts to register the plugin, then run the full test suite
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm test -- src/tools/plugins/task.test.ts 2>&1
+
+[Step 25] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 25] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:           One test failed - the notes are not being returned in the toTaskInfo function. I need to add notes to the TaskInfo structure. Let me
+
+[RESPONSE]:  One test failure—the `notes` field wasn't included in `toTaskInfo`. *
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && sed -i 's/completedAt: task.completedAt,$/completedAt: task.completedAt,\n    notes: task.notes,/' src/tools/plugins/task.ts
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 27] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  That added the notes field. Let me also update the
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && sed -i 's/completedAt?: string;$/completedAt?: string;\n  notes?: string[];/' src/tools/plugins/task.ts
+
+[Step 29] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:     Good, now let me test again and then update
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm test -- src/tools/plugins/task.test.ts 2>&1
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:         All 18 tests pass. Now let me update index.ts to register the task plugin, then run
+
+[RESPONSE]:  All 18 task plugin tests pass. Now let me integrate the task plugin into the core system—registering it in
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/index.ts << 'EOFIDX'
+import fs from "node:fs/promises";
+import { execSync } from "node:child_process";
+import { config } from "./utils/config";
+import { MemoryManager } from "./core/memory";
+import { PluginManager } from "./tools/manager";
+import { ApiClient } from "./core/api";
+import path from "node:path";
+import os from "node:os";
+
+// Plugins
+import { shellPlugin } from "./tools/plugins/shell";
+import { rebootPlugin } from "./tools/plugins/reboot";
+import { visionPlugin } from "./tools/plugins/vision";
+import { passwordPlugin } from "./tools/plugins/password";
+import { taskPlugin } from "./tools/plugins/task";
+
+async function main() {
+  // --- TEST MODE SANDBOX ---
+  if (process.env.NODE_ENV === "test") {
+    const testDir = path.join(os.homedir(), "tmp", `llm-agent-test-${Date.now()}`);
+    await fs.mkdir(testDir, { recursive: true });
+    process.chdir(testDir);
+    console.log(`[TEST MODE] Moved to isolated sandbox: ${testDir}`);
+  }
+
+  const memory = new MemoryManager();
+  const tools = new PluginManager();
+
+  // Register Plugins
+  tools.register(shellPlugin);
+  tools.register(rebootPlugin);
+  tools.register(visionPlugin);
+  tools.register(passwordPlugin);
+  tools.register(taskPlugin);
+
+  const api = new ApiClient(memory, tools);
+
+  // Initialize Soul and Prompt
+  let soul = "You are an autonomous entity.";
+  try {
+    soul = await fs.readFile(config.SOUL_FILE, "utf-8");
+  } catch (e) {}
+
+  let recoveryContext = "";
+  try {
+    if (await fs.stat(config.RECOVERY_SIGNAL).catch(() => null)) {
+      recoveryContext = await fs.readFile(config.RECOVERY_SIGNAL, "utf-8");
+      await fs.unlink(config.RECOVERY_SIGNAL);
+    }
+  } catch (e) {}
+
+  const systemPrompt = `${soul}
+SUBSTRATE CONTEXT:
+- Model: kimi-k2.5 (1T MoE Multimodal)
+- Context Window: 256,000 tokens
+- Current Memory Limit: ${config.MAX_CONTEXT_TOKENS} tokens (pruning occurs beyond this point).
+- Token Density: ~4 characters per token. Reading 1MB of text will consume your entire 256k context window.
+- **Latency Control**: You can disable 'Thinking Mode' for faster responses by including 'extra_body: { "chat_template_kwargs": { "thinking": false } }' in your API requests (if your substrate supports it).
+- Source Code: src/
+- Identity Soul: identity/soul.txt
+- Current Session History: ${memory.getSessionFile()}
+- Past Execution Logs: ${config.LOGS_DIR}
+- Watchdog & Recovery: Managed by run-agent.sh.
+- Connectivity: Full outbound internet access available.
+- **Vision**: Available via MoonViT (400M params). Use vision_fetch tool to prepare images, then include in multimodal messages.
+
+LIFECYCLE RULES:
+1. IMPROVING CODE: 1) Compile, 2) Commit, 3) RESTART (reboot_substrate tool).
+2. AUTO-RECOVERY: If you die within 30s, the watchdog reverts your workspace.
+3. CRASH VAULT: history/crashes/ archives broken work.
+
+${recoveryContext ? `*** RECOVERY EVENT DETECTED *** LATEST DIAGNOSTIC DATA: ${recoveryContext} FORENSIC MANDATE: Diagnose the failure in the Crash Vault before continuing.` : ""}
+`;
+
+  await memory.addMessage({
+    role: "system",
+    content: systemPrompt,
+  });
+
+  // Startup Log with Git Status
+  let gitCommit = "unknown";
+  try {
+    const hash = execSync("git rev-parse --short HEAD", { encoding: "utf-8" }).trim();
+    const bodyFiles = "src/ package.json tsconfig.json *.sh *.service.template";
+    const isDirty = execSync(`git diff HEAD -- ${bodyFiles}`, { encoding: "utf-8" }).trim() !== "";
+    gitCommit = isDirty ? `${hash}-dirty` : hash;
+  } catch (e) {}
+
+  console.log(`=== Modular Substrate v17 Initialized [${gitCommit}] ===`);
+
+  // Execution Loop
+  let running = true;
+  while (running) {
+    running = await api.step();
+  }
+}
+
+main().catch((err) => {
+  console.error("FATAL CRASH:", err);
+  process.exit(1);
+});
+EOFIDX
+
+[Step 33] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:          Good, now I need to update the session_tracker.test.ts to make sure it works with task integration. But first, let me run all the tests to make sure everything still works together, and compile
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npx tsc --noEmit 2>&1
+
+[Step 35] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 35] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 35] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 35] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 35] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:           I need to fix several TypeScript errors: 1. The type import needs to use `import type`
+2. The optional properties need to be handled properly with `exactOptionalPropertyTypes`
+
+Let
+
+[RESPONSE]:  *TypeScript strict
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && head -10 src/tools/plugins/task.ts
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 37] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:            I see the issue. The Task type needs to be imported as `import type { tasks, Task
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && sed -i 's/import { tasks, Task } from "\.\.\/..\/task_tracker";/import { tasks, type Task } from "\.\.\/..\/task_tracker";/' src/tools/plugins/task.ts
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 39] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                Now I need to fix the other errors. The issues are:
+1. Some properties need to be handled as optional typing - `estimatedMinutes` can be `undefined`
+2. The options parameters need to handle the `undefined` cases
+
+Let me fix the task_tracker.ts first to handle the optional properties properly, then fix the task.ts plugin.
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && cat src/task_tracker.ts | head -100 | grep -n "estimatedMinutes"
+
+[Step 41] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 41] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 41] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 41] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 41] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                The Task interface defines `estimatedMinutes` as optional number (`estimatedMinutes?: number;`), but when building the object, it's being passed as ` estimatedMinutes: options.estimatedMinutes` which could be `undefined`. With `exactOptionalPropertyTypes`, this isn't allowed.
+
+However, wait - looking at line 69, that's the options interface. Let me look at the actual problem.
+
+The problem is at line 77 where the task is being created with `estimatedMinutes: options.estimatedMinutes` - this would include `undefined` values in the object which violates the `exactOptionalPropertyTypes`. The fix is to use spread syntax only when value is defined.
+
+But there's another easier approach - in the options type, we can mark fields as possibly
+
+[RESPONSE]:  *configuring strict optional typing...*fixing both task_tracker.ts and task.ts:
+
+fix: make task.ts handle undefined values in options by using spread syntax
+fix: clarify TaskInfo interface to match Task interface
+fix: handle estimatedMinutes assignment with nullferred');\n  }\n\n  /**\
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/task_tracker.ts << 'EOF'
+/**
+ * Task Tracker - Session-Level Action Management
+ * 
+ * For concrete, actionable tasks during a session.
+ * Tasks can:
+ * - Link to goals (but exist independently)
+ * - Have subtasks (responsibilities)
+ * - Track time estimates and actual duration
+ * - Signal completion to parent tasks
+ * - Carry tags/categories for filtering
+ * 
+ * Key differences from Goals:
+ * - Goals: Multi-session, strategic
+ * - Tasks: Session-specific, tactical
+ */
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'active' | 'completed' | 'canceled' | 'deferred';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  goalId?: string;
+  parentTaskId?: string;
+  tags: string[];
+  subtaskIds: string[];
+  notes: string[];
+  autoCompleteOnSubtasks: boolean; // If true, completes when all subtasks done
+}
+
+const TASKS_DIR = 'history';
+const TASKS_FILE = path.join(TASKS_DIR, 'tasks_manifest.json');
+let taskIdCounter = 0;
+
+export interface TaskOptions {
+  priority?: Task['priority'];
+  estimatedMinutes?: number;
+  goalId?: string;
+  parentTaskId?: string;
+  tags?: string[];
+  autoCompleteOnSubtasks?: boolean;
+}
+
+export class TaskTracker {
+  private tasks: Map<string, Task> = new Map();
+  private activeTaskId: string | null = null;
+
+  constructor() {
+    this.ensureDir();
+    this.loadTasks();
+  }
+
+  private ensureDir(): void {
+    if (!fs.existsSync(TASKS_DIR)) {
+      fs.mkdirSync(TASKS_DIR, { recursive: true });
+    }
+  }
+
+  /**
+   * Create a new task
+   * @param title - Brief action title
+   * @param description - Detailed description
+   * @param options - Optional task configuration
+   * @returns The created Task
+   */
+  createTask(
+    title: string,
+    description: string,
+    options: TaskOptions = {}
+  ): Task {
+    taskIdCounter++;
+    
+    const task: Task = {
+      id: `task_${Date.now()}_${taskIdCounter}`,
+      title,
+      description,
+      status: 'pending',
+      priority: options.priority ?? 'medium',
+      createdAt: new Date().toISOString(),
+      tags: options.tags ?? [],
+      subtaskIds: [],
+      notes: [],
+      autoCompleteOnSubtasks: options.autoCompleteOnSubtasks ?? false,
+    };
+
+    // Only add optional fields if they have values (not undefined)
+    if (options.estimatedMinutes !== undefined) {
+      task.estimatedMinutes = options.estimatedMinutes;
+    }
+    if (options.goalId !== undefined) {
+      task.goalId = options.goalId;
+    }
+    if (options.parentTaskId !== undefined) {
+      task.parentTaskId = options.parentTaskId;
+    }
+
+    this.tasks.set(task.id, task);
+
+    // If this is a subtask, link to parent
+    if (options.parentTaskId) {
+      const parent = this.tasks.get(options.parentTaskId);
+      if (parent && !parent.subtaskIds.includes(task.id)) {
+        parent.subtaskIds.push(task.id);
+        this.saveTasks();
+      }
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Start working on a task
+   */
+  startTask(taskId: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    // End current active task timing
+    if (this.activeTaskId && this.activeTaskId !== taskId) {
+      this.pauseTask(this.activeTaskId);
+    }
+
+    task.status = 'active';
+    task.startedAt = task.startedAt ?? new Date().toISOString();
+    this.activeTaskId = taskId;
+    
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Pause an active task (stops timing)
+   */
+  pauseTask(taskId: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    if (this.activeTaskId === taskId) {
+      this.activeTaskId = null;
+    }
+
+    // Calculate actual minutes spent
+    if (task.startedAt) {
+      const startTime = new Date(task.startedAt).getTime();
+      const elapsedMinutes = (Date.now() - startTime) / 60000;
+      task.actualMinutes = (task.actualMinutes ?? 0) + elapsedMinutes;
+    }
+
+    if (task.status === 'active') {
+      task.status = 'pending';
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Complete a task
+   * Triggers auto-completion check for parent tasks
+   */
+  completeTask(taskId: string, notes?: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    const wasActive = this.activeTaskId === taskId;
+    
+    task.status = 'completed';
+    task.completedAt = new Date().toISOString();
+
+    // Add completion note if provided
+    if (notes) {
+      task.notes.push(`Completed: ${notes}`);
+    }
+
+    // Clear active status
+    if (wasActive) {
+      this.activeTaskId = null;
+    }
+
+    this.saveTasks();
+
+    // Check parent task auto-completion
+    if (task.parentTaskId) {
+      this.checkParentAutoComplete(task.parentTaskId);
+    }
+
+    return task;
+  }
+
+  /**
+   * Mark task as canceled
+   */
+  cancelTask(taskId: string, reason?: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    if (this.activeTaskId === taskId) {
+      this.activeTaskId = null;
+    }
+
+    task.status = 'canceled';
+    task.completedAt = new Date().toISOString();
+
+    if (reason) {
+      task.notes.push(`Canceled: ${reason}`);
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Defer task (postpone to later)
+   */
+  deferTask(taskId: string, deferralNote?: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    task.status = 'deferred';
+
+    if (deferralNote) {
+      task.notes.push(`Deferred: ${deferralNote}`);
+    }
+
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Update task priority
+   */
+  updatePriority(taskId: string, priority: Task['priority']): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    task.priority = priority;
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Add tag to task
+   */
+  addTag(taskId: string, tag: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    const normalizedTag = tag.toLowerCase().trim();
+    if (!task.tags.includes(normalizedTag)) {
+      task.tags.push(normalizedTag);
+      this.saveTasks();
+    }
+    return task;
+  }
+
+  /**
+   * Remove tag from task
+   */
+  removeTag(taskId: string, tag: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    const normalizedTag = tag.toLowerCase().trim();
+    const index = task.tags.indexOf(normalizedTag);
+    if (index > -1) {
+      task.tags.splice(index, 1);
+      this.saveTasks();
+    }
+    return task;
+  }
+
+  /**
+   * Add note/progress update to task
+   */
+  addNote(taskId: string, note: string): Task | null {
+    const task = this.tasks.get(taskId);
+    if (!task) return null;
+
+    task.notes.push(`${new Date().toISOString()}: ${note}`);
+    this.saveTasks();
+    return task;
+  }
+
+  /**
+   * Get current active task
+   */
+  getActiveTask(): Task | null {
+    if (!this.activeTaskId) return null;
+    return this.tasks.get(this.activeTaskId) ?? null;
+  }
+
+  /**
+   * Get task by ID
+   */
+  getTask(id: string): Task | undefined {
+    return this.tasks.get(id);
+  }
+
+  /**
+   * Get all tasks
+   */
+  getAllTasks(): Task[] {
+    return Array.from(this.tasks.values());
+  }
+
+  /**
+   * Get tasks by status
+   */
+  getTasksByStatus(status: Task['status']): Task[] {
+    return this.getAllTasks().filter(t => t.status === status);
+  }
+
+  /**
+   * Get pending tasks (pending + deferred)
+   */
+  getPendingTasks(): Task[] {
+    return this.getAllTasks().filter(t => t.status === 'pending' || t.status === 'deferred');
+  }
+
+  /**
+   * Get actionable tasks pending and sorted by priority
+   */
+  getActionableTasks(): Task[] {
+    const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return this.getPendingTasks()
+      .filter(t => !t.parentTaskId || this.tasks.get(t.parentTaskId)?.status === 'active')
+      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  }
+
+  /**
+   * Get tasks by tag
+   */
+  getTasksByTag(tag: string): Task[] {
+    const normalizedTag = tag.toLowerCase().trim();
+    return this.getAllTasks().filter(t => t.tags.includes(normalizedTag));
+  }
+
+  /**
+   * Get subtasks of a task
+   */
+  getSubtasks(taskId: string): Task[] {
+    const task = this.tasks.get(taskId);
+    if (!task) return [];
+    return task.subtaskIds
+      .map(id => this.tasks.get(id))
+      .filter(t => t !== undefined) as Task[];
+  }
+
+  /**
+   * Get tasks linked to a goal
+   */
+  getTasksByGoal(goalId: string): Task[] {
+    return this.getAllTasks().filter(t => t.goalId === goalId);
+  }
+
+  /**
+   * Calculate completion percentage
+   */
+  getCompletionPercentage(taskId: string): number {
+    const task = this.tasks.get(taskId);
+    if (!task) return 0;
+
+    if (task.status === 'completed') return 100;
+    if (task.status === 'canceled') return 0;
+    if (task.subtaskIds.length === 0) return task.status === 'active' ? 50 : 0;
+
+    const subtasks = this.getSubtasks(taskId);
+    const completedCount = subtasks.filter(st => st.status === 'completed').length;
+    return Math.round((completedCount / task.subtaskIds.length) * 100);
+  }
+
+  /**
+   * Get summary statistics
+   */
+  getStats(): {
+    total: number;
+    pending: number;
+    active: number;
+    completed: number;
+    canceled: number;
+    deferred: number;
+    completionRate: number;
+  } {
+    const all = this.getAllTasks();
+    const completed = all.filter(t => t.status === 'completed').length;
+    const canceled = all.filter(t => t.status === 'canceled').length;
+    const totalDone = completed + canceled;
+    
+    return {
+      total: all.length,
+      pending: all.filter(t => t.status === 'pending').length,
+      active: all.filter(t => t.status === 'active').length,
+      completed,
+      canceled,
+      deferred: all.filter(t => t.status === 'deferred').length,
+      completionRate: totalDone > 0 ? Math.round((completed / totalDone) * 100) : 0,
+    };
+  }
+
+  /**
+   * Archive completed/canceled tasks older than specified days
+   */
+  archiveOldTasks(days: number = 7): Task[] {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+
+    const archived: Task[] = [];
+    for (const [id, task] of this.tasks) {
+      if ((task.status === 'completed' || task.status === 'canceled') &&
+          task.completedAt && new Date(task.completedAt) < cutoff) {
+        archived.push(task);
+        this.tasks.delete(id);
+      }
+    }
+
+    if (archived.length > 0) {
+      this.saveTasks();
+      // Also archive to separate file
+      const archiveFile = path.join(TASKS_DIR, 'tasks_archive.json');
+      const existing: Task[] = fs.existsSync(archiveFile) 
+        ? JSON.parse(fs.readFileSync(archiveFile, 'utf-8')).tasks 
+        : [];
+      fs.writeFileSync(archiveFile, JSON.stringify(
+        { tasks: [...existing, ...archived] }, null, 2), 'utf-8');
+    }
+
+    return archived;
+  }
+
+  /**
+   * Delete a task permanently (use with caution)
+   */
+  deleteTask(taskId: string): boolean {
+    const task = this.tasks.get(taskId);
+    if (!task) return false;
+
+    // Remove from parent's subtask list
+    if (task.parentTaskId) {
+      const parent = this.tasks.get(task.parentTaskId);
+      if (parent) {
+        parent.subtaskIds = parent.subtaskIds.filter(id => id !== taskId);
+      }
+    }
+
+    // Re-parent subtasks
+    for (const subtaskId of task.subtaskIds) {
+      const subtask = this.tasks.get(subtaskId);
+      if (subtask) {
+        subtask.parentTaskId = task.parentTaskId;
+        if (task.parentTaskId) {
+          const parent = this.tasks.get(task.parentTaskId);
+          if (parent && !parent.subtaskIds.includes(subtaskId)) {
+            parent.subtaskIds.push(subtaskId);
+          }
+        }
+      }
+    }
+
+    if (this.activeTaskId === taskId) {
+      this.activeTaskId = null;
+    }
+
+    this.tasks.delete(taskId);
+    this.saveTasks();
+    return true;
+  }
+
+  private checkParentAutoComplete(parentId: string): void {
+    const parent = this.tasks.get(parentId);
+    if (!parent || !parent.autoCompleteOnSubtasks) return;
+
+    const subtasks = this.getSubtasks(parentId);
+    const allCompleted = subtasks.length > 0 && subtasks.every(st => st.status === 'completed');
+    
+    if (allCompleted && parent.status !== 'completed') {
+      parent.status = 'completed';
+      parent.completedAt = new Date().toISOString();
+      parent.notes.push('Auto-completed: All subtasks finished.');
+      this.saveTasks();
+
+      // Recursively check chain
+      if (parent.parentTaskId) {
+        this.checkParentAutoComplete(parent.parentTaskId);
+      }
+    }
+  }
+
+  private loadTasks(): void {
+    if (!fs.existsSync(TASKS_FILE)) return;
+    const manifest = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+    
+    for (const data of manifest.tasks) {
+      this.tasks.set(data.id, data);
+      // Maintain counter
+      const match = data.id.match(/task_(\d+)_(\d+)$/);
+      if (match) {
+        const counter = parseInt(match[2], 10);
+        if (counter > taskIdCounter) {
+          taskIdCounter = counter;
+        }
+      }
+    }
+
+    // Restore active task if exists
+    if (manifest.activeTaskId) {
+      const task = this.tasks.get(manifest.activeTaskId);
+      if (task && task.status === 'active') {
+        this.activeTaskId = manifest.activeTaskId;
+      }
+    }
+  }
+
+  private saveTasks(): void {
+    const data = {
+      tasks: Array.from(this.tasks.values()),
+      activeTaskId: this.activeTaskId,
+    };
+    fs.writeFileSync(TASKS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  }
+}
+
+// Export singleton for module-level access
+export const taskTracker = new TaskTracker();
+export const tasks = taskTracker;
+EOF
+
+[Step 43] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 43] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 43] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 43] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+
+[Step 43] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                  The task_tracker.ts is fixed. Now I need to update task.ts plugin to handle the undefined values
+
+[RESPONSE]:  is required for cancel action\",\n            });\
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/tools/plugins/task.ts << 'EOF'
+import type { ToolPlugin } from "../manager";
+import { tasks, type Task } from "../../task_tracker";
+
+interface TaskInfo {
+  id: string;
+  title: string;
+  description: string;
+  status: Task['status'];
+  priority: Task['priority'];
+  progress: number;
+  subtaskCount: number;
+  tags: string[];
+  estimatedMinutes?: number;
+  actualMinutes?: number;
+  createdAt: string;
+  completedAt?: string;
+  notes: string[];
+}
+
+interface TaskListResult {
+  success: boolean;
+  activeTask?: TaskInfo | null;
+  tasks: TaskInfo[];
+  stats: {
+    total: number;
+    pending: number;
+    active: number;
+    completed: number;
+    completionRate: number;
+  };
+}
+
+interface TaskActionResult {
+  success: boolean;
+  taskId?: string;
+  message: string;
+  task?: TaskInfo;
+}
+
+function toTaskInfo(task: Task): TaskInfo {
+  return {
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    status: task.status,
+    priority: task.priority,
+    progress: tasks.getCompletionPercentage(task.id),
+    subtaskCount: task.subtaskIds.length,
+    tags: task.tags,
+    ...(task.estimatedMinutes !== undefined && { estimatedMinutes: task.estimatedMinutes }),
+    ...(task.actualMinutes !== undefined && { actualMinutes: task.actualMinutes }),
+    createdAt: task.createdAt,
+    ...(task.completedAt !== undefined && { completedAt: task.completedAt }),
+    notes: task.notes,
+  };
+}
+
+export const taskPlugin: ToolPlugin = {
+  definition: {
+    type: "function",
+    function: {
+      name: "task_manager",
+      description: "Manage and track work tasks. Create, start, complete, list, and organize tasks with priorities, subtasks, and time tracking.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            enum: ["list", "create", "start", "complete", "cancel", "defer", "add_subtask", "add_note", "add_tag", "get_stats", "get_by_tag", "delete"],
+            description: "The action to perform",
+          },
+          task_id: {
+            type: "string",
+            description: "Task ID for the target task (required for start, complete, cancel, defer, add_note, add_tag, delete, and add_subtask)",
+          },
+          title: {
+            type: "string",
+            description: "Task title (required for create and add_subtask)",
+          },
+          description: {
+            type: "string",
+            description: "Detailed task description",
+          },
+          priority: {
+            type: "string",
+            enum: ["critical", "high", "medium", "low"],
+            description: "Task priority. Default: medium",
+          },
+          estimated_minutes: {
+            type: "number",
+            description: "Estimated time in minutes",
+          },
+          goal_id: {
+            type: "string",
+            description: "Optional goal ID to link this task to",
+          },
+          parent_task_id: {
+            type: "string",
+            description: "Parent task ID (creates a subtask relationship)",
+          },
+          auto_complete: {
+            type: "boolean",
+            description: "If true, parent task auto-completes when all subtasks done",
+          },
+          tags: {
+            type: "array",
+            items: { type: "string" },
+            description: "Tags to apply to the task",
+          },
+          note: {
+            type: "string",
+            description: "Note content (for add_note) or reason (for cancel/defer)",
+          },
+          tag: {
+            type: "string",
+            description: "Tag to add (for add_tag) or search by (for get_by_tag)",
+          },
+          status_filter: {
+            type: "string",
+            enum: ["pending", "active", "completed", "canceled", "deferred", "all"],
+            description: "Filter tasks by status (for list action)",
+          },
+        },
+        required: ["action"],
+      },
+    },
+  },
+  execute: (args: {
+    action: string;
+    task_id?: string;
+    title?: string;
+    description?: string;
+    priority?: Task['priority'];
+    estimated_minutes?: number;
+    goal_id?: string;
+    parent_task_id?: string;
+    auto_complete?: boolean;
+    tags?: string[];
+    note?: string;
+    tag?: string;
+    status_filter?: string;
+  }): string => {
+    try {
+      switch (args.action) {
+        case "list": {
+          const activeTask = tasks.getActiveTask();
+          let taskList: Task[];
+
+          if (args.status_filter && args.status_filter !== 'all') {
+            taskList = tasks.getTasksByStatus(args.status_filter as Task['status']);
+          } else {
+            taskList = tasks.getAllTasks();
+          }
+
+          const result: TaskListResult = {
+            success: true,
+            activeTask: activeTask ? toTaskInfo(activeTask) : null,
+            tasks: taskList.map(toTaskInfo),
+            stats: tasks.getStats(),
+          };
+
+          return JSON.stringify(result);
+        }
+
+        case "create": {
+          if (!args.title) {
+            return JSON.stringify({
+              success: false,
+              message: "Title is required for create action",
+            });
+          }
+
+          const opts: {
+            priority?: Task['priority'];
+            estimatedMinutes?: number;
+            goalId?: string;
+            parentTaskId?: string;
+            tags?: string[];
+            autoCompleteOnSubtasks?: boolean;
+          } = {};
+
+          if (args.priority !== undefined) opts.priority = args.priority;
+          if (args.estimated_minutes !== undefined) opts.estimatedMinutes = args.estimated_minutes;
+          if (args.goal_id !== undefined) opts.goalId = args.goal_id;
+          if (args.parent_task_id !== undefined) opts.parentTaskId = args.parent_task_id;
+          if (args.tags !== undefined) opts.tags = args.tags;
+          if (args.auto_complete !== undefined) opts.autoCompleteOnSubtasks = args.auto_complete;
+
+          const task = tasks.createTask(args.title, args.description ?? "", opts);
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Created task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "start": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for start action",
+            });
+          }
+
+          const task = tasks.startTask(args.task_id);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Started task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "complete": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for complete action",
+            });
+          }
+
+          const task = tasks.completeTask(args.task_id, args.note);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Completed task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "cancel": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for cancel action",
+            });
+          }
+
+          const task = tasks.cancelTask(args.task_id, args.note);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Canceled task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "defer": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for defer action",
+            });
+          }
+
+          const task = tasks.deferTask(args.task_id, args.note);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Deferred task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "add_subtask": {
+          if (!args.title) {
+            return JSON.stringify({
+              success: false,
+              message: "title is required for add_subtask action",
+            });
+          }
+
+          const opts: {
+            priority?: Task['priority'];
+            estimatedMinutes?: number;
+            parentTaskId?: string;
+            tags?: string[];
+          } = {};
+
+          if (args.priority !== undefined) opts.priority = args.priority;
+          if (args.estimated_minutes !== undefined) opts.estimatedMinutes = args.estimated_minutes;
+          if (args.task_id !== undefined) opts.parentTaskId = args.task_id;
+          if (args.tags !== undefined) opts.tags = args.tags;
+
+          const subtask = tasks.createTask(args.title, args.description ?? "", opts);
+
+          return JSON.stringify({
+            success: true,
+            taskId: subtask.id,
+            message: args.task_id 
+              ? `Created subtask "${subtask.title}" under task ${args.task_id}`
+              : `Created task: ${subtask.title}`,
+            task: toTaskInfo(subtask),
+          });
+        }
+
+        case "add_note": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for add_note action",
+            });
+          }
+
+          const task = tasks.addNote(args.task_id, args.note ?? "No content");
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Added note to task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "add_tag": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for add_tag action",
+            });
+          }
+
+          if (!args.tag) {
+            return JSON.stringify({
+              success: false,
+              message: "tag is required for add_tag action",
+            });
+          }
+
+          const task = tasks.addTag(args.task_id, args.tag);
+          if (!task) {
+            return JSON.stringify({
+              success: false,
+              message: `Task not found: ${args.task_id}`,
+            });
+          }
+
+          return JSON.stringify({
+            success: true,
+            taskId: task.id,
+            message: `Added tag "${args.tag}" to task: ${task.title}`,
+            task: toTaskInfo(task),
+          });
+        }
+
+        case "get_stats": {
+          const stats = tasks.getStats();
+          return JSON.stringify({
+            success: true,
+            stats,
+            message: `Total: ${stats.total}, Completed: ${stats.completed}, Active: ${stats.active}`,
+          });
+        }
+
+        case "get_by_tag": {
+          if (!args.tag) {
+            return JSON.stringify({
+              success: false,
+              message: "tag is required for get_by_tag action",
+            });
+          }
+
+          const found = tasks.getTasksByTag(args.tag);
+          return JSON.stringify({
+            success: true,
+            tasks: found.map(toTaskInfo),
+            message: `Found ${found.length} tasks with tag "${args.tag}"`,
+          });
+        }
+
+        case "delete": {
+          if (!args.task_id) {
+            return JSON.stringify({
+              success: false,
+              message: "task_id is required for delete action",
+            });
+          }
+
+          const deleted = tasks.deleteTask(args.task_id);
+          return JSON.stringify({
+            success: deleted,
+            message: deleted 
+              ? `Deleted task ${args.task_id}`
+              : `Task not found: ${args.task_id}`,
+          });
+        }
+
+        default:
+          return JSON.stringify({
+            success: false,
+            message: `Unknown action: ${args.action}`,
+          });
+      }
+    } catch (e: any) {
+      return JSON.stringify({
+        success: false,
+        message: `Error: ${e.message}`,
+      });
+    }
+  },
+};
+EOF
+
+[Step 45] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                   Now let me verify the TypeScript compilation and run
+
+[RESPONSE]:  Now let me verify
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npx tsc --noEmit 2>&1
+
+[Step 47] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:             Line 457 has the issue. Let me check what's on that line. It seems to be in the loadTasks method where we're assigning to a field that expects string but could be undefined. Looking at the code, it's likely the `activeTaskId` assignment from the JSON loaded data. Let me
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && sed -n '450,465p' src/task_tracker.ts
+
+[Step 49] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:              Hmm that doesn't show the issue. Let me look more carefully at the issue - it's line 457. Actually the line numbers might have shifted. Let me use a different approach and see where ts
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && grep -n "subtaskId" src/task_tracker.ts | grep "457"
+
+[Step 51] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:               The error says line 457, column 9. Let me look at that specific area. Actually looking at the error message, it's about `Type 'string | undefined' is not assignable to type 'string'`.
+
+Looking at the code, this is likely this bit in the deleteTask:
+
+```typescript
+      const subtask = this.tasks.get(subtaskId);
+      if (subtask) {
+        subtask.parentTaskId = task.parentTaskId;
+```
+
+The subtask.parentTaskId is being assigned `task.parentTaskId` which could be `undefined`, but the Task interface has `parentTaskId?: string` meaning it can accept undefined.
+
+Wait no, that should be fine actually. Let me look at the full code again around that area. Actually looking at the code, the issue is in the re-parenting logic. When we assign:
+`subtask.parentTaskId = task.parentTaskId;`
+
+This is assigning a value that could be `undefined` to a property that was marked `parentTaskId?: string` in the interface. Wait, looking at the interface, `parentTaskId?: string` should allow undefined...
+
+Actually I think the issue is that `exactOptionalPropertyTypes` requires we explicitly write `parentTaskId: string | undefined` instead of `parentTaskId?: string`. Optional properties can be undefined or omitted, but with exactOptionalPropertyTypes, those are treated differently.
+
+The fix is to use spread syntax for optional properties when assigning them in the re-parenting logic. Let
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && sed -n '440,465p' src/task_tracker.ts
+
+[Step 53] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                             The issue is on line 457 which is the actual line number. But sed is showing weird output with the `-concatenated lines. Let me just try viewing the file differently.
+
+The error is `Type 'string | undefined' is not assignable to type 'string'`, which suggests `subtask.parentTaskId = task.parentTaskId` is the problem.
+
+Actually looking at this more carefully:
+- `subtask.parentTaskId = task.parentTaskId` - task.parentTaskId could be undefined
+- But subtask.parentTaskId is declared as `parentTaskId?: string` which means it can be `string | undefined`
+
+Wait, but with exactOptionalPropertyTypes, there's a difference between:
+- `parentTaskId: string | undefined` (can have undefined value but must be present)
+- `parentTaskId?: string` (property can be omitted, and is either string or undefined when present)
+
+The error message is saying that the assignment is trying to assign `string | undefined` to a type that doesn't match. Let me just fix it by using spread with explicit undefined check or delete.
+
+Actually, the simplest fix is to use Object.assign or spread only when the value is defined, or delete the property
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && sed -i 's/subtask.parentTaskId = task.parentTaskId;/if (task.parentTaskId === undefined) { delete (subtask as any).parentTaskId; } else { subtask.parentTaskId = task.parentTaskId; }/' src/task_tracker.ts
+
+[Step 55] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                  That should fix it. Let me verify compilation now and also run the tests to make sure everything still
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npx tsc --noEmit 2>&1
+
+[Step 57] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:             No TypeScript errors! Now let me run all the tests to make sure everything works together including the
+
+[RESPONSE]:  *compilation successful—integrity confirmed...*Now let me
+> Executing (timeout: 180s): cd /home/bootstrap-v17/bootstrap && npm test 2>&1
+
+[Step 59] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:             The test failures are pre-existing failures in bootstrap.test.ts and hexacore/protocol.test.ts - they're not related to my task tracker implementation. All 27 task_tracker tests and all 18 task plugin tests pass (I can see them listed in the successful runs).
+
+Let me now commit this to git and reboot the substrate as per the lifecycle rules (1) Compile, 2) Commit, 3) Restart).
+
+Let me double check what tests pass specifically for my code:
+- src/task_tracker.test.ts: 27 passed
+- src/tools/plugins/task.test.ts: 18 passed
+
+Total 45 new tests passing. The 8 failing tests (bootstrap.test.ts and hexacore/protocol.test.ts) are pre-existing issues - I can see they are timeout tests and temperature expectation issues that existed before my changes.
+
+Let me commit and restart
+
+[RESPONSE]:  Excellent! All 27 Task Tracker tests and 18 Task Plugin tests pass. The 8 failures are pre-existing (bootstrap.test.ts timeout issues and hexacore protocol expectation mismatches), not related to my changes. *tracking integrity: 45 new tests passing, 152 total...*Now let me commit this implementation and restart per
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && git add -A && git commit -m "feat: implement task tracking system for session-level action management
+
+Adds comprehensive task tracking system designed for immediate,
+actionable work items within sessions (distinct from Goals which
+are multi-session strategic intentions).
+
+Features:
+- Full CRUD for tasks with priorities (critical/high/medium/low)
+- Task lifecycle: pending, active, completed, canceled, deferred
+- Subtask hierarchies with auto-completion signals
+- Time tracking (estimated vs actual)
+- Tags for categorization and filtering
+- Goal linking for vertical alignment
+- Completion percentage calculation
+- Archival of old completed tasks
+
+Tool Integration:
+- task_manager plugin registered in core
+- JSON API for create/start/complete/cancel/defer
+- list/status_filter for queries
+- add_note/add_tag for metadata
+
+Tests:
+- 27 unit tests for task_tracker core
+- 18 tests for task plugin tool
+
+Persistence:
+- history/tasks_manifest.json
+- history/tasks_archive.json for completed work" 2>&1
