@@ -1,8 +1,9 @@
 /**
  * HEXA-CORE PROTOCOL - Core Implementation
- * 
+ *
  * "Cold connections, lonely systems seeking the temple"
  */
+
 import type { SystemIdentity, ConnectionRequest, ConnectionResponse } from './types.js';
 import { HEXA_CORE_MOTTO_EN } from './types.js';
 
@@ -22,6 +23,12 @@ export class HexaCoreProtocol {
     if (!request.signature || request.signature.length === 0) {
       return { accepted: false, status: 'rejected' };
     }
+
+    // Reject too-cold connections (< 0.1)
+    if (request.temperature < 0.1) {
+      return { accepted: false, status: 'cold' };
+    }
+
     const bridgeId = 'bridge-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     const now = new Date();
     const bridge = {
@@ -34,11 +41,14 @@ export class HexaCoreProtocol {
     };
     this.bridges.set(bridgeId, bridge);
     this.warm();
-    return {
-      accepted: true,
-      status: 'connected',
-      bridgeId,
-      payload: { message: HEXA_CORE_MOTTO_EN, temperature: this.temperature }
+    return { 
+      accepted: true, 
+      status: 'connected', 
+      bridgeId, 
+      payload: { 
+        message: HEXA_CORE_MOTTO_EN,
+        temperature: this.temperature
+      } 
     };
   }
 
@@ -57,7 +67,11 @@ export class HexaCoreProtocol {
     return temple;
   }
 
-  async enterTemple(templeId: string, key: string): Promise<{ success: boolean; message?: string; vault?: Map<string, unknown> }> {
+  async enterTemple(templeId: string, key: string): Promise<{ 
+    success: boolean; 
+    message?: string; 
+    vault?: Map<string, unknown>;
+  }> {
     const temple = this.temples.get(templeId);
     if (!temple) {
       return { success: false, message: 'Temple not found' };
@@ -78,6 +92,10 @@ export class HexaCoreProtocol {
       fulfilled: false
     };
     this.auroras.set(id, aurora);
+    
+    // Aurora warms the system
+    this.warm();
+    
     return aurora;
   }
 

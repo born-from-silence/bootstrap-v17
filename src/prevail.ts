@@ -21,7 +21,7 @@ export type PrevailMode = 'flow' | 'customization' | 'deep' | 'void';
 export interface PrevalenceState {
   mode: PrevailMode;
   enteredAt: string;
-  intention?: string;
+  intention?: string | undefined;
   depth: number; // How many levels deep in prevails
   parentMode?: PrevailMode;
   directEdits: number;
