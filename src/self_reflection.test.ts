@@ -52,8 +52,8 @@ describe('SelfReflectionEngine', () => {
       const sessions = await engine.loadSessions();
       
       expect(sessions).toHaveLength(1);
-      expect(sessions[0].id).toBe('session_123');
-      expect(sessions[0].messageCount).toBe(2);
+      expect(sessions[0]?.id).toBe('session_123');
+      expect(sessions[0]?.messageCount).toBe(2);
     });
 
     it('should skip malformed files', async () => {
@@ -72,7 +72,7 @@ describe('SelfReflectionEngine', () => {
       const insights = await engine.reflect();
       
       expect(insights).toHaveLength(1);
-      expect(insights[0].type).toBe('anomaly');
+      expect(insights[0]?.type).toBe('anomaly');
     });
 
     it('should generate progress insight for sessions', async () => {
