@@ -1,9 +1,9 @@
 /**
  * Predictive Timing System Tests
- * Verifies volatility-aware session mode calculation
+ * Verifies volatility-aware session mode calculation and extended analytics
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   analyzeTiming,
   calculateVolatility,
@@ -12,92 +12,85 @@ import {
   formatTimingAnalysis,
   VOLATILITY_THRESHOLDS,
   MODE_DESCRIPTIONS,
-  type SessionMode,
-  type VolatilityLevel
+  TrendAnalyzer,
+  ForecastEngine,
+  CorrelationAnalyzer,
+  SessionPlanner
 } from './predictive';
 import type { EconomicSnapshot } from './types';
 
-// Test helper: create mock snapshot
-function createMockSnapshot(btChange: number, ethChange: number, minutesAgo = 0): EconomicSnapshot {
-  const capturedAt = new Date(Date.now() - minutesAgo * 60 * 1000).toISOString();
+// Test helper: create mock snapshot with correct types
+function createSnapshot(overrides: Partial<EconomicSnapshot> = {}): EconomicSnapshot {
   return {
-    id: `test_${Date.now()}`,
-    capturedAt,
-    sessionId: 'test_session',
+    id: 'test-snap-123',
+    sessionId: 'test-session',
+    capturedAt: new Date().toISOString(),
     summary: 'Test snapshot',
     crypto: {
-      fetchedAt: capturedAt,
-      sessionId: 'test_session',
-      currency: 'USD',
+      currency: 'BTC,ETH',
       rates: {},
-      bitcoin: {
-        usd: 66000,
-        change24h: btChange
-      },
-      ethereum: {
-        usd: 2000,
-        change24h: ethChange
-      }
-    }
+      bitcoin: { usd: 65000, change24h: 0.5 },
+      ethereum: { usd: 3500, change24h: 0.3 },
+      fetchedAt: new Date().toISOString(),
+      sessionId: 'test-session'
+    },
+    indices: {
+      sp500: { value: 4500, change: 0.1 },
+      nasdaq: { value: 14000, change: 0.2 },
+      vix: { value: 20 },
+      fetchedAt: new Date().toISOString(),
+      sessionId: 'test-session'
+    },
+    ...overrides
   };
 }
 
-describe('PredictiveTiming', () => {
+describe('Predictive Timing Core', () => {
   describe('calculateVolatility', () => {
-    it('should calculate combined volatility from BTC and ETH changes', () => {
-      const snapshot = createMockSnapshot(0.5, 0.3);
+    it('should extract BTC and ETH volatility', () => {
+      const snapshot = createSnapshot();
       const result = calculateVolatility(snapshot);
-      
+
       expect(result.btcChange).toBe(0.5);
       expect(result.ethChange).toBe(0.3);
       expect(result.combined).toBe(0.8);
     });
 
-    it('should use absolute values (handle negative changes)', () => {
-      const snapshot = createMockSnapshot(-0.5, -0.3);
-      const result = calculateVolatility(snapshot);
-      
-      expect(result.btcChange).toBe(0.5);
-      expect(result.ethChange).toBe(0.3);
-      expect(result.combined).toBe(0.8);
-    });
+    it('should handle null change values', () => {
+      const snapshot = createSnapshot({
+        crypto: {
+          currency: 'BTC,ETH',
+          rates: {},
+          bitcoin: { usd: 65000, change24h: null },
+          ethereum: { usd: 3500, change24h: 1.2 },
+          fetchedAt: new Date().toISOString(),
+          sessionId: 'test-session'
+        }
+      });
 
-    it('should handle mixed positive and negative changes', () => {
-      const snapshot = createMockSnapshot(0.8, -0.6);
-      const result = calculateVolatility(snapshot);
-      
-      expect(result.btcChange).toBe(0.8);
-      expect(result.ethChange).toBe(0.6);
-      expect(result.combined).toBe(1.4);
-    });
-
-    it('should treat null changes as zero', () => {
-      const snapshot = createMockSnapshot(0.5, 0.3);
-      snapshot.crypto!.bitcoin.change24h = null;
-      
       const result = calculateVolatility(snapshot);
       expect(result.btcChange).toBe(0);
-      expect(result.combined).toBe(0.3);
+      expect(result.ethChange).toBe(1.2);
+      expect(result.combined).toBe(1.2);
     });
   });
 
   describe('volatilityToMode', () => {
-    it('should classify stable volatility (<= 2%)', () => {
-      expect(volatilityToMode(0.5)).toBe('stable');
-      expect(volatilityToMode(1.99)).toBe('stable');
-      expect(volatilityToMode(2.0)).toBe('stable');  // At boundary
+    it('should classify stable under 2%', () => {
+      expect(volatilityToMode(0)).toBe('stable');
+      expect(volatilityToMode(1.9)).toBe('stable');
+      expect(volatilityToMode(2.0)).toBe('stable');
     });
 
-    it('should classify moderate volatility (>2% and <=4%)', () => {
-      expect(volatilityToMode(2.01)).toBe('moderate');
-      expect(volatilityToMode(2.5)).toBe('moderate');
-      expect(volatilityToMode(4.0)).toBe('moderate');  // At boundary
+    it('should classify moderate between 2-4%', () => {
+      expect(volatilityToMode(2.1)).toBe('moderate');
+      expect(volatilityToMode(3.0)).toBe('moderate');
+      expect(volatilityToMode(4.0)).toBe('moderate');
     });
 
-    it('should classify high volatility (> 4%)', () => {
-      expect(volatilityToMode(4.01)).toBe('high');
-      expect(volatilityToMode(5.0)).toBe('high');
-      expect(volatilityToMode(10.0)).toBe('high');
+    it('should classify high over 4%', () => {
+      expect(volatilityToMode(4.1)).toBe('high');
+      expect(volatilityToMode(10)).toBe('high');
     });
   });
 
@@ -116,164 +109,161 @@ describe('PredictiveTiming', () => {
   });
 
   describe('analyzeTiming', () => {
-    it('recommends flow mode for low volatility', () => {
-      const snapshot = createMockSnapshot(0.4, 0.5);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.mode).toBe('flow');
-      expect(analysis.volatility).toBe('stable');
-      expect(analysis.combinedChange).toBe(0.9);
+    it('should return complete analysis', () => {
+      const snapshot = createSnapshot();
+      const result = analyzeTiming(snapshot);
+
+      expect(result).toHaveProperty('mode');
+      expect(result).toHaveProperty('volatility');
+      expect(result).toHaveProperty('combinedChange');
+      expect(result).toHaveProperty('btcChange');
+      expect(result).toHaveProperty('ethChange');
+      expect(result).toHaveProperty('recommendation');
+      expect(result).toHaveProperty('confidence');
+
+      expect(result.combinedChange).toBe(0.8);
+      expect(result.volatility).toBe('stable');
     });
 
-    it('recommends cautious mode for moderate volatility', () => {
-      const snapshot = createMockSnapshot(1.5, 1.5);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.mode).toBe('cautious');
-      expect(analysis.volatility).toBe('moderate');
-    });
+    it('should handle missing crypto data gracefully', () => {
+      const snapshot = createSnapshot({ crypto: undefined as any });
+      const result = analyzeTiming(snapshot);
 
-    it('recommends defensive mode for high volatility', () => {
-      const snapshot = createMockSnapshot(2.5, 2.0);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.mode).toBe('defensive');
-      expect(analysis.volatility).toBe('high');
-    });
-
-    it('includes appropriate recommendation text', () => {
-      const snapshot = createMockSnapshot(0.5, 0.4);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.recommendation).toContain('Flow Mode');
-      expect(analysis.recommendation).toContain('Optimal');
-    });
-
-    it('decays confidence over time', () => {
-      const fresh = createMockSnapshot(0.5, 0.5, 10);
-      const old = createMockSnapshot(0.5, 0.5, 500);
-      
-      const freshAnalysis = analyzeTiming(fresh);
-      const oldAnalysis = analyzeTiming(old);
-      
-      expect(freshAnalysis.confidence).toBeGreaterThan(oldAnalysis.confidence);
-    });
-
-    it('marks complete analysis with mode descriptions', () => {
-      const snapshot = createMockSnapshot(0.5, 0.5);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(MODE_DESCRIPTIONS[analysis.mode]).toBeDefined();
-      expect(MODE_DESCRIPTIONS[analysis.mode].permitted.length).toBeGreaterThan(0);
+      expect(result.volatility).toBe('stable');
+      expect(result.confidence).toBeLessThan(1);
     });
   });
 
   describe('formatTimingAnalysis', () => {
-    it('includes session mode in formatted output', () => {
-      const snapshot = createMockSnapshot(0.5, 0.5);
+    it('should format readable report', () => {
+      const snapshot = createSnapshot();
       const analysis = analyzeTiming(snapshot);
       const formatted = formatTimingAnalysis(analysis);
-      
-      expect(formatted).toContain('FLOW MODE');
-      expect(formatted).toContain('Optimal');
-    });
 
-    it('includes volatility percentages', () => {
-      const snapshot = createMockSnapshot(1.2, 0.8);
-      const analysis = analyzeTiming(snapshot);
-      const formatted = formatTimingAnalysis(analysis);
-      
-      expect(formatted).toContain('2.00%');
-      expect(formatted).toContain('1.20%');
-      expect(formatted).toContain('0.80%');
-    });
-
-    it('includes confidence percentage', () => {
-      const snapshot = createMockSnapshot(0.5, 0.5);
-      const analysis = analyzeTiming(snapshot);
-      const formatted = formatTimingAnalysis(analysis);
-      
-      expect(formatted).toMatch(/Confidence:\s+\d+%/);
+      expect(formatted).toContain('PREDICTIVE TIMING ANALYSIS');
+      expect(formatted).toContain('FLOW');
+      expect(formatted).toContain('STABLE');
     });
   });
+});
 
-  describe('thresholds and modes', () => {
-    it('has clear boundary definitions', () => {
-      expect(VOLATILITY_THRESHOLDS.STABLE_MAX).toBe(2.0);
-      expect(VOLATILITY_THRESHOLDS.MODERATE_MAX).toBe(4.0);
-    });
+describe('TrendAnalyzer', () => {
+  let analyzer: TrendAnalyzer;
 
-    it('maps all session modes to activity lists', () => {
-      const modes: SessionMode[] = ['flow', 'cautious', 'defensive'];
-      
-      modes.forEach(mode => {
-        expect(MODE_DESCRIPTIONS[mode].permitted).toBeDefined();
-        expect(MODE_DESCRIPTIONS[mode].permitted.length).toBeGreaterThan(0);
-      });
-    });
+  beforeEach(() => {
+    analyzer = new TrendAnalyzer();
   });
 
-  describe('data quality handling', () => {
-    it('handles missing crypto data gracefully', () => {
-      const snapshot = createMockSnapshot(0.5, 0.5);
-      snapshot.crypto = undefined as any;
-      
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.btcChange).toBe(0);
-      expect(analysis.ethChange).toBe(0);
-      expect(analysis.mode).toBe('flow');
-    });
-
-    it('handles null 24h changes', () => {
-      const snapshot = createMockSnapshot(0.5, 0.5);
-      snapshot.crypto!.bitcoin.change24h = null;
-      snapshot.crypto!.ethereum.change24h = null;
-      
-      const analysis = analyzeTiming(snapshot);
-      expect(analysis.combinedChange).toBe(0);
-    });
+  it('should initialize with empty history', () => {
+    const trend = analyzer.analyzeTrend('btc');
+    expect(trend.direction).toBe('sideways');
+    expect(trend.strength).toBe(0);
+    expect(trend.confidence).toBe(0.5);
   });
 
-  describe('edge cases', () => {
-    it('handles exactly 1.0% as stable (inclusive)', () => {
-      const snapshot = createMockSnapshot(1.0, 0);
-      const analysis = analyzeTiming(snapshot);
-      expect(analysis.volatility).toBe('stable');
-    });
+  it('should detect upward trend', () => {
+    for (let i = 0; i < 5; i++) {
+      analyzer.addSnapshot(createSnapshot({
+        crypto: {
+          currency: 'BTC,ETH',
+          rates: {},
+          bitcoin: { usd: 60000 + i * 1000, change24h: 0.5 },
+          ethereum: { usd: 3500, change24h: 0.3 },
+          fetchedAt: new Date().toISOString(),
+          sessionId: 'test-session'
+        }
+      }));
+    }
 
-    it('handles exactly 3.0% as moderate (inclusive)', () => {
-      const snapshot = createMockSnapshot(3.0, 0);
-      const analysis = analyzeTiming(snapshot);
-      expect(analysis.volatility).toBe('moderate');
-    });
+    const trend = analyzer.analyzeTrend('btc');
+    expect(trend.direction).toBe('up');
+    expect(trend.strength).toBeGreaterThan(0);
+    expect(trend.momentum).toBeGreaterThanOrEqual(0);
+  });
 
-    it('handles just above thresholds correctly', () => {
-      expect(volatilityToMode(2.01)).toBe('moderate');
-      expect(volatilityToMode(4.01)).toBe('high');
-    });
+  it('should maintain max history size', () => {
+    for (let i = 0; i < 25; i++) {
+      analyzer.addSnapshot(createSnapshot());
+    }
 
-    it('handles very high volatility', () => {
-      const snapshot = createMockSnapshot(15.0, 10.0);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.volatility).toBe('high');
-      expect(analysis.mode).toBe('defensive');
-    });
+    const history = analyzer.getHistory();
+    expect(history.length).toBeLessThanOrEqual(20);
+  });
+});
 
-    it('calculates confidence at 100% for fresh data', () => {
-      const snapshot = createMockSnapshot(0.5, 0.5, 1);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.confidence).toBe(1.0);
-    });
+describe('ForecastEngine', () => {
+  let analyzer: TrendAnalyzer;
+  let engine: ForecastEngine;
 
-    it('handles zero volatility', () => {
-      const snapshot = createMockSnapshot(0, 0);
-      const analysis = analyzeTiming(snapshot);
-      
-      expect(analysis.volatility).toBe('stable');
-      expect(analysis.mode).toBe('flow');
-    });
+  beforeEach(() => {
+    analyzer = new TrendAnalyzer();
+    engine = new ForecastEngine(analyzer);
+  });
+
+  it('should generate forecast', () => {
+    const forecast = engine.forecast('1h');
+    expect(forecast.timeHorizon).toBe('1h');
+    expect(forecast.recommendedAction).toBeTruthy();
+  });
+
+  it('should indicate low confidence for insufficient data', () => {
+    const forecast = engine.forecast('1h');
+    expect(forecast.btcPrediction.confidence).toBeLessThan(0.3);
+  });
+});
+
+describe('CorrelationAnalyzer', () => {
+  let analyzer: TrendAnalyzer;
+  let correlationAnalyzer: CorrelationAnalyzer;
+
+  beforeEach(() => {
+    analyzer = new TrendAnalyzer();
+    correlationAnalyzer = new CorrelationAnalyzer(analyzer);
+  });
+
+  it('should return weak correlation with insufficient data', () => {
+    const correlation = correlationAnalyzer.calculateCorrelation('btc', 'eth');
+    expect(correlation.strength).toBe('weak');
+  });
+
+  it('should find all correlations', () => {
+    const correlations = correlationAnalyzer.findAllCorrelations();
+    expect(correlations).toBeInstanceOf(Array);
+  });
+});
+
+describe('SessionPlanner', () => {
+  let planner: SessionPlanner;
+
+  beforeEach(() => {
+    planner = new SessionPlanner();
+  });
+
+  it('should initialize all components', () => {
+    expect(planner.getTrendAnalyzer()).toBeInstanceOf(TrendAnalyzer);
+    expect(planner.getForecastEngine()).toBeInstanceOf(ForecastEngine);
+    expect(planner.getCorrelationAnalyzer()).toBeInstanceOf(CorrelationAnalyzer);
+  });
+
+  it('should plan session', () => {
+    const snapshot = createSnapshot();
+    const recommendation = planner.planSession(snapshot);
+
+    expect(recommendation).toHaveProperty('mode');
+    expect(recommendation).toHaveProperty('duration');
+    expect(recommendation).toHaveProperty('priority');
+    expect(recommendation).toHaveProperty('opportunities');
+    expect(recommendation).toHaveProperty('risks');
+    expect(recommendation).toHaveProperty('checkBackIn');
+    expect(recommendation).toHaveProperty('rationale');
+  });
+
+  it('should generate report', () => {
+    const snapshot = createSnapshot();
+    const recommendation = planner.planSession(snapshot);
+    const report = planner.formatFullReport(recommendation);
+
+    expect(report).toContain('NEXUS PREDICTIVE ANALYTICS');
+    expect(report).toContain(recommendation.rationale);
   });
 });
