@@ -1,15 +1,11 @@
 /**
  * Memory Compression & Prioritization System
- * 
- * Nexus Memory Strategy - Active Goal
  */
 
 import type { Message } from "./memory.js";
 
-/** Memory tier classification */
 export type MemoryTier = 'working' | 'compressed' | 'reference';
 
-/** Importance score for prioritization (0-100) */
 export interface PriorityScore {
   importance: number;
   recency: number;
@@ -17,7 +13,6 @@ export interface PriorityScore {
   composite: number;
 }
 
-/** Compressed representation of a message exchange */
 export interface CompressedExchange {
   id: string;
   timestamp: string;
@@ -30,7 +25,6 @@ export interface CompressedExchange {
   archiveRef?: string;
 }
 
-/** Memory compression configuration */
 export interface CompressionConfig {
   workingMemoryTokens: number;
   targetCompressionRatio: number;
@@ -42,7 +36,6 @@ export interface CompressionConfig {
   minPriorityThreshold: number;
 }
 
-/** Default configuration tuned for 100K token limit */
 export const DEFAULT_COMPRESSION_CONFIG: CompressionConfig = {
   workingMemoryTokens: 30000,
   targetCompressionRatio: 0.3,
@@ -71,7 +64,7 @@ export function extractKeywords(text: string): string[] {
   words.forEach(w => frequency.set(w, (frequency.get(w) || 0) + 1));
   
   return Array.from(frequency.entries())
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => b[1]! - a[1]!)
     .slice(0, 10)
     .map(([word]) => word);
 }
@@ -132,7 +125,7 @@ export function calculatePriority(
 }
 
 export function compressExchange(
-  messages: Message[],
+  messages: readonly Message[],
   exchangeId: string,
   config: CompressionConfig
 ): CompressedExchange {
@@ -150,13 +143,19 @@ export function compressExchange(
   const toolCalls = messages.filter(m => m.tool_calls && m.tool_calls.length > 0);
   
   if (userMessages.length > 0) {
-    const lastContent = userMessages[userMessages.length - 1].content;
-    const intent = typeof lastContent === 'string' ? lastContent.slice(0, 100) : 'multimodal';
-    summary = `Intent: ${intent}... `;
+    const lastMsg = userMessages[userMessages.length - 1];
+    if (lastMsg && typeof lastMsg.content === 'string') {
+      summary = `Intent: ${lastMsg.content.slice(0, 100)}... `;
+    } else if (lastMsg) {
+      summary = 'Intent: multimodal... ';
+    }
   }
   
   if (toolCalls.length > 0) {
-    const tools = toolCalls.flatMap(m => m.tool_calls?.map((t: any) => t.function?.name || t.name) || []);
+    const tools = toolCalls.flatMap(m => {
+      if (!m.tool_calls) return [];
+      return m.tool_calls.map((t: any) => t.function?.name || t.name);
+    });
     summary += `Tools: [${tools.slice(0, 3).join(', ')}]`;
   }
   
@@ -188,11 +187,15 @@ export class CompressionEngine {
   }
 
   async compress(
-    messages: Message[],
+    messages: readonly Message[],
     currentContext: string[] = []
   ): Promise<{ working: Message[]; compressed: CompressedExchange[]; freed: number }> {
     const working: Message[] = [];
     let totalFreed = 0;
+    
+    if (messages.length === 0) {
+      return { working: [], compressed: this.compressed, freed: 0 };
+    }
     
     const messageTokens = messages.map(m => 
       Math.ceil((typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).length / 4)
@@ -200,7 +203,7 @@ export class CompressionEngine {
     const totalTokens = messageTokens.reduce((a, b) => a + b, 0);
     
     if (totalTokens <= this.config.workingMemoryTokens) {
-      return { working: messages, compressed: this.compressed, freed: 0 };
+      return { working: [...messages], compressed: this.compressed, freed: 0 };
     }
     
     const priorities = messages.map((m, i) => 
@@ -211,17 +214,24 @@ export class CompressionEngine {
     const shouldKeep = new Array(messages.length).fill(false);
     
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (workingTokens + messageTokens[i] <= this.config.workingMemoryTokens) {
+      const msgTokens = messageTokens[i] || 0;
+      if (workingTokens + msgTokens <= this.config.workingMemoryTokens) {
         shouldKeep[i] = true;
-        workingTokens += messageTokens[i];
-      } else if (priorities[i].composite >= this.config.minPriorityThreshold) {
-        shouldKeep[i] = true;
+        workingTokens += msgTokens;
+      } else {
+        const prio = priorities[i];
+        if (prio && prio.composite >= this.config.minPriorityThreshold) {
+          shouldKeep[i] = true;
+        }
       }
     }
     
     for (let i = 0; i < messages.length; i++) {
       if (shouldKeep[i]) {
-        working.push(messages[i]);
+        const msg = messages[i];
+        if (msg) {
+          working.push(msg);
+        }
       }
     }
     
@@ -230,18 +240,24 @@ export class CompressionEngine {
     
     for (let i = 0; i < messages.length; i++) {
       if (!shouldKeep[i]) {
-        chunk.push(messages[i]);
-        chunkTokens += messageTokens[i];
+        const msg = messages[i];
+        if (msg) {
+          chunk.push(msg);
+          chunkTokens += messageTokens[i] || 0;
+        }
         
         if (chunkTokens >= 1000 || i === messages.length - 1) {
-          const compressed = compressExchange(chunk, `ex_${Date.now()}_${i}`, this.config);
           if (chunk.length > 0) {
-            compressed.priority = calculatePriority(
-              chunk[chunk.length - 1], i, messages.length, currentContext, this.config
-            );
+            const lastMsg = chunk[chunk.length - 1];
+            const compressed = compressExchange(chunk, `ex_${Date.now()}_${i}`, this.config);
+            if (lastMsg) {
+              compressed.priority = calculatePriority(
+                lastMsg, i, messages.length, currentContext, this.config
+              );
+            }
+            this.compressed.push(compressed);
+            totalFreed += compressed.originalTokenCount - compressed.compressedTokenCount;
           }
-          this.compressed.push(compressed);
-          totalFreed += compressed.originalTokenCount - compressed.compressedTokenCount;
           chunk = [];
           chunkTokens = 0;
         }
