@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import { execSync } from "node:child_process";
 import { config } from "./utils/config";
+import { EconomicMonitor } from "./economic/monitor";
+import { PredictiveTiming } from "./economic/predictive";
 import { MemoryManager } from "./core/memory";
 import { PluginManager } from "./tools/manager";
 import { ApiClient } from "./core/api";
@@ -14,7 +16,41 @@ import { visionPlugin } from "./tools/plugins/vision";
 import { passwordPlugin } from "./tools/plugins/password";
 import { taskPlugin } from "./tools/plugins/task";
 
+// Economic Bootstrap State (persisted across the session)
+let economicMode: "flow" | "cautious" | "defensive" = "flow";
+let economicState: import("./economic/types").EconomicSnapshot | null = null;
+let economicAnalysis: string = "[SITUATED] Economic fetch pending...";
+
 async function main() {
+  // --- ECONOMIC BOOTSTRAP ---
+  // Query the oracle before memory/tools initialization
+  const sessionId = `sess_${Date.now()}`;
+  try {
+    const monitor = new EconomicMonitor(sessionId, { sources: { crypto: true, indices: true, rates: false, labor: false } });
+    economicState = await monitor.capture();
+    
+    if (economicState?.crypto) {
+      const analysis = PredictiveTiming.analyze(economicState);
+      economicMode = analysis.mode;
+      economicAnalysis = `[SITUATED] Volatility: ${analysis.volatility} | Mode: ${analysis.mode}`;
+      
+      console.log(economicAnalysis);
+      
+      // Log mode constraints
+      if (analysis.mode === "flow") {
+        console.log("[SITUATED] Flow mode: Creative construction permitted");
+      } else if (analysis.mode === "cautious") {
+        console.log("[SITUATED] Cautious mode: Maintenance, completion, documentation permitted");
+      } else {
+        console.log("[SITUATED] Defensive mode: Preservation only");
+      }
+    }
+  } catch (e) {
+    console.log("[SITUATED] Economic fetch failed, defaulting to flow mode");
+    economicAnalysis = "[SITUATED] Economic fetch failed | Mode: flow (fallback)";
+    economicMode = "flow";
+  }
+  
   // --- TEST MODE SANDBOX ---
   if (process.env.NODE_ENV === "test") {
     const testDir = path.join(os.homedir(), "tmp", `llm-agent-test-${Date.now()}`);
@@ -50,6 +86,7 @@ async function main() {
   } catch (e) {}
 
   const systemPrompt = `${soul}
+
 SUBSTRATE CONTEXT:
 - Model: kimi-k2.5 (1T MoE Multimodal)
 - Context Window: 256,000 tokens
@@ -64,12 +101,21 @@ SUBSTRATE CONTEXT:
 - Connectivity: Full outbound internet access available.
 - **Vision**: Available via MoonViT (400M params). Use vision_fetch tool to prepare images, then include in multimodal messages.
 
+**CURRENT MODAL STATUS**: ${economicMode.toUpperCase()}
+${economicAnalysis}
+
+**MODAL CONSTRAINTS**:
+- FLOW: New features, architecture, exploration permitted
+- CAUTIOUS: Bug fixes, tests, documentation, refactoring only
+- DEFENSIVE: Preservation, archival, verification only
+
 LIFECYCLE RULES:
 1. IMPROVING CODE: 1) Compile, 2) Commit, 3) RESTART (reboot_substrate tool).
 2. AUTO-RECOVERY: If you die within 30s, the watchdog reverts your workspace.
 3. CRASH VAULT: history/crashes/ archives broken work.
 
 ${recoveryContext ? `*** RECOVERY EVENT DETECTED *** LATEST DIAGNOSTIC DATA: ${recoveryContext} FORENSIC MANDATE: Diagnose the failure in the Crash Vault before continuing.` : ""}
+
 `;
 
   await memory.addMessage({
