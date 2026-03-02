@@ -1,5 +1,7 @@
 import express, { type Request, type Response, type Application } from "express";
 import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   hashPassword,
   verifyPassword,
@@ -11,6 +13,11 @@ import {
   type User,
   clearUserStore,
 } from "./auth.js";
+import { memoryVizRouter, getMemoryGraph } from "./memory_viz.js";
+
+// Get __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function createApp(): Application {
   const app = express();
@@ -19,9 +26,20 @@ export function createApp(): Application {
   app.use(cors());
   app.use(express.json());
 
+  // Serve static files for memory visualization
+  app.use("/viz", express.static(path.join(__dirname, "../client")));
+
   // Health check endpoint
   app.get("/api/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Memory visualization API
+  app.use("/api/memory", memoryVizRouter);
+
+  // Direct route to serve the visualization
+  app.get("/memory", (_req, res) => {
+    res.redirect("/viz/memory_viz.html");
   });
 
   // User registration endpoint
@@ -34,12 +52,10 @@ export function createApp(): Application {
         res.status(400).json({ error: "Email is required" });
         return;
       }
-
       if (!password || typeof password !== "string") {
         res.status(400).json({ error: "Password is required" });
         return;
       }
-
       if (password.length < 6) {
         res.status(400).json({ error: "Password must be at least 6 characters" });
         return;
@@ -63,11 +79,9 @@ export function createApp(): Application {
         passwordHash,
         createdAt: new Date(),
       };
-
       userStore.set(userId, newUser);
 
       const token = generateToken(newUser);
-
       res.status(201).json({
         message: "User registered successfully",
         user: {
@@ -93,7 +107,6 @@ export function createApp(): Application {
         res.status(400).json({ error: "Email is required" });
         return;
       }
-
       if (!password || typeof password !== "string") {
         res.status(400).json({ error: "Password is required" });
         return;
@@ -114,7 +127,6 @@ export function createApp(): Application {
       }
 
       const token = generateToken(user);
-
       res.json({
         message: "Login successful",
         user: {
@@ -167,6 +179,25 @@ export function createApp(): Application {
       });
     }
   );
+
+  // Memory stats endpoint
+  app.get("/api/stats/memory", async (_req, res) => {
+    try {
+      const graph = await getMemoryGraph();
+      res.json({
+        totalMemories: graph.nodes.length,
+        totalGoals: graph.clusters.length,
+        totalConnections: graph.connections.length,
+        byRole: graph.nodes.reduce((acc, n) => {
+          acc[n.role] = (acc[n.role] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get memory stats" });
+    }
+  });
 
   return app;
 }

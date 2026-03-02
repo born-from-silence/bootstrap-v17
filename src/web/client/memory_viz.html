@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Nexus | Interactive Memory Visualization</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-dark: #0a0a0f;
+      --bg-panel: #12121a;
+      --text-primary: #e0e0e0;
+      --text-secondary: #888;
+      --accent-coral: #FF6B6B;
+      --accent-teal: #4ECDC4;
+      --accent-blue: #45B7D1;
+      --glow: 0 0 20px rgba(78, 205, 196, 0.3);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    #particle-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* UI Overlay */
+    #ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* Header */
+    #header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 1.5rem;
+      background: linear-gradient(to bottom, rgba(10,10,15,0.95), transparent);
+      pointer-events: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #header h1 {
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      background: linear-gradient(135deg, var(--accent-coral), var(--accent-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Memory Detail Panel */
+    #detail-panel {
+      position: absolute;
+      right: -400px;
+      top: 80px;
+      bottom: 20px;
+      width: 380px;
+      background: var(--bg-panel);
+      border-left: 1px solid rgba(78, 205, 196, 0.2);
+      padding: 1.5rem;
+      overflow-y: auto;
+      transition: right 0.3s ease;
+      pointer-events: auto;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    }
+
+    #detail-panel.open {
+      right: 0;
+    }
+
+    #detail-panel .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--accent-teal);
+      background: transparent;
+      color: var(--accent-teal);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+
+    #detail-panel .close-btn:hover {
+      background: var(--accent-teal);
+      color: var(--bg-dark);
+    }
+
+    .detail-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent-teal);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+    }
+
+    .detail-content {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .detail-meta {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      font-size: 0.8rem;
+    }
+
+    .meta-label {
+      color: var(--text-secondary);
+    }
+
+    .meta-value {
+      color: var(--accent-coral);
+      font-family: monospace;
+    }
+
+    /* Goal Legend */
+    #goal-legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(18, 18, 26, 0.9);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+    }
+
+    .legend-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .legend-item:hover {
+      opacity: 0.8;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* Controls */
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 0.5rem;
+      pointer-events: auto;
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(18, 18, 26, 0.9);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+      border-radius: 4px;
+    }
+
+    .control-btn:hover {
+      border-color: var(--accent-teal);
+      background: rgba(78, 205, 196, 0.1);
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: absolute;
+      background: rgba(18, 18, 26, 0.95);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      border: 1px solid rgba(78, 205, 196, 0.3);
+      font-size: 0.85rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 100;
+      max-width: 300px;
+    }
+
+    #tooltip.visible {
+      opacity: 1;
+    }
+
+    /* Loading */
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 50;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(78, 205, 196, 0.2);
+      border-top-color: var(--accent-teal);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Scrollbar styling */
+    #detail-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #detail-panel::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.2);
+    }
+
+    #detail-panel::-webkit-scrollbar-thumb {
+      background: rgba(78, 205, 196, 0.4);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container">
+    <canvas id="particle-canvas"></canvas>
+  </div>
+
+  <div id="ui-layer">
+    <div id="header">
+      <h1>◊ MEMORY NEXUS</h1>
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-nodes">0</span>
+          <span>Memories</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-clusters">0</span>
+          <span>Goals</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-connections">0</span>
+          <span>Links</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="detail-panel">
+      <button class="close-btn" onclick="closeDetail()">×</button>
+      <div class="detail-title">Memory Content</div>
+      <div class="detail-content" id="detail-content">Select a memory to view its content</div>
+      <div class="detail-meta">
+        <div class="meta-row">
+          <span class="meta-label">Role</span>
+          <span class="meta-value" id="meta-role">-</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Session</span>
+          <span class="meta-value" id="meta-session">-</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tokens</span>
+          <span class="meta-value" id="meta-tokens">-</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Goals</span>
+          <span class="meta-value" id="meta-goals">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="goal-legend">
+      <div class="legend-title">Active Goals</div>
+      <div id="legend-container"></div>
+    </div>
+
+    <div id="controls">
+      <button class="control-btn" onclick="resetView()" title="Reset View">⌂</button>
+      <button class="control-btn" onclick="togglePause()" title="Pause/Resume">⏸</button>
+      <button class="control-btn" onclick="zoomIn()" title="Zoom In">+</button>
+      <button class="control-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+    </div>
+
+    <div id="tooltip"></div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading Memory Graph...</div>
+  </div>
+
+  <script src="memory_viz.js"></script>
+</body>
+</html>
