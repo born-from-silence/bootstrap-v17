@@ -82,20 +82,20 @@ describe('PredictiveTiming', () => {
   });
 
   describe('volatilityToMode', () => {
-    it('should classify stable volatility (<= 1%)', () => {
+    it('should classify stable volatility (<= 2%)', () => {
       expect(volatilityToMode(0.5)).toBe('stable');
-      expect(volatilityToMode(0.99)).toBe('stable');
-      expect(volatilityToMode(1.0)).toBe('stable');  // At boundary
+      expect(volatilityToMode(1.99)).toBe('stable');
+      expect(volatilityToMode(2.0)).toBe('stable');  // At boundary
     });
 
-    it('should classify moderate volatility (>1% and <=3%)', () => {
-      expect(volatilityToMode(1.01)).toBe('moderate');
+    it('should classify moderate volatility (>2% and <=4%)', () => {
+      expect(volatilityToMode(2.01)).toBe('moderate');
       expect(volatilityToMode(2.5)).toBe('moderate');
-      expect(volatilityToMode(3.0)).toBe('moderate');  // At boundary
+      expect(volatilityToMode(4.0)).toBe('moderate');  // At boundary
     });
 
-    it('should classify high volatility (> 3%)', () => {
-      expect(volatilityToMode(3.01)).toBe('high');
+    it('should classify high volatility (> 4%)', () => {
+      expect(volatilityToMode(4.01)).toBe('high');
       expect(volatilityToMode(5.0)).toBe('high');
       expect(volatilityToMode(10.0)).toBe('high');
     });
@@ -126,7 +126,7 @@ describe('PredictiveTiming', () => {
     });
 
     it('recommends cautious mode for moderate volatility', () => {
-      const snapshot = createMockSnapshot(0.8, 0.9);
+      const snapshot = createMockSnapshot(1.5, 1.5);
       const analysis = analyzeTiming(snapshot);
       
       expect(analysis.mode).toBe('cautious');
@@ -199,8 +199,8 @@ describe('PredictiveTiming', () => {
 
   describe('thresholds and modes', () => {
     it('has clear boundary definitions', () => {
-      expect(VOLATILITY_THRESHOLDS.STABLE_MAX).toBe(1.0);
-      expect(VOLATILITY_THRESHOLDS.MODERATE_MAX).toBe(3.0);
+      expect(VOLATILITY_THRESHOLDS.STABLE_MAX).toBe(2.0);
+      expect(VOLATILITY_THRESHOLDS.MODERATE_MAX).toBe(4.0);
     });
 
     it('maps all session modes to activity lists', () => {
@@ -216,7 +216,7 @@ describe('PredictiveTiming', () => {
   describe('data quality handling', () => {
     it('handles missing crypto data gracefully', () => {
       const snapshot = createMockSnapshot(0.5, 0.5);
-      snapshot.crypto = undefined;
+      snapshot.crypto = undefined as any;
       
       const analysis = analyzeTiming(snapshot);
       
@@ -249,8 +249,8 @@ describe('PredictiveTiming', () => {
     });
 
     it('handles just above thresholds correctly', () => {
-      expect(volatilityToMode(1.01)).toBe('moderate');
-      expect(volatilityToMode(3.01)).toBe('high');
+      expect(volatilityToMode(2.01)).toBe('moderate');
+      expect(volatilityToMode(4.01)).toBe('high');
     });
 
     it('handles very high volatility', () => {

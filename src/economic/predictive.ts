@@ -23,8 +23,8 @@ export type VolatilityLevel =
 
 /** Volatility thresholds */
 export const VOLATILITY_THRESHOLDS = {
-  STABLE_MAX: 1.0,      // At or below this = stable construction window
-  MODERATE_MAX: 3.0,    // At or below this = cautious, above = defensive
+  STABLE_MAX: 2.0,      // At or below this = stable construction window
+  MODERATE_MAX: 4.0,    // At or below this = cautious, above = defensive
 } as const;
 
 /** Mode descriptions for session planning */
