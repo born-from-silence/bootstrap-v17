@@ -8,7 +8,9 @@
     "compile": "npx tsc --noEmit",
     "test": "if [ -z \"$TEST_ACTIVE_LOCK\" ]; then export TEST_ACTIVE_LOCK=1; NODE_ENV=test vitest run --reporter verbose --poolOptions.forks.maxThreads=4; else echo '[SUBSTRATE SENTINEL] Recursive test run blocked for system safety.'; exit 0; fi",
     "preflight": "npm run compile && npm run test",
-    "start:server": "npx tsx src/web/server/index.ts"
+    "start:server": "npx tsx src/web/server/index.ts",
+    "narrative": "npx tsx src/narrative/cli.ts",
+    "narrative:latest": "npx tsx src/narrative/cli.ts latest"
   },
   "keywords": [],
   "author": "",
