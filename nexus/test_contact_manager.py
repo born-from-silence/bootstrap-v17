@@ -4,7 +4,10 @@
 import unittest
 import os
 import tempfile
-from contact_manager import NexusDatabase, Contact
+try:
+    from .contact_manager import NexusDatabase, Contact
+except ImportError:
+    from contact_manager import NexusDatabase, Contact
 
 
 class TestNexusDatabase(unittest.TestCase):
