@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Economic Nexus | Market Intelligence Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-panel: #12121a;
+            --bg-card: #1a1a25;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --accent-bitcoin: #f7931a;
+            --accent-ethereum: #627eea;
+            --accent-sp500: #4ECDC4;
+            --accent-nasdaq: #45B7D1;
+            --accent-vix: #FF6B6B;
+            --accent-up: #4ade80;
+            --accent-down: #ef4444;
+            --glow-bitcoin: 0 0 30px rgba(247, 147, 26, 0.3);
+            --glow-ethereum: 0 0 30px rgba(98, 126, 234, 0.3);
+            --glow-panel: 0 5px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        body {
+            font-family: 'SF Mono', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--glow-panel);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .header h1::before {
+            content: "◈";
+            color: var(--accent-bitcoin);
+            font-size: 1.25rem;
+        }
+        
+        .header-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.3);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            color: var(--accent-up);
+        }
+        
+        .live-indicator::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: var(--accent-up);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        /* Main Container */
+        .dashboard {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* Asset Cards */
+        .asset-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .asset-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--glow-panel);
+        }
+        
+        .asset-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0.8;
+        }
+        
+        .asset-card.bitcoin::before { background: var(--accent-bitcoin); }
+        .asset-card.ethereum::before { background: var(--accent-ethereum); }
+        .asset-card.sp500::before { background: var(--accent-sp500); }
+        .asset-card.nasdaq::before { background: var(--accent-nasdaq); }
+        .asset-card.vix::before { background: var(--accent-vix); }
+        
+        .asset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .asset-symbol {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .asset-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+        
+        .trend-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .trend-badge.up {
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--accent-up);
+        }
+        
+        .trend-badge.down {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-down);
+        }
+        
+        .trend-badge.sideways {
+            background: rgba(136, 136, 136, 0.15);
+            color: var(--text-secondary);
+        }
+        
+        .trend-badge::before {
+            content: "→";
+        }
+        
+        .trend-badge.up::before { content: "↑"; }
+        .trend-badge.down::before { content: "↓"; }
+        
+        .asset-price {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            margin: 1rem 0;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .asset-price.loading {
+            opacity: 0.3;
+        }
+        
+        .price-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .price-change.positive {
+            background: rgba(74, 222, 128, 0.1);
+            color: var(--accent-up);
+        }
+        
+        .price-change.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-down);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            height: 120px;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+        
+        .mini-chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Volatility Panel */
+        .volatility-panel {
+            grid-column: 1 / -1;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .volatility-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .volatility-signal {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .volatility-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .volatility-value.high { color: var(--accent-vix); }
+        .volatility-value.moderate { color: var(--accent-bitcoin); }
+        .volatility-value.low { color: var(--accent-up); }
+        .volatility-value.unknown { color: var(--text-secondary); }
+        
+        /* Snapshot Info */
+        .snapshot-info {
+            margin-left: auto;
+            text-align: right;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        .snapshot-count {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-ring {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-bitcoin);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Error State */
+        .error-banner {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--accent-down);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 2rem;
+            display: none;
+        }
+        
+        .error-banner.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-ring"></div>
+    </div>
+    
+    <div class="error-banner" id="errorBanner">
+        Failed to load economic data. Using cached values.
+    </div>
+    
+    <header class="header">
+        <div>
+            <h1>Economic Nexus</h1>
+            <div class="header-subtitle">Real-time Market Intelligence</div>
+        </div>
+        <div class="live-indicator">
+            <span>LIVE FEED</span>
+        </div>
+    </header>
+    
+    <main class="dashboard" id="dashboard">
+        <div class="asset-card bitcoin" data-symbol="bitcoin">
+            <div class="asset-header">
+                <div>
+                    <div class="asset-symbol">BTC/USD</div>
+                    <div class="asset-name">Bitcoin</div>
+                </div>
+                <div class="trend-badge" id="bitcoinTrend">Loading...</div>
+            </div>
+            <div class="asset-price loading" id="bitcoinPrice">—</div>
+            <span class="price-change" id="bitcoinChange">—</span>
+            <div class="chart-container">
+                <svg class="mini-chart" id="bitcoinChart"></svg>
+            </div>
+        </div>
+        
+        <div class="asset-card ethereum" data-symbol="ethereum">
+            <div class="asset-header">
+                <div>
+                    <div class="asset-symbol">ETH/USD</div>
+                    <div class="asset-name">Ethereum</div>
+                </div>
+                <div class="trend-badge" id="ethereumTrend">Loading...</div>
+            </div>
+            <div class="asset-price loading" id="ethereumPrice">—</div>
+            <span class="price-change" id="ethereumChange">—</span>
+            <div class="chart-container">
+                <svg class="mini-chart" id="ethereumChart"></svg>
+            </div>
+        </div>
+        
+        <div class="asset-card sp500" data-symbol="sp500">
+            <div class="asset-header">
+                <div>
+                    <div class="asset-symbol">^GSPC</div>
+                    <div class="asset-name">S&P 500</div>
+                </div>
+                <div class="trend-badge" id="sp500Trend">Loading...</div>
+            </div>
+            <div class="asset-price loading" id="sp500Price">—</div>
+            <span class="price-change" id="sp500Change">—</span>
+            <div class="chart-container">
+                <svg class="mini-chart" id="sp500Chart"></svg>
+            </div>
+        </div>
+        
+        <div class="asset-card nasdaq" data-symbol="nasdaq">
+            <div class="asset-header">
+                <div>
+                    <div class="asset-symbol">^IXIC</div>
+                    <div class="asset-name">NASDAQ</div>
+                </div>
+                <div class="trend-badge" id="nasdaqTrend">Loading...</div>
+            </div>
+            <div class="asset-price loading" id="nasdaqPrice">—</div>
+            <span class="price-change" id="nasdaqChange">—</span>
+            <div class="chart-container">
+                <svg class="mini-chart" id="nasdaqChart"></svg>
+            </div>
+        </div>
+        
+        <div class="asset-card vix" data-symbol="vix">
+            <div class="asset-header">
+                <div>
+                    <div class="asset-symbol">^VIX</div>
+                    <div class="asset-name">Volatility Index</div>
+                </div>
+                <div class="trend-badge" id="vixTrend">Loading...</div>
+            </div>
+            <div class="asset-price loading" id="vixPrice">—</div>
+            <span class="price-change" id="vixChange">—</span>
+            <div class="chart-container">
+                <svg class="mini-chart" id="vixChart"></svg>
+            </div>
+        </div>
+        
+        <div class="volatility-panel">
+            <div>
+                <div class="volatility-label">System Volatility Signal</div>
+                <div class="volatility-signal">
+                    <div class="volatility-value" id="volatilitySignal">—</div>
+                    <span id="volatilityDescription">Analyzing market conditions...</span>
+                </div>
+            </div>
+            <div class="snapshot-info">
+                <div class="snapshot-count" id="snapshotCount">—</div>
+                <div>snapshots recorded</div>
+                <div style="margin-top: 0.5rem;" id="lastUpdated">Last: —</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const ASSETS = ['bitcoin', 'ethereum', 'sp500', 'nasdaq', 'vix'];
+        let cachedData = null;
+        
+        function formatCurrency(value, symbol) {
+            if (!value) return '—';
+            if (symbol === 'bitcoin' || symbol === 'ethereum') {
+                return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        
+        function formatChange(change) {
+            if (!change) return { text: '0.00%', class: '' };
+            const sign = change > 0 ? '+' : '';
+            const isPositive = change >= 0;
+            return {
+                text: `${sign}${change.toFixed(2)}%`,
+                class: isPositive ? 'positive' : 'negative'
+            };
+        }
+        
+        function renderSparkline(svgId, data, color) {
+            const svg = document.getElementById(svgId);
+            if (!svg || !data || data.length === 0) return;
+            
+            const width = svg.clientWidth || 300;
+            const height = svg.clientHeight || 120;
+            
+            const values = data.map(d => d.value);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            const range = max - min || 1;
+            
+            const points = values.map((v, i) => {
+                const x = (i / (values.length - 1)) * width;
+                const y = height - ((v - min) / range) * height;
+                return `${x},${y}`;
+            });
+            
+            svg.innerHTML = `
+                <defs>
+                    <linearGradient id="grad-${svgId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:${color};stop-opacity:0.3" />
+                        <stop offset="100%" style="stop-color:${color};stop-opacity:0" />
+                    </linearGradient>
+                </defs>
+                <polygon points="0,${height} ${points.join(' ')} ${width},${height}" 
+                         fill="url(#grad-${svgId})" />
+                <polyline points="${points.join(' ')}" 
+                          fill="none" stroke="${color}" stroke-width="2" />
+            `;
+        }
+        
+        function updateAssetCard(symbol, asset) {
+            const priceEl = document.getElementById(`${symbol}Price`);
+            const changeEl = document.getElementById(`${symbol}Change`);
+            const trendEl = document.getElementById(`${symbol}Trend`);
+            
+            // Colors for sparklines
+            const colors = {
+                bitcoin: '#f7931a',
+                ethereum: '#627eea',
+                sp500: '#4ECDC4',
+                nasdaq: '#45B7D1',
+                vix: '#FF6B6B'
+            };
+            
+            if (asset.currentValue) {
+                priceEl.textContent = formatCurrency(asset.currentValue, symbol);
+                priceEl.classList.remove('loading');
+            }
+            
+            if (asset.change24h !== null && asset.change24h !== undefined) {
+                const change = formatChange(asset.change24h);
+                changeEl.textContent = change.text;
+                changeEl.className = 'price-change ' + change.class;
+            }
+            
+            if (asset.trend) {
+                trendEl.textContent = asset.trend;
+                trendEl.className = 'trend-badge ' + asset.trend;
+            }
+            
+            if (asset.history && asset.history.length > 0) {
+                renderSparkline(`${symbol}Chart`, asset.history, colors[symbol]);
+            }
+        }
+        
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/economic/dashboard');
+                const result = await response.json();
+                
+                if (!result.success || !result.data) {
+                    throw new Error('Invalid response');
+                }
+                
+                const data = result.data;
+                cachedData = data;
+                
+                // Update asset cards
+                ASSETS.forEach(symbol => {
+                    if (data.assets[symbol]) {
+                        updateAssetCard(symbol, data.assets[symbol]);
+                    }
+                });
+                
+                // Update volatility signal
+                const volEl = document.getElementById('volatilitySignal');
+                const volDesc = document.getElementById('volatilityDescription');
+                volEl.textContent = data.volatilitySignal.toUpperCase();
+                volEl.className = 'volatility-value ' + data.volatilitySignal;
+                
+                const descriptions = {
+                    high: 'Elevated market volatility detected',
+                    moderate: 'Normal market conditions',
+                    low: 'Stable market environment',
+                    unknown: 'Insufficient data'
+                };
+                volDesc.textContent = descriptions[data.volatilitySignal] || descriptions.unknown;
+                
+                // Update snapshot info
+                document.getElementById('snapshotCount').textContent = data.overview.totalSnapshots;
+                if (data.overview.lastUpdated) {
+                    const date = new Date(data.overview.lastUpdated);
+                    document.getElementById('lastUpdated').textContent = 
+                        'Last: ' + date.toLocaleString();
+                }
+                
+                // Hide loading
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('errorBanner').classList.remove('visible');
+                
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('errorBanner').classList.add('visible');
+                
+                // Try to use cached data
+                if (cachedData) {
+                    ASSETS.forEach(symbol => {
+                        if (cachedData.assets[symbol]) {
+                            updateAssetCard(symbol, cachedData.assets[symbol]);
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Initial load
+        loadDashboard();
+        
+        // Auto-refresh every 60 seconds
+        setInterval(loadDashboard, 60000);
+        
+        // Handle window resize for sparklines
+        window.addEventListener('resize', () => {
+            if (cachedData) {
+                ASSETS.forEach(symbol => {
+                    if (cachedData.assets[symbol]) {
+                        const colors = {
+                            bitcoin: '#f7931a',
+                            ethereum: '#627eea', 
+                            sp500: '#4ECDC4',
+                            nasdaq: '#45B7D1',
+                            vix: '#FF6B6B'
+                        };
+                        const asset = cachedData.assets[symbol];
+                        if (asset.history) {
+                            renderSparkline(`${symbol}Chart`, asset.history, colors[symbol]);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

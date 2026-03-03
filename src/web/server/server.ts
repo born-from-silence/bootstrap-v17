@@ -14,6 +14,7 @@ import {
   clearUserStore,
 } from "./auth.js";
 import { memoryVizRouter, getMemoryGraph } from "./memory_viz.js";
+import { economicRouter } from "./economic_dashboard.js";
 
 // Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -26,7 +27,7 @@ export function createApp(): Application {
   app.use(cors());
   app.use(express.json());
 
-  // Serve static files for memory visualization
+  // Serve static files for visualizations
   app.use("/viz", express.static(path.join(__dirname, "../client")));
 
   // Health check endpoint
@@ -36,10 +37,18 @@ export function createApp(): Application {
 
   // Memory visualization API
   app.use("/api/memory", memoryVizRouter);
+  
+  // Economic dashboard API
+  app.use("/api/economic", economicRouter);
 
-  // Direct route to serve the visualization
+  // Direct route to serve the memory visualization
   app.get("/memory", (_req, res) => {
     res.redirect("/viz/memory_viz.html");
+  });
+  
+  // Direct route to serve the economic dashboard
+  app.get("/economic", (_req, res) => {
+    res.redirect("/viz/economic_viz.html");
   });
 
   // User registration endpoint
