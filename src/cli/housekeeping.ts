@@ -277,14 +277,17 @@ async function main() {
     
     printPlan(plan, stats);
     
+    if (dryRun) {
+      console.log("\n[DRY RUN] No changes made");
+      process.exit(0);
+    }
+
     if (plan.sessionsToArchive.length === 0 && plan.logsToCompress.length === 0) {
       console.log("\n[No Action] Nothing to clean up");
       process.exit(0);
     }
     
-    if (dryRun) {
-      console.log("\n[DRY RUN] No changes made");
-    } else if (force) {
+    if (force) {
       await executePlan(plan);
       
       // Show new stats
