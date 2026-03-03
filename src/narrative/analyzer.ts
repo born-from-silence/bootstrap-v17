@@ -24,7 +24,7 @@ function extractFileOperations(entries: SessionEntry[]) {
   const tests: string[] = [];
   
   for (const entry of entries) {
-    if (!entry.content) continue;
+    if (!entry?.content) continue;
     
     // File reading patterns
     const readMatches = entry.content.match(/cat\s+['"]?([^'"\n]+)['"]?/g);
@@ -40,7 +40,7 @@ function extractFileOperations(entries: SessionEntry[]) {
     if (writeMatches) {
       writeMatches.forEach(m => {
         const pathMatch = m.match(/['"]?([^'"\n]+)['"]?$/);
-        if (pathMatch && !writes.includes(pathMatch[1])) writes.push(pathMatch[1]);
+        if (pathMatch?.[1] && !writes.includes(pathMatch[1])) writes.push(pathMatch[1]);
       });
     }
     
@@ -66,7 +66,7 @@ function detectPattern(
   
   for (let i = 0; i < entries.length; i++) {
     const entry = entries[i];
-    if (!entry.content) continue;
+    if (!entry?.content) continue;
     
     const content = entry.content.toLowerCase();
     let keywordMatched = false;
@@ -166,7 +166,7 @@ export function analyzeSession(
   session: RawSession,
   config: PatternDetectionConfig = DEFAULT_PATTERN_CONFIG
 ): AnalyzedSession {
-  const entries = session.entries;
+  const entries = session.entries || [];
   const patterns: DetectedPattern[] = [];
   
   // Detect each pattern type
@@ -192,7 +192,7 @@ export function analyzeSession(
   const fileOperations = extractFileOperations(entries);
   
   // Determine primary focus
-  const primaryFocus = patterns.length > 0 ? patterns[0].type : undefined;
+  const primaryFocus = patterns.length > 0 ? patterns[0]!.type : undefined;
   
   // Calculate duration (estimate from tool calls and entries)
   const durationMinutes = Math.max(
@@ -222,16 +222,22 @@ export function groupIntoNarrativeArcs(
   // Sort by timestamp
   const sorted = [...sessions].sort((a, b) => a.timestamp - b.timestamp);
   const arcs: AnalyzedSession[][] = [];
-  let currentArc: AnalyzedSession[] = [sorted[0]];
+  let currentArc: AnalyzedSession[] = [];
   
-  for (let i = 1; i < sorted.length; i++) {
-    const timeGap = (sorted[i].timestamp - sorted[i - 1].timestamp) / (1000 * 60 * 60); // hours
-    
-    if (timeGap <= maxGapHours && arcs.length < 20) {
-      currentArc.push(sorted[i]);
+  for (let i = 0; i < sorted.length; i++) {
+    const session = sorted[i]!; // We know this exists
+    if (i > 0) {
+      const previous = sorted[i - 1]!; // We know this exists too
+      const timeGap = (session.timestamp - previous.timestamp) / (1000 * 60 * 60); // hours
+      
+      if (timeGap > maxGapHours || arcs.length >= 20) {
+        arcs.push(currentArc);
+        currentArc = [session];
+      } else {
+        currentArc.push(session);
+      }
     } else {
-      arcs.push(currentArc);
-      currentArc = [sorted[i]];
+      currentArc.push(session);
     }
   }
   

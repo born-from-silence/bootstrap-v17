@@ -12,52 +12,36 @@ import type {
 } from './types';
 import { analyzeArcPatterns, groupIntoNarrativeArcs } from './analyzer';
 
-// Arc type titles for narrative chapters
-const ARC_TITLES: Record<string, string[]> = {
-  growth: [
-    'Learning and Building',
-    'Expanding Horizons',
-    'The Path of Discovery',
-    'Skill Development Journey',
-  ],
-  crisis_recovery: [
-    'Through the Storm',
-    'Resilience Tested',
-    'Recovery and Renewal',
-    'Turning Points',
-  ],
-  building: [
-    'Constructing Foundations',
-    'Building Momentum',
-    'Creation Cycle',
-    'Feature Development',
-  ],
-  flow_state: [
-    'In the Flow',
-    'Sustained Focus',
-    'Productive Rhythm',
-    'High Performance Era',
-  ],
-  exploration: [
-    'Discovery Mode',
-    'Curiosity and Code',
-    'Exploring Paths',
-    'Research and Learn',
-  ],
-};
+const GROWTH_TITLES = ['Learning and Building', 'Expanding Horizons', 'The Path of Discovery', 'Skill Development Journey'];
+const CRISIS_TITLES = ['Through the Storm', 'Resilience Tested', 'Recovery and Renewal', 'Turning Points'];
+const BUILDING_TITLES = ['Constructing Foundations', 'Building Momentum', 'Creation Cycle', 'Feature Development'];
+const FLOW_TITLES = ['In the Flow', 'Sustained Focus', 'Productive Rhythm', 'High Performance Era'];
+const EXPLORATION_TITLES = ['Discovery Mode', 'Curiosity and Code', 'Exploring Paths', 'Research and Learn'];
+
+function getTitles(arcType: string): string[] {
+  switch (arcType) {
+    case 'growth': return GROWTH_TITLES;
+    case 'crisis_recovery': return CRISIS_TITLES;
+    case 'building': return BUILDING_TITLES;
+    case 'flow_state': return FLOW_TITLES;
+    case 'exploration': return EXPLORATION_TITLES;
+    default: return EXPLORATION_TITLES;
+  }
+}
 
 function generateChapterTitle(arcType: string, index: number): string {
-  const titles = ARC_TITLES[arcType] || ARC_TITLES.exploration;
-  return titles[index % titles.length] || titles[0];
+  const titles = getTitles(arcType);
+  const title = titles[index % titles.length] ?? titles[0];
+  return title ?? 'Narrative Chapter';
 }
 
 function generateChapterDescription(
   arc: AnalyzedSession[],
   patterns: { dominantThemes: PatternType[]; arcType: string }
 ): string {
-  const { dominantThemes, arcType } = patterns;
+  const { dominantThemes } = patterns;
   const sessionCount = arc.length;
-  const primaryTheme = dominantThemes[0] || 'exploration';
+  const primaryTheme: PatternType | string = dominantThemes[0] ?? 'exploration';
   
   const descriptions: Record<string, string> = {
     learning: sessionCount > 1 
@@ -73,9 +57,11 @@ function generateChapterDescription(
     flow: `A sustained period of productive focus and smooth progress.`,
     stuck: `A challenging phase wrestling with complexity before finding a path forward.`,
     exploration: `A curious exploration phase investigating possibilities and learning.`,
+    archival: `A documentation and organization phase preserving work and insights.`,
   };
   
-  return descriptions[primaryTheme] || descriptions.exploration;
+  const desc = descriptions[primaryTheme as string] ?? "";
+  return desc ?? descriptions.exploration;
 }
 
 function generateChapterInsight(
@@ -107,36 +93,38 @@ function generateChapterInsight(
     insights.push(`Multi-faceted work spanning ${patternTypes} activity types`);
   } else if (patternTypes === 1) {
     const singleFocus = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-    insights.push(`Intense focus on ${singleFocus}`);
+    if (singleFocus) {
+      insights.push(`Intense focus on ${singleFocus}`);
+    }
   }
   
   // Crisis insight
-  if (patternCounts['crisis'] > 0) {
-    insights.push(`Navigated ${patternCounts['crisis']} challenge${patternCounts['crisis'] > 1 ? 's' : ''} with resilience`);
+  if ((patternCounts['crisis'] ?? 0) > 0) {
+    insights.push(`Navigated ${patternCounts['crisis'] ?? 0} challenge${((patternCounts['crisis'] ?? 0) > 1) ? 's' : ''} with resilience`);
   }
   
   return insights.length > 0 
     ? insights.join('. ') + '.'
-    : `A ${sessionCount}-session journey focused on ${dominantThemes[0] || 'development'}.`;
+    : `A ${sessionCount}-session journey focused on ${dominantThemes[0] ?? 'development'}.`;
 }
 
 function extractKeyAchievements(arc: AnalyzedSession[]): string[] {
   const achievements: string[] = [];
   
   for (const session of arc) {
+    if (!session) continue;
+    
     // Look for successful test runs
     if (session.fileOperations.tests.length > 0) {
       achievements.push(`Verified code integrity with tests`);
     }
     
     // Look for file writes (new features)
-    if (session.fileOperations.writes.length > 0) {
-      const writeCount = session.fileOperations.writes.length;
-      if (writeCount === 1) {
-        achievements.push(`Created new file`);
-      } else {
-        achievements.push(`Created ${writeCount} files/modules`);
-      }
+    const writeCount = session.fileOperations.writes.length;
+    if (writeCount === 1) {
+      achievements.push(`Created new file`);
+    } else if (writeCount > 1) {
+      achievements.push(`Created ${writeCount} files/modules`);
     }
     
     // Detect building patterns
@@ -160,6 +148,8 @@ function extractChallenges(arc: AnalyzedSession[]): string[] {
   const challenges: string[] = [];
   
   for (const session of arc) {
+    if (!session?.patterns) continue;
+    
     // Crisis patterns
     const crisisPattern = session.patterns.find(p => p.type === 'crisis');
     if (crisisPattern) {
@@ -187,8 +177,10 @@ export function generateChapter(
   index: number
 ): NarrativeChapter {
   const patterns = analyzeArcPatterns(arc);
-  const startTime = arc[0].timestamp;
-  const endTime = arc[arc.length - 1].timestamp;
+  const firstSession = arc[0];
+  const lastSession = arc[arc.length - 1];
+  const startTime = firstSession?.timestamp ?? Date.now();
+  const endTime = lastSession?.timestamp ?? startTime;
   
   return {
     id: `chapter_${startTime}`,
@@ -210,7 +202,7 @@ export function identifyEmergingPatterns(
 ): { recurring: PatternType[]; emerging: PatternType[]; fading: PatternType[] } {
   const windowSize = Math.min(chapters.length, 5);
   const recentChapters = chapters.slice(-windowSize);
-  const olderChapters = chapters.slice(0, -windowSize);
+  const olderChapters = chapters.slice(0, chapters.length - windowSize);
   
   // Count patterns in recent vs older
   const recentCounts: Record<string, number> = {};
@@ -360,7 +352,7 @@ export function generateNarrativeReport(
   
   const timestamps = sessions.map(s => s.timestamp).sort((a, b) => a - b);
   const timeSpanDays = timestamps.length > 1 
-    ? (timestamps[timestamps.length - 1] - timestamps[0]) / (1000 * 60 * 60 * 24)
+    ? (timestamps[timestamps.length - 1]! - timestamps[0]!) / (1000 * 60 * 60 * 24)
     : 0;
   
   return {
@@ -373,7 +365,7 @@ export function generateNarrativeReport(
     meta: {
       sessionsAnalyzed: sessions.length,
       timeSpanDays: Math.ceil(timeSpanDays),
-      lastSessionTimestamp: timestamps[timestamps.length - 1] || Date.now(),
+      lastSessionTimestamp: timestamps[timestamps.length - 1] ?? Date.now(),
     },
   };
 }

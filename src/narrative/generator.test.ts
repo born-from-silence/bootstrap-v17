@@ -30,7 +30,7 @@ function createMockAnalyzedSession(
     })),
     toolCalls: 5,
     fileOperations: { reads: [], writes: [], tests: [] },
-    primaryFocus: patterns[0]?.type,
+    primaryFocus: patterns[0]?.type ?? undefined,
     energyLevel: patterns.some(p => p.type === 'flow') ? 'high' : 'medium',
     complexity: patterns.length > 2 ? 'complex' : 'simple',
     ...options,
@@ -184,7 +184,7 @@ describe('generateInsights', () => {
     const patterns = {
       recurring: ['building'] as PatternType[],
       emerging: ['learning'] as PatternType[],
-      fading: [],
+      fading: [] as PatternType[],
     };
     
     const insights: string[] = generateInsights([], patterns, 10);

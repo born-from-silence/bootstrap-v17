@@ -124,21 +124,23 @@ describe('groupIntoNarrativeArcs', () => {
   it('should group sessions close in time', () => {
     const now = Date.now();
     const sessions = [
-      { sessionId: 's_1', timestamp: now, durationMinutes: 30, patterns: [], toolCalls: 5, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'medium' as const, complexity: 'simple' as const },
-      { sessionId: 's_2', timestamp: now + 30 * 60 * 1000, durationMinutes: 45, patterns: [], toolCalls: 8, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'high' as const, complexity: 'moderate' as const },
+      { sessionId: 's_1', timestamp: now, durationMinutes: 30, patterns: [], toolCalls: 5, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'medium' as const, complexity: 'simple' as const, primaryFocus: undefined },
+      { sessionId: 's_2', timestamp: now + 30 * 60 * 1000, durationMinutes: 45, patterns: [], toolCalls: 8, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'high' as const, complexity: 'moderate' as const, primaryFocus: undefined },
     ];
     
     const arcs = groupIntoNarrativeArcs(sessions, 4);
     
     expect(arcs.length).toBeGreaterThanOrEqual(1);
-    expect(arcs[0].length).toBeGreaterThan(0);
+    if (arcs[0]) {
+      expect(arcs[0].length).toBeGreaterThan(0);
+    }
   });
   
   it('should separate sessions far apart', () => {
     const now = Date.now();
     const sessions = [
-      { sessionId: 's_1', timestamp: now, durationMinutes: 30, patterns: [], toolCalls: 5, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'medium' as const, complexity: 'simple' as const },
-      { sessionId: 's_2', timestamp: now + 24 * 60 * 60 * 1000, durationMinutes: 45, patterns: [], toolCalls: 8, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'high' as const, complexity: 'moderate' as const },
+      { sessionId: 's_1', timestamp: now, durationMinutes: 30, patterns: [], toolCalls: 5, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'medium' as const, complexity: 'simple' as const, primaryFocus: undefined },
+      { sessionId: 's_2', timestamp: now + 24 * 60 * 60 * 1000, durationMinutes: 45, patterns: [], toolCalls: 8, fileOperations: { reads: [], writes: [], tests: [] }, energyLevel: 'high' as const, complexity: 'moderate' as const, primaryFocus: undefined },
     ];
     
     const arcs = groupIntoNarrativeArcs(sessions, 4);
@@ -159,7 +161,7 @@ describe('analyzeArcPatterns', () => {
         fileOperations: { reads: [], writes: [], tests: [] }, 
         energyLevel: 'high' as const, 
         complexity: 'moderate' as const,
-        primaryFocus: 'building',
+        primaryFocus: 'building' as PatternType,
       },
     ];
     
@@ -183,7 +185,7 @@ describe('analyzeArcPatterns', () => {
         fileOperations: { reads: [], writes: [], tests: [] }, 
         energyLevel: 'high' as const, 
         complexity: 'moderate' as const,
-        primaryFocus: 'building',
+        primaryFocus: 'building' as PatternType,
       },
       { 
         sessionId: 's_2', 
@@ -196,7 +198,7 @@ describe('analyzeArcPatterns', () => {
         fileOperations: { reads: [], writes: [], tests: [] }, 
         energyLevel: 'medium' as const, 
         complexity: 'simple' as const,
-        primaryFocus: 'building',
+        primaryFocus: 'building' as PatternType,
       },
     ];
     
@@ -218,6 +220,7 @@ describe('analyzeArcPatterns', () => {
         fileOperations: { reads: [], writes: [], tests: [] }, 
         energyLevel: 'high' as const, 
         complexity: 'moderate' as const,
+        primaryFocus: undefined,
       },
     ];
     

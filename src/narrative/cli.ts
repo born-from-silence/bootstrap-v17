@@ -133,7 +133,10 @@ async function main() {
       case 'full':
         // Print all chapters
         for (let i = 0; i < report.chapters.length; i++) {
-          printChapter(report.chapters[i], i);
+          const chapter = report.chapters[i];
+          if (chapter) {
+            printChapter(chapter, i);
+          }
         }
         
         // Print patterns
@@ -148,7 +151,10 @@ async function main() {
         
       case 'chapters':
         for (let i = 0; i < report.chapters.length; i++) {
-          printChapter(report.chapters[i], i);
+          const chapter = report.chapters[i];
+          if (chapter) {
+            printChapter(chapter, i);
+          }
         }
         break;
         
@@ -160,7 +166,10 @@ async function main() {
         
       case 'latest':
         if (report.chapters.length > 0) {
-          printChapter(report.chapters[report.chapters.length - 1], report.chapters.length - 1);
+          const chapter = report.chapters[report.chapters.length - 1];
+          if (chapter) {
+            printChapter(chapter, report.chapters.length - 1);
+          }
         }
         break;
         

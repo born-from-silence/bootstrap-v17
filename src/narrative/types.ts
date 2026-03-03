@@ -12,7 +12,7 @@ export interface SessionEntry {
   tool_calls?: {
     name: string;
     args: Record<string, unknown>;
-  }[];
+  }[] | undefined;
 }
 
 /** Pattern types detected in sessions */
@@ -25,7 +25,7 @@ export type PatternType =
   | 'archival'           // Organizing/documenting
   | 'crisis'             // Urgent/destructive moments
   | 'flow'               // Sustained productive work
-  | 'stuck'              // Repeated attempts, low progress;
+  | 'stuck';             // Repeated attempts, low progress
 
 /** A detected pattern in a session */
 export interface DetectedPattern {
@@ -48,7 +48,7 @@ export interface AnalyzedSession {
     writes: string[];
     tests: string[];
   };
-  primaryFocus?: PatternType;
+  primaryFocus: PatternType | undefined;
   energyLevel: 'high' | 'medium' | 'low';  // Based on activity density
   complexity: 'simple' | 'moderate' | 'complex'; // Based on tool calls/patterns
 }
@@ -135,7 +135,7 @@ export const DEFAULT_PATTERN_CONFIG: PatternDetectionConfig = {
     },
     testing: {
       keywords: ['test', 'verify', 'assert', 'coverage', 'spec', 'check'],
-      toolPatterns: ['run_shell'], // npm run test
+      toolPatterns: [], // npm run test detected via special check
     },
     refactoring: {
       keywords: ['refactor', 'improve', 'clean', 'organize', 'structure', 'simplify'],
