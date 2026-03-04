@@ -93,6 +93,26 @@ export class DialogosObserver {
     this.storedIntents.set(subject, existing);
     this.saveState();
   }
+  /**
+   * Mark an intent as completed and remove it from tracking.
+   */
+  completeIntent(subject: string, intentId: string): boolean {
+    const result = this.dialogos.completeIntent(subject, intentId);
+    if (result) {
+      const existing = this.storedIntents.get(subject);
+      if (existing) {
+        const filtered = existing.filter(i => i.id !== intentId);
+        if (filtered.length === 0) {
+          this.storedIntents.delete(subject);
+        } else {
+          this.storedIntents.set(subject, filtered);
+        }
+        this.saveState();
+      }
+    }
+    return result;
+  }
+
   
   recordActivity(activity: string) {
     this.dialogos.recordActivity(Date.now(), activity);

@@ -16,6 +16,7 @@ import { visionPlugin } from "./tools/plugins/vision";
 import { passwordPlugin } from "./tools/plugins/password";
 import { taskPlugin } from "./tools/plugins/task";
 import { dialogosIntentPlugin } from "./palace/dialogos/intent_tool.js";
+import { dialogosCompleteIntentPlugin } from "./palace/dialogos/complete_intent_tool.js";
 
 // Economic Bootstrap State (persisted across the session)
 let economicMode: "flow" | "cautious" | "defensive" = "flow";
@@ -70,6 +71,7 @@ async function main() {
   tools.register(passwordPlugin);
   tools.register(taskPlugin);
 tools.register(dialogosIntentPlugin);
+tools.register(dialogosCompleteIntentPlugin);
 
   const api = new ApiClient(memory, tools);
 

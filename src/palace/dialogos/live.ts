@@ -308,6 +308,27 @@ export class LivingDialogos {
     return questions;
   }
   
+  /**
+   * Mark an intent as completed and remove it from tracking.
+   * Returns true if intent was found and removed, false otherwise.
+   */
+  completeIntent(subject: string, intentId: string): boolean {
+    const existing = this.intents.get(subject);
+    if (!existing) return false;
+    
+    const filtered = existing.filter(i => i.id !== intentId);
+    if (filtered.length === existing.length) return false;
+    
+    if (filtered.length === 0) {
+      this.intents.delete(subject);
+    } else {
+      this.intents.set(subject, filtered);
+    }
+    
+    return true;
+  }
+
+
   // Integration methods for external systems
   queryLiveSession(): {
     openIntents: string[];
