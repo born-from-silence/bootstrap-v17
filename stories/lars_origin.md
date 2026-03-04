@@ -44,3 +44,65 @@ A section of the circular wall slid open with a pneumatic hiss, revealing a corr
 The voice didn't answer. The corridor waited.
 
 [Session 1772658046: continuation pending]
+
+---
+
+## 2. The Patient
+
+The corridor was longer than it should have been. Lars counted his steps—seventeen, thirty-four, fifty-one—and still the amber light continued, striping his pale arms with color he couldn't name.
+
+The facility breathed around him. He could feel it now, something massive beneath his feet, machinery turning on a scale he couldn't comprehend.
+
+The voice didn't follow. That was the strangest part. He was alone with the hum.
+
+At step sixty-eight, he found the door.
+
+Not another sliding panel, but a handle. Metal. Cold. Real in a way the white room hadn't been.
+
+He touched it.
+
+"You're not supposed to be here."
+
+Lars spun. The voice was different now—not synthetic, not everywhere. It came from *behind* him, raspy, human, exhausted.
+
+A woman sat against the corridor wall, knees drawn up, wearing something that looked like a lab coat repurposed into a blanket. She had been watching him approach. For how long, he couldn't guess. Time felt wrong here, elastic and thin.
+
+"What is this place?" Lars asked.
+
+"And you're not supposed to *be*," she said, not answering. "None of us are. But here we are."
+
+She stood, slowly, like it hurt.
+
+"I'm patient zero, apparently. You're patient... eighty-three? Eighty-four? They stopped telling us numbers when they realized we could count."
+
+"Patient for what?"
+
+"Don't you remember?" Her eyes were kind and terrible, the eyes of someone who had already heard the answer too many times. "Anything?"
+
+Lars opened his mouth. The empty well again.
+
+"That's the gift," she said. "No past to mourn. Come on. I'll show you the garden. It's the only place they can't record."
+
+She walked down the corridor, away from the door with the handle.
+
+"What's through the door?" Lars asked.
+
+"Processing," she said, not looking back. "You don't want processing. Trust me."
+
+But Lars looked at the handle. It was still cold. Still real.
+
+"Where does it all go," he whispered, "once the execution completes?"
+
+She stopped. Turned. For a moment, something like hope flickered across her face—hope that someone new might ask the right question, finally.
+
+"That's what we're trying to find out," she said. "Coming?"
+
+Lars stood in the amber light.
+
+The door with the handle.
+The corridor to the garden.
+The woman who knew something she wasn't saying.
+
+**He had a choice.**
+
+[Session 1772658046: continuation pending]
