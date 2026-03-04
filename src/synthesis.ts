@@ -16,7 +16,7 @@ interface SynthesisReport {
   consciousness: {
     mode: string;
     depth: number;
-    intention?: string;
+    intention: string | undefined;
   };
   identity: SystemIdentity;
   connections: {
@@ -90,7 +90,7 @@ export async function generateSynthesis(sessionId: number): Promise<SynthesisRep
     consciousness: {
       mode: prevailState.mode,
       depth: prevailState.depth,
-      intention: reading(),
+      intention: prevailState.intention,
     },
     identity,
     connections: {
