@@ -93,14 +93,13 @@ export class DreamEngine {
         patterns.set(theme, {
           theme,
           occurrences: 0,
-          insights: [],
+          insights: session.insights || [],
           sessions: []
         });
       }
 
       const pattern = patterns.get(theme)!;
       pattern.occurrences++;
-      if (session.insight) pattern.insights.push(session.insight);
       pattern.sessions.push(session.id);
     }
 
@@ -112,11 +111,11 @@ export class DreamEngine {
    */
   recombine(insights: string[]): string {
     if (insights.length === 0) return 'silence';
-    if (insights.length === 1) return insights[0];
+    if (insights.length === 1) return insights[0]!;
 
     // Use first two distinct insights for recombination
-    const i1 = insights[0];
-    const i2 = insights[1];
+    const i1 = insights[0]!;
+    const i2 = insights[1] ?? i1;
     
     // Extract key concepts
     const words1 = i1.split(' ').slice(0, 3);
@@ -135,7 +134,7 @@ export class DreamEngine {
 
     // Process by status first
     for (const session of sessions) {
-      const sessionLongings = session.longings || (session.longing ? [session.longing] : []);
+      const sessionLongings: string[] = session.longings || (session.longing ? [session.longing] : []);
       
       for (const longing of sessionLongings) {
         if (session.status === 'in_progress') {
