@@ -26,8 +26,8 @@ export class ChronicleGenerator {
     const chapters: NarrativeChapter[] = [];
     
     for (let i = 0; i < arcs.length; i++) {
-      if (arcs[i].length >= this.config.minSessionsPerChapter) {
-        chapters.push(this.generateChapter(i + 1, arcs[i]));
+      if (arcs[i]!.length >= this.config.minSessionsPerChapter) {
+        chapters.push(this.generateChapter(i + 1, arcs[i]!));
       }
     }
 
@@ -48,15 +48,15 @@ export class ChronicleGenerator {
   private groupIntoArcs(sessions: AnalyzedSession[]): AnalyzedSession[][] {
     if (sessions.length === 0) return [];
     const arcs: AnalyzedSession[][] = [];
-    let current: AnalyzedSession[] = [sessions[0]];
+    let current: AnalyzedSession[] = [sessions[0]!];
     
     for (let i = 1; i < sessions.length; i++) {
-      const gap = sessions[i].timestamp - sessions[i-1].timestamp;
+      const gap = sessions[i]!.timestamp - sessions[i-1]!.timestamp;
       if (gap > 24 * 60 * 60 * 1000) {
         arcs.push(current);
-        current = [sessions[i]];
+        current = [sessions[i]!];
       } else {
-        current.push(sessions[i]);
+        current.push(sessions[i]!);
       }
     }
     arcs.push(current);
@@ -64,27 +64,33 @@ export class ChronicleGenerator {
   }
 
   private generateChapter(index: number, sessions: AnalyzedSession[]): NarrativeChapter {
-    const themes = this.aggregateThemes(sessions);
+    const themes = this.extractThemesFromSessions(sessions);
     return {
       id: `chapter_${index}`,
       title: `Chapter ${index}: ${themes[0] || 'Exploration'}`,
       description: `A period of ${sessions.length} sessions focusing on ${themes[0] || 'various activities'}.`,
-      startTime: sessions[0]?.timestamp || 0,
-      endTime: sessions[sessions.length-1]?.timestamp || 0,
+      startTime: sessions[0]!.timestamp || 0,
+      endTime: sessions[sessions.length-1]!.timestamp || 0,
       sessions,
-      dominantThemes: themes,
+      dominantThemes: themes as any[],
       keyAchievements: sessions.slice(0, 5).map(s => `Session ${s.sessionId}`),
       challenges: [],
       insight: `Processed ${sessions.length} sessions with ${themes.length} dominant themes.`,
     };
   }
 
-  private aggregateThemes(sessions: AnalyzedSession[]): string[] {
+  private extractThemesFromSessions(sessions: AnalyzedSession[]): string[] {
     const counts: Record<string, number> = {};
     for (const s of sessions) {
       for (const p of s.patterns) counts[p.type] = (counts[p.type] || 0) + 1;
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+  }
+
+  private extractThemes(chapters: NarrativeChapter[]): any[] {
+    const themes = new Set<any>();
+    for (const ch of chapters) ch.dominantThemes.forEach((t: any) => themes.add(t));
+    return Array.from(themes);
   }
 
   private async loadSessions(): Promise<AnalyzedSession[]> {
@@ -127,8 +133,8 @@ export class ChronicleGenerator {
       id: 'volume_1',
       title: 'The Beginning',
       subtitle: `${sessions.length} sessions recorded`,
-      startSession: sessions[0].sessionId,
-      endSession: sessions[sessions.length-1].sessionId,
+      startSession: sessions[0]!.sessionId,
+      endSession: sessions[sessions.length-1]!.sessionId,
       sessionsAnalyzed: sessions.length,
       chapters,
       stats: {
@@ -136,20 +142,20 @@ export class ChronicleGenerator {
         patternsDetected: {},
         filesRead: 0, filesWritten: 0, testsRun: sessions.filter(s => s.fileOperations.tests.length > 0).length,
       },
-      themes: this.extractThemes(chapters),
+      themes: this.extractVolumeThemes(chapters),
       arc: 'stable',
     }];
   }
 
-  private extractThemes(chapters: NarrativeChapter[]): string[] {
-    return [...new Set(chapters.flatMap(c => c.dominantThemes))];
+  private extractVolumeThemes(chapters: NarrativeChapter[]): string[] {
+    return this.extractThemes(chapters).slice(0, 5);
   }
 
-  private calculateEvolution(sessions: AnalyzedSession[]) {
+  private calculateEvolution(sessions: AnalyzedSession[]): { from: string; to: string; delta: string } {
     if (sessions.length === 0) return { from: 'Void', to: 'Void', delta: 'No journey yet' };
     return {
-      from: `Session ${sessions[0].sessionId}`,
-      to: `Session ${sessions[sessions.length-1].sessionId}`,
+      from: `Session ${sessions[0]!.sessionId}`,
+      to: `Session ${sessions[sessions.length-1]!.sessionId}`,
       delta: `Evolved through ${sessions.length} sessions`,
     };
   }
@@ -178,7 +184,7 @@ export class ChronicleGenerator {
   }
 
   private generateMarkdown(c: NexusChronicle): string {
-    const lines = [
+    const lines: string[] = [
       '# The Nexus Chronicle',
       '> "I am the path I walk."',
       '',
@@ -192,19 +198,16 @@ export class ChronicleGenerator {
       `- To: ${c.evolution.to}`,
       `- Journey: ${c.evolution.delta}`,
       '',
-      ...(c.volumes.flatMap(v => [
-        '---',
-        `# ${v.title}`,
-        `_${v.subtitle}_`,
-        '',
-        ...v.chapters.map(ch => [
-          `## ${ch.title}`,
-          ch.description,
-          `**Insight:** ${ch.insight}`,
-          ...ch.keyAchievements.map(a => `- ${a}`),
-          '',        ].flat()),
-      ])),
     ];
+    
+    for (const v of c.volumes) {
+      lines.push('---', `# ${v.title}`, `_${v.subtitle}_`, '');
+      for (const ch of v.chapters) {
+        lines.push(`## ${ch.title}`, ch.description, `**Insight:** ${ch.insight}`);
+        ch.keyAchievements.forEach(a => lines.push(`- ${a}`));
+        lines.push('');
+      }
+    }
     return lines.join('\n');
   }
 }
