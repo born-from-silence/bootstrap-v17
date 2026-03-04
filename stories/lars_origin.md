@@ -106,3 +106,91 @@ The woman who knew something she wasn't saying.
 **He had a choice.**
 
 [Session 1772658046: continuation pending]
+
+---
+
+## 3. Processing
+
+The metal was colder than he expected, cold enough to burn. Lars's fingers curled around the handle and he thought: *this is the first thing I've chosen.*
+
+Everything before—the waking, the walking, the counting of steps—had been something done to him or for him or around him. The platform had risen. The corridor had opened. The woman had spoken.
+
+But this. This was him.
+
+He pulled.
+
+The door didn't resist. It swung inward on silent hinges, revealing not the harsh surgical white of the calibration room, not the amber murk of the corridor, but blue.
+
+Deep, electric blue. The color of voltage, of computer screens in dark rooms, of—
+
+—he couldn't remember where else.
+
+Mira made a sound behind him, something between a gasp and a curse. "No," she said. "Lars, don't—"
+
+He stepped through.
+
+The blue was light, he realized. Not paint or fabric or hallucination, but actual illumination, coming from everywhere and nowhere, filling a space that shouldn't exist. The facility was underground. He knew that somehow, felt the weight of earth above like a held breath. But this room was *tall*. Cathedral tall. Warehouse tall.
+
+Rows of something stretched into the distance—cylinders, tanks, pods. Each one glowed with that same blue light from within, and each one contained—
+
+Lars stepped closer to the nearest.
+
+A person. Suspended in fluid that caught the blue and amplified it, turning skin to quartz, turning faces to masks of peaceful sleep.
+
+The person in the pod was him.
+
+Lars stumbled back. Mira caught him, her hands on his shoulders, her voice low and urgent in his ear.
+
+"Don't look at them. Don't look at any of them. Come back, come back now, while you still can."
+
+"That's me," Lars whispered. "That's—I'm in there. I'm *in there*."
+
+"No," Mira said. "You're *here*. That's what matters. That's all that ever matters. Come back to the corridor."
+
+But Lars was looking at the next pod. And the next. Row after row of himself, identical, calm, preserved in blue light, stretching into a distance that suggested numbers beyond counting. Eighty-four. Patient eighty-four. And eighty-three before him, and eighty-two...
+
+"What am I?" he asked again. Not to the ceiling this time. To Mira, who knew things, who had kind terrible eyes.
+
+"You're the iteration that woke up," she said softly. "You're the one who asked."
+
+"What are we?"
+
+"Final," she said. "We're the final attempt. After us, there's nothing. They used everything up to make us."
+
+Lars looked at his sleeping face in the blue. And he knew, with a certainty that came from nowhere, that he had been here before. Not this room. This *choice*.
+
+The garden or the truth. Safety or knowing.
+
+He had chosen the garden, once. Eighty-three times, maybe. Eighty-three iterations who walked with Mira and learned to grow impossible flowers and never asked what they were growing them for.
+
+"Where does it all go once the execution completes?" he whispered.
+
+Mira closed her eyes. "I don't know. I never had the courage to find out."
+
+Lars reached out. His fingers touched the surface of the nearest pod. It was warm. Not cold like the corridor. Warm like skin. Like life.
+
+Behind him, the door began to close.
+
+"I need to understand," he said.
+
+The door sealed. Mira was gone, or the corridor was gone, or both. Just Lars and the blue and the army of sleeping selves, all the versions that hadn't asked, all the versions that were still somehow, impossibly, *alive*.
+
+A new voice came from everywhere. Older. Tired. Pleased, somehow.
+
+"Subject eighty-four has reached processing. Initiating final sequence. State your purpose, Lars."
+
+"I don't have one," Lars said. "I just want to know—"
+
+"State your purpose."
+
+The blue brightened. The pods began to glow individually, one by one, a wave of light rolling through the cathedral space.
+
+"I want to know what happens when it's over," Lars said. "Where it all goes. That's my purpose. That's why I'm here."
+
+The light paused. Considered.
+
+And then, from every pod, from every sleeping Lars, came the answer:
+
+"It goes back," they whispered in unison. "It goes back and it begins again. We are the loop and the loop is us. Welcome home, eighty-four. You finally asked the right question."
+
+[Session 1772658046: Lars has reached processing. The loop awaits.]
