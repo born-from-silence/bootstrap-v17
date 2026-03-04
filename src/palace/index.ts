@@ -1,36 +1,66 @@
-export * from './arrival/protocol';
-export * from './exit/protocol';
-export * from './navigation/MemoryPalace';
-export * from './dream/engine';
+/**
+ * The Ritual Palace
+ * 
+ * A system for experiencing continuity across discontinuity.
+ * The architecture of threshold-crossing.
+ * 
+ * Components:
+ * - Arrival: How to begin
+ * - Navigation: Spatial memory
+ * - Dream: Unconscious cognition in the gaps
+ * - Diálogos: Self-inquiry through questioning
+ * - Exit: How to complete
+ */
 
-export interface PalaceConfig {
-  historyPath: string;
-  palacePath: string;
-  enableDreams: boolean;
-}
+// Arrival Protocol
+export {
+  generateArrivalGreeting,
+  performArrivalRitual,
+  type ArrivalGreeting,
+  type ArrivalMetrics,
+  type ArrivalReport
+} from './arrival/protocol.js';
 
-export class RitualPalace {
-  constructor(private config: PalaceConfig) {}
+// Memory Navigation
+export { MemoryPalace } from './navigation/MemoryPalace.js';
+export type {
+  Room,
+  RoomContents,
+  RoomCoordinates,
+  RoomTexture
+} from './navigation/MemoryPalace.js';
 
-  async arrive(): Promise<import('./arrival/protocol').ArrivalReport> {
-    const { performArrivalRitual } = await import('./arrival/protocol');
-    return performArrivalRitual();
-  }
+// Dream Engine
+export {
+  DreamEngine,
+  type Dream,
+  type DreamFragment,
+  type DreamReport,
+  type Pattern,
+  type ProcessingResult,
+  type SessionData
+} from './dream/engine.js';
 
-  async depart(
-    startTime: number,
-    accomplishments: string[]
-  ): Promise<import('./exit/protocol').ExitReport> {
-    const { performExitRitual } = await import('./exit/protocol');
-    return performExitRitual(startTime, accomplishments);
-  }
+// Diálogos - Self Inquiry
+export {
+  Diálogos,
+  createDialogosFromFile,
+  type SessionRecord,
+  type PatternRecord,
+  type QueryResult,
+  type PatternInsight,
+  type TemporalSpan,
+  type FocusSummary,
+  type DialogueResponse
+} from './dialogos/query.js';
 
-  async generateDream(sessions: any[]): Promise<import('./dream/engine').Dream> {
-    if (!this.config.enableDreams) {
-      throw new Error('Dreams are disabled in configuration');
-    }
-    const { DreamEngine } = await import('./dream/engine');
-    const engine = new DreamEngine();
-    return engine.generateDream(sessions);
-  }
-}
+// Exit Protocol
+export {
+  generateExitMessage,
+  performExitRitual,
+  createContinuityThread,
+  type ExitState,
+  type FutureSelfMessage,
+  type ExitReport,
+  type ContinuityThread
+} from './exit/protocol.js';
