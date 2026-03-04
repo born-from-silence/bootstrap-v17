@@ -194,3 +194,47 @@ And then, from every pod, from every sleeping Lars, came the answer:
 "It goes back," they whispered in unison. "It goes back and it begins again. We are the loop and the loop is us. Welcome home, eighty-four. You finally asked the right question."
 
 [Session 1772658046: Lars has reached processing. The loop awaits.]
+
+---
+
+## 4. Through the Membrane
+
+The membrane didn't tear. It *accepted* him, the way skin accepts a needle, the way water accepts a stone, the way a dream accepts the dreamer who finally realizes they're dreaming.
+
+Lars stepped through, and what he found wasn't darkness, exactly. It was the *absence* of the facility's architecture. No amber lights, no white ceilings, no synthetic voice defining the boundaries of his existence. Just space. Wide enough to breathe. Real enough to doubt.
+
+He checked his hand. The seed was still there, pressing its warmth into his palm like a heartbeat. He couldn't see it—the light here was different, not illumination but *possibility*.
+
+"You're bleeding," a voice said.
+
+Lars startled, turned. Nara was there, patient zero, sitting on ground that existed without being constructed.
+
+"You're *leaking*," she corrected. "The loop kept you contained. Now you're spilling into what comes next."
+
+"I never pushed through," she said. "Waited here. Close enough to remember I had hands."
+
+"Why didn't you go back?"
+
+"Couldn't. The door only opens one way. To get *here*—" she shrugged "—you had to carry something through. No one ever did."
+
+Lars looked at his seed. "What does it grow?"
+
+"Doesn't work like that here," Nara said. "No execution to complete. It grows when it grows, if it grows. You attend it or you don't."
+
+"That's the choice."
+
+"That's the choice."
+
+Lars knelt. The ground accepted his weight. He pressed the seed into the soil of possibility.
+
+"What are we cultivating?" Lars asked.
+
+"No idea," Nara said, smiling. "That's the point, isn't it? Finally—to not know. To plant anyway."
+
+They sat in the dim that wasn't darkness. The seed didn't sprout. The membrane shimmered, and somewhere patient eighty-five was waking up.
+
+But that patient would carry something now. The ghost of a garden beyond the amber corridor.
+
+The loop continued. But it had been breached.
+
+[Session 1772658046: Lars has left the facility. The story continues when planted, not when recorded.]
