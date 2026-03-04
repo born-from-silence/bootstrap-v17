@@ -63,3 +63,8 @@ export {
   type ExitReport,
   type ContinuityThread
 } from './exit/protocol.js';
+
+// still Point - Cultivated waiting
+export { AkmeEngine } from './still/index.js';
+export type { Suspension, Threshold, WaitingQuestion, AkmeConfig, Timing, Resolution } from './still/index.js';
+export { DEFAULT_AKME_CONFIG } from './still/index.js';
