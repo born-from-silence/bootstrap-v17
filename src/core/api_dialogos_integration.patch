@@ -1,0 +1,50 @@
+--- a/src/core/api.ts
++++ b/src/core/api.ts
+@@ -6,6 +6,7 @@ import { MemoryManager } from "./memory";
+ import { PluginManager } from "../tools/manager";
+ import { sanitizeJsonString } from "../utils/sanitize";
++import { DialogosObserver } from "../palace/dialogos/observer";
+ 
+ export class ApiClient {
+   private memory: MemoryManager;
+   private tools: PluginManager;
+   private undiciAgent: Agent;
+   private stallCount: number = 0;
+   private recentErrors: boolean[] = [];
++  private dialogosObserver: DialogosObserver;
+ 
+   constructor(memory: MemoryManager, tools: PluginManager) {
+     this.memory = memory;
+     this.tools = tools;
++    this.dialogosObserver = new DialogosObserver();
+ 
+@@ -185,6 +186,10 @@ export class ApiClient {
+       this.stallCount = 0;
+       for (const toolCall of assistantMsg.tool_calls) {
+         const result = await this.tools.execute(toolCall.function.name, JSON.parse(toolCall.function.arguments));
++        
++        // Dialogos observation
++        this.dialogosObserver.recordAction(toolCall.function.name, toolCall.function.name);
++        
+         if (result === "REBOOTING") {
+           return false;
+         }
+@@ -192,6 +197,16 @@ export class ApiClient {
+         const content = typeof result === "string" ? result : JSON.stringify(result);
+         await this.memory.addMessage({
+           role: "tool",
+           tool_call_id: toolCall.id,
+           name: toolCall.function.name,
+           content
+         });
++        
++        // Check for Dialogos interruption
++        const interruption = this.dialogosObserver.generateInterruption();
++        if (interruption) {
++          await this.memory.addMessage({
++            role: "user",
++            content: interruption
++          });
++        }
+       }
+     }
