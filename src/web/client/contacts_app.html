@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS Contacts - Search & Categorize</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #e4e4e7;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    
+    .header p {
+      color: #a1a1aa;
+      font-size: 0.95rem;
+    }
+    
+    .stats-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .stat-card {
+      flex: 1;
+      min-width: 140px;
+      padding: 1rem;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .stat-card .number {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #8b5cf6;
+    }
+    
+    .stat-card .label {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      margin-top: 0.25rem;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    
+    .search-box input::placeholder { color: #71717a; }
+    .search-box input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+    
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #71717a;
+    }
+    
+    .filter-select {
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      cursor: pointer;
+      outline: none;
+      min-width: 150px;
+    }
+    
+    .filter-select:focus { border-color: #8b5cf6; }
+    .filter-select option { background: #1a1a2e; color: #e4e4e7; }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e4e4e7;
+    }
+    
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+    
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+    
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+    
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .contact-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .contact-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .contact-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 0.75rem;
+    }
+    
+    .contact-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f4f4f5;
+    }
+    
+    .contact-category {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .contact-category.work { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .contact-category.personal { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .contact-category.family { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+    .contact-category.business { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    
+    .contact-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .contact-detail {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #a1a1aa;
+    }
+    
+    .contact-detail svg {
+      width: 16px;
+      height: 16px;
+      color: #71717a;
+    }
+    
+    .contact-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .contact-actions .btn {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #71717a;
+    }
+    
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+      color: #a1a1aa;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    
+    .modal {
+      background: #1e1e2e;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f4f4f5;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: #71717a;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+    
+    .modal-close:hover { background: rgba(255, 255, 255, 0.1); color: #e4e4e7; }
+    
+    .modal-body {
+      padding: 1.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #a1a1aa;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(139, 92, 246, 0.3);
+      border-top-color: #8b5cf6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    
+    .success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    
+    .category-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    
+    .category-pill {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #a1a1aa;
+      transition: all 0.2s ease;
+    }
+    
+    .category-pill:hover { background: rgba(255, 255, 255, 0.1); }
+    .category-pill.active {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: #8b5cf6;
+      color: #f4f4f5;
+    }
+  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+    
+    const API_URL = '/api/contacts';
+    
+    // Icons as components
+    const SearchIcon = () => (
+      <svg className="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    );
+    
+    const MailIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    );
+    
+    const PhoneIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+      </svg>
+    );
+    
+    const MapPinIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+    
+    const NoteIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    );
+    
+    const PlusIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{width: 18, height: 18, marginRight: 8}}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+      </svg>
+    );
+    
+    const EmptyStateIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    );
+    
+    // API functions
+    const api = {
+      async getAll() {
+        const res = await fetch(API_URL);
+        return res.json();
+      },
+      
+      async search(query, category = null) {
+        const params = new URLSearchParams();
+        if (query) params.append('q', query);
+        if (category && category !== 'all') params.append('category', category);
+        const res = await fetch(`${API_URL}/search?${params}`);
+        return res.json();
+      },
+      
+      async getCategories() {
+        const res = await fetch(`${API_URL}/categories`);
+        return res.json();
+      },
+      
+      async create(data) {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      },
+      
+      async update(id, data) {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      },
+      
+      async delete(id) {
+        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        return res.json();
+      }
+    };
+    
+    // Modal Component
+    const ContactModal = ({ contact, categories, onClose, onSave }) => {
+      const [formData, setFormData] = useState(contact || {
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        notes: '',
+        category: 'Uncategorized'
+      });
+      
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+      };
+      
+      const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+      
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{contact ? 'Edit Contact' : 'New Contact'}</h2>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Name *</label>
+                  <input 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleChange}
+                    placeholder="Full name"
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input 
+                      name="email" 
+                      type="email"
+                      value={formData.email} 
+                      onChange={handleChange}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Phone</label>
+                    <input 
+                      name="phone" 
+                      value={formData.phone} 
+                      onChange={handleChange}
+                      placeholder="+1 234 567 890"
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Address</label>
+                  <input 
+                    name="address" 
+                    value={formData.address} 
+                    onChange={handleChange}
+                    placeholder="Street address"
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select name="category" value={formData.category} onChange={handleChange}>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                      <option value="Uncategorized">Uncategorized</option>
+                      <option value="Work">Work</option>
+                      <option value="Personal">Personal</option>
+                      <option value="Family">Family</option>
+                      <option value="Business">Business</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Notes</label>
+                  <textarea 
+                    name="notes" 
+                    value={formData.notes} 
+                    onChange={handleChange}
+                    placeholder="Additional notes..."
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {contact ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+    
+    // Contact Card Component
+    const ContactCard = ({ contact, categories, onEdit, onDelete }) => {
+      const categoryClass = contact.category.toLowerCase().replace(/\s+/g, '-');
+      
+      return (
+        <div className="contact-card">
+          <div className="contact-header">
+            <div>
+              <div className="contact-name">{contact.name}</div>
+              <span className={`contact-category ${categoryClass}`}>{contact.category}</span>
+            </div>
+          </div>
+          <div className="contact-details">
+            {contact.email && (
+              <div className="contact-detail">
+                <MailIcon />
+                <span>{contact.email}</span>
+              </div>
+            )}
+            {contact.phone && (
+              <div className="contact-detail">
+                <PhoneIcon />
+                <span>{contact.phone}</span>
+              </div>
+            )}
+            {contact.address && (
+              <div className="contact-detail">
+                <MapPinIcon />
+                <span>{contact.address}</span>
+              </div>
+            )}
+            {contact.notes && (
+              <div className="contact-detail">
+                <NoteIcon />
+                <span>{contact.notes.length > 60 ? contact.notes.substring(0, 60) + '...' : contact.notes}</span>
+              </div>
+            )}
+          </div>
+          <div className="contact-actions">
+            <button className="btn btn-secondary" onClick={() => onEdit(contact)}>
+              Edit
+            </button>
+            <button className="btn btn-danger" onClick={() => onDelete(contact)}>
+              Delete
+            </button>
+          </div>
+        </div>
+      );
+    };
+    
+    // Main App
+    const App = () => {
+      const [contacts, setContacts] = useState([]);
+      const [categories, setCategories] = useState(['Uncategorized', 'Work', 'Personal', 'Family', 'Business']);
+      const [stats, setStats] = useState({ total: 0, byCategory: {} });
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('all');
+      const [modalOpen, setModalOpen] = useState(false);
+      const [editingContact, setEditingContact] = useState(null);
+      const [message, setMessage] = useState(null);
+      
+      const showMessage = (text, type = 'success') => {
+        setMessage({ text, type });
+        setTimeout(() => setMessage(null), 3000);
+      };
+      
+      const loadContacts = useCallback(async () => {
+        try {
+          setLoading(true);
+          let result;
+          if (searchQuery || selectedCategory !== 'all') {
+            result = await api.search(searchQuery, selectedCategory === 'all' ? null : selectedCategory);
+          } else {
+            result = await api.getAll();
+          }
+          if (result.success) {
+            setContacts(result.data);
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to load contacts: ' + err.message);
+        } finally {
+          setLoading(false);
+        }
+      }, [searchQuery, selectedCategory]);
+      
+      const loadCategories = useCallback(async () => {
+        try {
+          const result = await api.getCategories();
+          if (result.success && result.data.categories.length > 0) {
+            setCategories(result.data.categories);
+            setStats({ total: result.data.total, byCategory: result.data.byCategory });
+          }
+        } catch (err) {
+          console.error('Failed to load categories:', err);
+        }
+      }, []);
+      
+      useEffect(() => {
+        loadContacts();
+      }, [loadContacts]);
+      
+      useEffect(() => {
+        loadCategories();
+      }, [loadCategories]);
+      
+      const handleCreate = async (data) => {
+        try {
+          const result = await api.create(data);
+          if (result.success) {
+            showMessage('Contact created successfully!');
+            setModalOpen(false);
+            loadContacts();
+            loadCategories();
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to create contact');
+        }
+      };
+      
+      const handleUpdate = async (data) => {
+        if (!editingContact) return;
+        try {
+          const result = await api.update(editingContact.id, data);
+          if (result.success) {
+            showMessage('Contact updated successfully!');
+            setModalOpen(false);
+            setEditingContact(null);
+            loadContacts();
+            loadCategories();
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to update contact');
+        }
+      };
+      
+      const handleDelete = async (contact) => {
+        if (!confirm(`Delete "${contact.name}"?`)) return;
+        try {
+          const result = await api.delete(contact.id);
+          if (result.success) {
+            showMessage('Contact deleted successfully!');
+            loadContacts();
+            loadCategories();
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to delete contact');
+        }
+      };
+      
+      const openCreateModal = () => {
+        setEditingContact(null);
+        setModalOpen(true);
+      };
+      
+      const openEditModal = (contact) => {
+        setEditingContact(contact);
+        setModalOpen(true);
+      };
+      
+      const closeModal = () => {
+        setModalOpen(false);
+        setEditingContact(null);
+      };
+      
+      const uniqueCategories = ['all', ...new Set([...categories, 'Work', 'Personal', 'Family', 'Business', 'Uncategorized'])];
+      
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>NEXUS Contacts</h1>
+            <p>Search and organize your network</p>
+          </div>
+          
+          {message && (
+            <div className={message.type === 'error' ? 'error-message' : 'success-message'}>
+              {message.text}
+            </div>
+          )}
+          
+          <div className="stats-bar">
+            <div className="stat-card">
+              <div className="number">{stats.total}</div>
+              <div className="label">Total Contacts</div>
+            </div>
+            {categories.slice(0, 3).map(cat => (
+              <div key={cat} className="stat-card">
+                <div className="number">{stats.byCategory[cat] || 0}</div>
+                <div className="label">{cat}</div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="controls">
+            <div className="search-box">
+              <SearchIcon />
+              <input 
+                type="text" 
+                placeholder="Search by name, email, phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select 
+              className="filter-select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {uniqueCategories.filter(c => c !== 'all').map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <button className="btn btn-primary" onClick={openCreateModal}>
+              <PlusIcon />
+              Add Contact
+            </button>
+          </div>
+          
+          <div className="category-pills">
+            {uniqueCategories.map(cat => (
+              <button
+                key={cat}
+                className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat === 'all' ? 'All' : cat}
+                {cat !== 'all' && stats.byCategory[cat] && (
+                  <span style={{marginLeft: 6, opacity: 0.7}}>({stats.byCategory[cat]})</span>
+                )}
+              </button>
+            ))}
+          </div>
+          
+          {loading ? (
+            <div className="loading">
+              <div className="spinner"></div>
+            </div>
+          ) : error ? (
+            <div className="error-message">
+              <p>{error}</p>
+              <button className="btn btn-primary" onClick={loadContacts} style={{marginTop: '1rem'}}>
+                Retry
+              </button>
+            </div>
+          ) : contacts.length === 0 ? (
+            <div className="empty-state">
+              <EmptyStateIcon />
+              <h3>{searchQuery ? 'No contacts found' : 'No contacts yet'}</h3>
+              <p>{searchQuery ? 'Try a different search term' : 'Add your first contact to get started'}</p>
+              {!searchQuery && (
+                <button className="btn btn-primary" onClick={openCreateModal} style={{marginTop: '1rem'}}>
+                  <PlusIcon />
+                  Add Contact
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="contacts-grid">
+              {contacts.map(contact => (
+                <ContactCard
+                  key={contact.id}
+                  contact={contact}
+                  categories={categories}
+                  onEdit={openEditModal}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+          
+          {modalOpen && (
+            <ContactModal
+              contact={editingContact}
+              categories={categories}
+              onClose={closeModal}
+              onSave={editingContact ? handleUpdate : handleCreate}
+            />
+          )}
+        </div>
+      );
+    };
+    
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

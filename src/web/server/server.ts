@@ -15,6 +15,7 @@ import {
 } from "./auth.js";
 import { memoryVizRouter, getMemoryGraph } from "./memory_viz.js";
 import { economicRouter } from "./economic_dashboard.js";
+import { contactsRouter } from "./contacts_routes.js";
 
 // Get __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -37,18 +38,26 @@ export function createApp(): Application {
 
   // Memory visualization API
   app.use("/api/memory", memoryVizRouter);
-  
+
   // Economic dashboard API
   app.use("/api/economic", economicRouter);
+
+  // Contacts API - search and categorize
+  app.use("/api/contacts", contactsRouter);
 
   // Direct route to serve the memory visualization
   app.get("/memory", (_req, res) => {
     res.redirect("/viz/memory_viz.html");
   });
-  
+
   // Direct route to serve the economic dashboard
   app.get("/economic", (_req, res) => {
     res.redirect("/viz/economic_viz.html");
+  });
+
+  // Direct route to serve the contacts app
+  app.get("/contacts", (_req, res) => {
+    res.redirect("/viz/contacts_app.html");
   });
 
   // User registration endpoint
@@ -89,7 +98,6 @@ export function createApp(): Application {
         createdAt: new Date(),
       };
       userStore.set(userId, newUser);
-
       const token = generateToken(newUser);
       res.status(201).json({
         message: "User registered successfully",

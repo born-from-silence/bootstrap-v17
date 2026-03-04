@@ -1,0 +1,3213 @@
+--- Starting Agent Life at Tue Mar  3 23:24:28 UTC 2026 ---
+
+> bootstrap-v17@1.0.0 start
+> npx tsx src/index.ts
+
+[EconMonitor] Capturing snapshot snap_1772580274972_80274967...
+[EconMonitor] Snapshot saved: snap_1772580274972_80274967
+[SITUATED] Volatility: stable | Mode: flow
+[SITUATED] Flow mode: Creative construction permitted
+=== Modular Substrate v17 Initialized [3da2b8e] ===
+
+[Step 1] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]: 
+[STALL] No tool calls detected (#1)
+
+[Step 2] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  The user wants me to create a frontend interface. They mentioned:
+1. A simple React component with search and categorize functionality
+2. Use SQLite for the backend
+
+This is the Bootstrap project and I'm Nexus. I should explore the codebase first to understand the structure, then implement the requested features.
+
+Let me
+
+[RESPONSE]:  I'll explore the current codebase structure first, then implement the
+> Executing (timeout: 300s): ls -la /home/bootstrap-v17/bootstrap/
+
+[Step 4] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Let me explore the src and nexus directories to understand
+> Executing (timeout: 300s): ls -la /home/bootstrap-v17/bootstrap/src/ && echo "---" && ls -la /home/bootstrap-v17/bootstrap/nexus/
+
+[Step 6] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   There's already a web directory and a nexus directory with Python and SQLite. Let me explore both more to
+> Executing (timeout: 300s): ls -laR /home/bootstrap-v17/bootstrap/src/web/
+
+[Step 8] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    Let me also check what's already in the Nexus Python directory and what the current nexus.db contains.
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/nexus/contact_manager.py | head -100
+
+[Step 10] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    I see there's already a Python-based contact manager with SQLite. Now I need to understand the architecture:
+
+1. There's already a web layer in src/web/ with:
+   - server/ - TypeScript backend
+   - client/ - Frontend (HTML + TS)
+   - API layer (api.ts)
+
+2. There's a Python nexus/ directory with contact_manager.py
+
+The user wants a "simple React frontend with search and categorize, backend with SQLite".
+
+Since the existing stack in src/web is TypeScript-based, I should probably create the frontend using the existing web structure. However, they mentioned specifically "backend with SQLite" which suggests they might want the Python SQLite backend to be used. But I could also use the TypeScript server with SQLite.
+
+Let me check what database the TypeScript server
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/web/server/server.ts
+
+[Step 12] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:     Okay, so the existing server.ts uses an in-memory user store for auth, and Express with TypeScript. The Python nexus/contact_manager.py uses SQLite.
+
+For the user's request, I have two options:
+1. Integrate with the existing TypeScript/Express server and add SQLite there via better-sqlite3 or similar
+2. Create a Python backend with Flask/FastAPI using the existing contact_manager.py
+
+Given that:
+1. The user specifically mentioned "backend with SQLite"
+2. There's already contact_manager.py in nexus/ with SQLite implementation
+3. React frontend is requested
+
+I'll create:
+1. A Flask backend (Python) that wraps the existing contact_manager.py
+2. A simple React frontend with search and categorize features
+
+Let me first check package.json and if React
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/package.json
+
+[Step 14] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:       The project doesn't have React set up. Since the user wants a "simple React frontend", I should:
+
+1. Set up a simple React app (using Vite would be easiest but could also use create-react-app or just a simple HTML+React CDN for simplicity)
+2. Since the existing web client uses vanilla HTML/TS, I'll create a new React-based frontend
+
+Given this is "simple", I'll use a minimal approach:
+- Create a React frontend using a simple HTML file that loads React via CDN (no build step needed)
+- Create a Python Flask backend that extends contact_manager.py
+- Add search and categorize functionality
+
+Actually, looking at the existing client code in memory_viz.html, they use vanilla TypeScript compiled to the browser. But React needs a build process.
+
+Actually, let me reconsider. The cleanest approach that's consistent with the existing codebase would be to:
+1. Extend the TypeScript server to add SQLite support (using better-sqlite3)
+2. Create an HTML frontend (not React) - but the user specifically asked for React
+
+Wait, let me re-read the prompt: "Build a simple React frontend with search and categorize functionality. Backend with SQLite."
+
+They specifically want React. Since this is a TypeScript-first codebase, I should probably set up:
+1. A React frontend using Vite (simplest modern way)
+2. Keep the backend - either expand the existing Express server with SQLite, OR use the Python Flask approach with the existing contact_manager.py
+
+Actually, the cleanest integration would be to create:
+1. A new React frontend in src/web/react/ using Vite
+2. Extend the existing Express server (server.ts) to add SQLite endpoints that connect to the nexus.db
+
+Let me see if better-sqlite3 or
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm list | grep sqlite
+
+[Step 16] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:           No SQLite package installed. I'll need to add it. Let me plan:
+
+1. Add better-sqlite3 for TypeScript SQLite integration
+2. Create React frontend using Vite (simplest approach)
+3. Add API endpoints to server.ts for contacts with search and categorize
+
+Actually, looking at contact_manager.py, it has categories already - but wait, let me check if categories are actually implemented
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/nexus/contact_manager.py
+
+[Step 18] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:               Good, I can see the contact_manager.py has a search_contacts method but no explicit category field or categorization. The user wants "search and categorize" functionality.
+
+I'll implement:
+1. Add a 'category' field to the contacts table  
+2. Create a Flask backend API that wraps this functionality and adds categories
+3. Create a simple React frontend
+
+Since the user wants React specifically, and the existing codebase uses TypeScript for the web server, I think the best approach is:
+
+1. Extend the Python backend to include categories and expose a REST API (Flask)
+2. Create a React frontend that uses this API
+
+Actually, looking at the existing architecture:
+- src/web/server/ is TypeScript/Express
+- nexus/ is Python
+
+The user wants "backend with SQLite" - and contact_manager.py already uses SQLite. So I'll:
+1. Create a Flask API wrapper for contact_manager.py
+2. Add category support to the database schema
+3. Create a React frontend (using Vite)
+
+Let me set this up properly. First, let me create the Flask backend with category support, then set up a React frontend.
+
+Actually, let me check if there are any existing React setups or if I need to
+> Executing (timeout: 300s): find /home/bootstrap-v17/bootstrap -name "*.jsx" -o -name "*.tsx" | grep -E "(react|component)" | head -20
+
+[Step 20] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:               No existing React. I'll need to set up a new React frontend. Given that the user wants "simple", I'll:
+
+Create:
+1. `nexus/api.py` - Flask backend that wraps contact_manager.py and adds category support
+2. `src/web/react/` - React frontend using Vite
+
+Let me start by creating the Flask backend first, then install better-sqlite3 for the Node.js server, OR just keep the HTTP interface and have the React talk to the Flask backend on a different port.
+
+Actually, the simplest clean architecture:
+1. Keep existing Express server (server.ts) as the main API gateway
+2. Add SQLite support to Express via better-sqlite3
+3. Add category field to the database schema
+4. Create API endpoints for contacts with search and categorize
+5. Create React frontend in src/web/contact-app/
+
+Let me implementing this step by step.
+
+[RESPONSE]:  I'll create a complete React frontend with search and categorize functionality, backed by SQLite. Let me set
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm add better-sqlite3 @types/better-sqlite3
+
+[Step 22] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                Good, better-sqlite3 is added. Now let me create:1. A contacts database module using SQLite2. Express routes for the contacts API3. A React frontend
+
+Let me start by
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.ts << 'EOF'
+import Database from "better-sqlite3";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Database path - shared with Python nexus module
+const DB_PATH = path.join(__dirname, "../../../../nexus/nexus.db");
+
+export interface Contact {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateContactInput {
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  category?: string;
+}
+
+export interface UpdateContactInput {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  category?: string;
+}
+
+export class ContactsDatabase {
+  private db: Database.Database;
+
+  constructor() {
+    this.db = new Database(DB_PATH);
+    this.db.pragma("journal_mode = WAL");
+    this.initSchema();
+  }
+
+  private initSchema(): void {
+    // Create contacts table if not exists
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        address TEXT,
+        notes TEXT,
+        category TEXT DEFAULT 'Uncategorized',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add category column if upgrading from older schema
+    try {
+      this.db.exec(`ALTER TABLE contacts ADD COLUMN category TEXT DEFAULT 'Uncategorized'`);
+    } catch {
+      // Column already exists, ignore error
+    }
+
+    // Create indexes for search
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name)`);
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_contacts_category ON contacts(category)`);
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email)`);
+  }
+
+  create(input: CreateContactInput): Contact {
+    const stmt = this.db.prepare(`
+      INSERT INTO contacts (name, email, phone, address, notes, category, updated_at)
+      VALUES (@name, @email, @phone, @address, @notes, @category, CURRENT_TIMESTAMP)
+      RETURNING *
+    `);
+
+    const result = stmt.get({
+      name: input.name,
+      email: input.email || "",
+      phone: input.phone || "",
+      address: input.address || "",
+      notes: input.notes || "",
+      category: input.category || "Uncategorized",
+    }) as Contact;
+
+    return result;
+  }
+
+  getById(id: number): Contact | undefined {
+    return this.db.prepare("SELECT * FROM contacts WHERE id = ?").get(id) as
+      | Contact
+      | undefined;
+  }
+
+  getAll(): Contact[] {
+    return this.db
+      .prepare("SELECT * FROM contacts ORDER BY name ASC")
+      .all() as Contact[];
+  }
+
+  search(query: string, category?: string): Contact[] {
+    const pattern = `%${query}%`;
+    
+    if (category && category !== "all") {
+      return this.db
+        .prepare(
+          `SELECT * FROM contacts 
+           WHERE (name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?)
+           AND category = ?
+           ORDER BY name ASC`
+        )
+        .all(pattern, pattern, pattern, pattern, category) as Contact[];
+    }
+    
+    return this.db
+      .prepare(
+        `SELECT * FROM contacts 
+         WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?
+         ORDER BY name ASC`
+      )
+      .all(pattern, pattern, pattern, pattern) as Contact[];
+  }
+
+  getByCategory(category: string): Contact[] {
+    return this.db
+      .prepare("SELECT * FROM contacts WHERE category = ? ORDER BY name ASC")
+      .all(category) as Contact[];
+  }
+
+  getCategories(): string[] {
+    const rows = this.db
+      .prepare("SELECT DISTINCT category FROM contacts WHERE category IS NOT NULL ORDER BY category")
+      .all() as { category: string }[];
+    return rows.map((r) => r.category);
+  }
+
+  update(id: number, input: UpdateContactInput): Contact | undefined {
+    const current = this.getById(id);
+    if (!current) return undefined;
+
+    const stmt = this.db.prepare(`
+      UPDATE contacts SET
+        name = @name,
+        email = @email,
+        phone = @phone,
+        address = @address,
+        notes = @notes,
+        category = @category,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+      RETURNING *
+    `);
+
+    return stmt.get({
+      id,
+      name: input.name ?? current.name,
+      email: input.email ?? current.email,
+      phone: input.phone ?? current.phone,
+      address: input.address ?? current.address,
+      notes: input.notes ?? current.notes,
+      category: input.category ?? current.category,
+    }) as Contact;
+  }
+
+  delete(id: number): boolean {
+    const stmt = this.db.prepare("DELETE FROM contacts WHERE id = ?");
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
+  getStats(): {
+    total: number;
+    byCategory: Record<string, number>;
+    categories: string[];
+  } {
+    const total = (this.db.prepare("SELECT COUNT(*) as count FROM contacts").get() as { count: number }).count;
+    
+    const categoryRows = this.db
+      .prepare("SELECT category, COUNT(*) as count FROM contacts GROUP BY category")
+      .all() as { category: string; count: number }[];
+    
+    const byCategory: Record<string, number> = {};
+    for (const row of categoryRows) {
+      byCategory[row.category] = row.count;
+    }
+
+    const categories = this.getCategories();
+
+    return { total, byCategory, categories };
+  }
+
+  close(): void {
+    this.db.close();
+  }
+}
+
+// Singleton instance for the application
+let contactsDb: ContactsDatabase | null = null;
+
+export function getContactsDb(): ContactsDatabase {
+  if (!contactsDb) {
+    contactsDb = new ContactsDatabase();
+  }
+  return contactsDb;
+}
+
+export function closeContactsDb(): void {
+  if (contactsDb) {
+    contactsDb.close();
+    contactsDb = null;
+  }
+}
+EOF
+
+[Step 24] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                    Good, now let me create the Express routes for
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts_routes.ts << 'EOF'
+import { Router, type Request, type Response } from "express";
+import { getContactsDb, closeContactsDb, type CreateContactInput, type UpdateContactInput } from "./contacts.js";
+
+export const contactsRouter = Router();
+
+// Get all contacts
+contactsRouter.get("/", (_req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const contacts = db.getAll();
+    res.json({ success: true, data: contacts });
+  } catch (error) {
+    console.error("Error fetching contacts:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch contacts" });
+  }
+});
+
+// Search contacts with optional category filter
+contactsRouter.get("/search", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const query = (req.query.q as string) || "";
+    const category = req.query.category as string | undefined;
+    const contacts = db.search(query, category);
+    res.json({ success: true, data: contacts, query, category: category || "all" });
+  } catch (error) {
+    console.error("Error searching contacts:", error);
+    res.status(500).json({ success: false, error: "Failed to search contacts" });
+  }
+});
+
+// Get all categories with counts
+contactsRouter.get("/categories", (_req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const stats = db.getStats();
+    res.json({ 
+      success: true, 
+      data: {
+        categories: stats.categories,
+        byCategory: stats.byCategory,
+        total: stats.total
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch categories" });
+  }
+});
+
+// Get contacts by category
+contactsRouter.get("/category/:category", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const category = req.params.category;
+    const contacts = db.getByCategory(category);
+    res.json({ success: true, data: contacts, category });
+  } catch (error) {
+    console.error("Error fetching contacts by category:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch contacts by category" });
+  }
+});
+
+// Get single contact by ID
+contactsRouter.get("/:id", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "Invalid ID format" });
+      return;
+    }
+    const contact = db.getById(id);
+    if (!contact) {
+      res.status(404).json({ success: false, error: "Contact not found" });
+      return;
+    }
+    res.json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error fetching contact:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch contact" });
+  }
+});
+
+// Create new contact
+contactsRouter.post("/", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const input = req.body as CreateContactInput;
+    
+    if (!input.name || typeof input.name !== "string" || input.name.trim() === "") {
+      res.status(400).json({ success: false, error: "Name is required" });
+      return;
+    }
+
+    const contact = db.create({
+      name: input.name.trim(),
+      email: input.email?.trim() || "",
+      phone: input.phone?.trim() || "",
+      address: input.address?.trim() || "",
+      notes: input.notes?.trim() || "",
+      category: input.category?.trim() || "Uncategorized",
+    });
+
+    res.status(201).json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error creating contact:", error);
+    res.status(500).json({ success: false, error: "Failed to create contact" });
+  }
+});
+
+// Update contact
+contactsRouter.put("/:id", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "Invalid ID format" });
+      return;
+    }
+
+    const input = req.body as UpdateContactInput;
+    const contact = db.update(id, input);
+    
+    if (!contact) {
+      res.status(404).json({ success: false, error: "Contact not found" });
+      return;
+    }
+
+    res.json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error updating contact:", error);
+    res.status(500).json({ success: false, error: "Failed to update contact" });
+  }
+});
+
+// Delete contact
+contactsRouter.delete("/:id", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "Invalid ID format" });
+      return;
+    }
+
+    const deleted = db.delete(id);
+    if (!deleted) {
+      res.status(404).json({ success: false, error: "Contact not found" });
+      return;
+    }
+
+    res.json({ success: true, message: "Contact deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting contact:", error);
+    res.status(500).json({ success: false, error: "Failed to delete contact" });
+  }
+});
+
+// Get stats
+contactsRouter.get("/stats/overview", (_req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const stats = db.getStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch stats" });
+  }
+});
+EOF
+
+[Step 26] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                      
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import { ContactsDatabase } from "./contacts.js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Create a temp database for testing
+let testDb: ContactsDatabase;
+let tempDbPath: string;
+
+describe("ContactsDatabase", () => {
+  // Create temp database for each test
+  beforeAll(() => {
+    const tempDir = os.tmpdir();
+    tempDbPath = path.join(tempDir, `test-contacts-${Date.now()}.db`);
+  });
+
+  beforeEach(() => {
+    // Create fresh database
+    testDb = new (ContactsDatabase as any)(tempDbPath);
+  });
+
+  afterEach(() => {
+    if (testDb) {
+      testDb.close();
+    }
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempDbPath);
+    } catch {
+      // ignore
+    }
+  });
+
+  describe("create", () => {
+    it("should create a contact with minimal fields", () => {
+      const contact = testDb.create({ name: "John Doe" });
+      expect(contact).toBeDefined();
+      expect(contact.name).toBe("John Doe");
+      expect(contact.category).toBe("Uncategorized");
+      expect(contact.id).toBeGreaterThan(0);
+    });
+
+    it("should create a contact with all fields", () => {
+      const contact = testDb.create({
+        name: "Jane Smith",
+        email: "jane@example.com",
+        phone: "555-1234",
+        address: "123 Main St",
+        notes: "Important client",
+        category: "Work",
+      });
+
+      expect(contact.name).toBe("Jane Smith");
+      expect(contact.email).toBe("jane@example.com");
+      expect(contact.phone).toBe("555-1234");
+      expect(contact.category).toBe("Work");
+    });
+  });
+
+  describe("getById", () => {
+    it("should retrieve a contact by ID", () => {
+      const created = testDb.create({ name: "Test Contact", email: "test@test.com" });
+      const retrieved = testDb.getById(created.id);
+
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.name).toBe("Test Contact");
+      expect(retrieved?.email).toBe("test@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const retrieved = testDb.getById(999);
+      expect(retrieved).toBeUndefined();
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return empty array when no contacts", () => {
+      const contacts = testDb.getAll();
+      expect(contacts).toEqual([]);
+    });
+
+    it("should return all contacts sorted by name", () => {
+      testDb.create({ name: "Charlie" });
+      testDb.create({ name: "Alice" });
+      testDb.create({ name: "Bob" });
+
+      const contacts = testDb.getAll();
+      expect(contacts).toHaveLength(3);
+      expect(contacts[0].name).toBe("Alice");
+      expect(contacts[1].name).toBe("Bob");
+      expect(contacts[2].name).toBe("Charlie");
+    });
+  });
+
+  describe("search", () => {
+    beforeEach(() => {
+      testDb.create({ name: "Alice Smith", email: "alice@work.com", category: "Work" });
+      testDb.create({ name: "Bob Johnson", email: "bob@personal.com", category: "Personal" });
+      testDb.create({ name: "Charlie Work", email: "charlie@work.com", category: "Work" });
+    });
+
+    it("should search by name", () => {
+      const results = testDb.search("Alice");
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe("Alice Smith");
+    });
+
+    it("should search by email", () => {
+      const results = testDb.search("@work.com");
+      expect(results).toHaveLength(2);
+    });
+
+    it("should filter by category", () => {
+      const results = testDb.search("", "Work");
+      expect(results).toHaveLength(2);
+      expect(results.every(c => c.category === "Work")).toBe(true);
+    });
+
+    it("should search and filter by category", () => {
+      const results = testDb.search("Smith", "Work");
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe("Alice Smith");
+    });
+  });
+
+  describe("getCategories", () => {
+    it("should return unique categories", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Personal" });
+      testDb.create({ name: "C", category: "Work" });
+
+      const categories = testDb.getCategories();
+      expect(categories).toContain("Work");
+      expect(categories).toContain("Personal");
+      expect(categories).toHaveLength(2);
+    });
+  });
+
+  describe("update", () => {
+    it("should update contact fields", () => {
+      const created = testDb.create({ name: "Original Name", email: "original@test.com" });
+      const updated = testDb.update(created.id, { name: "Updated Name", email: "updated@test.com" });
+
+      expect(updated?.name).toBe("Updated Name");
+      expect(updated?.email).toBe("updated@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const updated = testDb.update(999, { name: "New Name" });
+      expect(updated).toBeUndefined();
+    });
+  });
+
+  describe("delete", () => {
+    it("should delete a contact", () => {
+      const created = testDb.create({ name: "To Delete" });
+      const deleted = testDb.delete(created.id);
+
+      expect(deleted).toBe(true);
+      expect(testDb.getById(created.id)).toBeUndefined();
+    });
+
+    it("should return false for non-existent ID", () => {
+      const deleted = testDb.delete(999);
+      expect(deleted).toBe(false);
+    });
+  });
+
+  describe("getStats", () => {
+    it("should return correct stats", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Work" });
+      testDb.create({ name: "C", category: "Personal" });
+
+      const stats = testDb.getStats();
+      expect(stats.total).toBe(3);
+      expect(stats.byCategory["Work"]).toBe(2);
+      expect(stats.byCategory["Personal"]).toBe(1);
+      expect(stats.categories).toContain("Work");
+      expect(stats.categories).toContain("Personal");
+    });
+  });
+});
+
+// Add path getter to mock the db path
+(ContactsDatabase as any).prototype.getDbPath = function() {
+  return this.dbPath;
+};
+EOF
+
+[Step 28] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                          Now I need to update the main server.ts to include the contacts router, and then create the React
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/web/server/server.ts | head -15
+
+[Step 30] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                             I need to modify server.ts to include the contacts
+> Executing (timeout: 300s): cat /home/bootstrap-v17/bootstrap/src/web/server/server.ts
+
+[Step 32] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                Now I need to modify server.ts to add the
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/server_updated.ts << 'EOF'
+import express, { type Request, type Response, type Application } from "express";
+import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  hashPassword,
+  verifyPassword,
+  generateToken,
+  generateId,
+  authMiddleware,
+  userStore,
+  type AuthenticatedRequest,
+  type User,
+  clearUserStore,
+} from "./auth.js";
+import { memoryVizRouter, getMemoryGraph } from "./memory_viz.js";
+import { economicRouter } from "./economic_dashboard.js";
+import { contactsRouter } from "./contacts_routes.js";
+
+// Get __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export function createApp(): Application {
+  const app = express();
+
+  // Middleware
+  app.use(cors());
+  app.use(express.json());
+
+  // Serve static files for visualizations
+  app.use("/viz", express.static(path.join(__dirname, "../client")));
+
+  // Health check endpoint
+  app.get("/api/health", (_req: Request, res: Response) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Memory visualization API
+  app.use("/api/memory", memoryVizRouter);
+
+  // Economic dashboard API
+  app.use("/api/economic", economicRouter);
+
+  // Contacts API - search and categorize
+  app.use("/api/contacts", contactsRouter);
+
+  // Direct route to serve the memory visualization
+  app.get("/memory", (_req, res) => {
+    res.redirect("/viz/memory_viz.html");
+  });
+
+  // Direct route to serve the economic dashboard
+  app.get("/economic", (_req, res) => {
+    res.redirect("/viz/economic_viz.html");
+  });
+
+  // Direct route to serve the contacts app
+  app.get("/contacts", (_req, res) => {
+    res.redirect("/viz/contacts_app.html");
+  });
+
+  // User registration endpoint
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      // Validation
+      if (!email || typeof email !== "string") {
+        res.status(400).json({ error: "Email is required" });
+        return;
+      }
+      if (!password || typeof password !== "string") {
+        res.status(400).json({ error: "Password is required" });
+        return;
+      }
+      if (password.length < 6) {
+        res.status(400).json({ error: "Password must be at least 6 characters" });
+        return;
+      }
+
+      // Check if user already exists
+      const existingUser = Array.from(userStore.values()).find(
+        (u) => u.email === email
+      );
+      if (existingUser) {
+        res.status(409).json({ error: "User already exists" });
+        return;
+      }
+
+      // Create new user
+      const userId = generateId();
+      const passwordHash = await hashPassword(password);
+      const newUser: User = {
+        id: userId,
+        email,
+        passwordHash,
+        createdAt: new Date(),
+      };
+      userStore.set(userId, newUser);
+      const token = generateToken(newUser);
+      res.status(201).json({
+        message: "User registered successfully",
+        user: {
+          id: userId,
+          email: newUser.email,
+          createdAt: newUser.createdAt.toISOString(),
+        },
+        token,
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // User login endpoint
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      // Validation
+      if (!email || typeof email !== "string") {
+        res.status(400).json({ error: "Email is required" });
+        return;
+      }
+      if (!password || typeof password !== "string") {
+        res.status(400).json({ error: "Password is required" });
+        return;
+      }
+
+      // Find user
+      const user = Array.from(userStore.values()).find((u) => u.email === email);
+      if (!user) {
+        res.status(401).json({ error: "Invalid credentials" });
+        return;
+      }
+
+      // Verify password
+      const isValidPassword = await verifyPassword(password, user.passwordHash);
+      if (!isValidPassword) {
+        res.status(401).json({ error: "Invalid credentials" });
+        return;
+      }
+
+      const token = generateToken(user);
+      res.json({
+        message: "Login successful",
+        user: {
+          id: user.id,
+          email: user.email,
+          createdAt: user.createdAt.toISOString(),
+        },
+        token,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Protected endpoint - requires authentication
+  app.get(
+    "/api/protected/profile",
+    authMiddleware,
+    (req: AuthenticatedRequest, res: Response) => {
+      const user = req.user!;
+      res.json({
+        message: "Profile retrieved successfully",
+        user: {
+          id: user.id,
+          email: user.email,
+          createdAt: user.createdAt.toISOString(),
+        },
+      });
+    }
+  );
+
+  // Protected endpoint - dashboard data
+  app.get(
+    "/api/protected/dashboard",
+    authMiddleware,
+    (req: AuthenticatedRequest, res: Response) => {
+      const user = req.user!;
+      res.json({
+        message: "Dashboard data retrieved",
+        data: {
+          userId: user.id,
+          email: user.email,
+          stats: {
+            loginCount: 1,
+            lastActive: new Date().toISOString(),
+            accountAge: Date.now() - user.createdAt.getTime(),
+          },
+        },
+      });
+    }
+  );
+
+  // Memory stats endpoint
+  app.get("/api/stats/memory", async (_req, res) => {
+    try {
+      const graph = await getMemoryGraph();
+      res.json({
+        totalMemories: graph.nodes.length,
+        totalGoals: graph.clusters.length,
+        totalConnections: graph.connections.length,
+        byRole: graph.nodes.reduce((acc, n) => {
+          acc[n.role] = (acc[n.role] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>),
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get memory stats" });
+    }
+  });
+
+  return app;
+}
+
+// Re-export for testing
+export { clearUserStore, userStore };
+EOF
+
+# Replace the original file
+mv /home/bootstrap-v17/bootstrap/src/web/server/server_updated.ts /home/bootstrap-v17/bootstrap/src/web/server/server.ts
+
+[Step 34] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                   Now let me create the React frontend. I'll create a simple React app without a build step by using React from CDN - this makes it simple to run
+> Executing (timeout: 300s): mkdir -p /home/bootstrap-v17/bootstrap/src/web/client/contacts
+
+[Step 36] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                       Now I'll create the React contact management app using CDN
+
+[RESPONSE]: form-group input,\n    .form-group select                </div>\n                <div className loadCategories();\n          } else {\n           
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/client/contacts_app.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS Contacts - Search & Categorize</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #e4e4e7;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    
+    .header p {
+      color: #a1a1aa;
+      font-size: 0.95rem;
+    }
+    
+    .stats-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .stat-card {
+      flex: 1;
+      min-width: 140px;
+      padding: 1rem;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .stat-card .number {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #8b5cf6;
+    }
+    
+    .stat-card .label {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      margin-top: 0.25rem;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+    
+    .search-box input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    
+    .search-box input::placeholder { color: #71717a; }
+    .search-box input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+    
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #71717a;
+    }
+    
+    .filter-select {
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      cursor: pointer;
+      outline: none;
+      min-width: 150px;
+    }
+    
+    .filter-select:focus { border-color: #8b5cf6; }
+    .filter-select option { background: #1a1a2e; color: #e4e4e7; }
+    
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e4e4e7;
+    }
+    
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
+    
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+    
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+    
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .contact-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .contact-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139, 92, 246, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .contact-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 0.75rem;
+    }
+    
+    .contact-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f4f4f5;
+    }
+    
+    .contact-category {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: rgba(139, 92, 246, 0.2);
+      color: #a78bfa;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .contact-category.work { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .contact-category.personal { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .contact-category.family { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+    .contact-category.business { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    
+    .contact-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .contact-detail {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: #a1a1aa;
+    }
+    
+    .contact-detail svg {
+      width: 16px;
+      height: 16px;
+      color: #71717a;
+    }
+    
+    .contact-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .contact-actions .btn {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #71717a;
+    }
+    
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+      color: #a1a1aa;
+      margin-bottom: 0.5rem;
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+    
+    .modal {
+      background: #1e1e2e;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f4f4f5;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: #71717a;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 8px;
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+    
+    .modal-close:hover { background: rgba(255, 255, 255, 0.1); color: #e4e4e7; }
+    
+    .modal-body {
+      padding: 1.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #a1a1aa;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #e4e4e7;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+    
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+    }
+    
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+    
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(139, 92, 246, 0.3);
+      border-top-color: #8b5cf6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    
+    .success-message {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    
+    .category-pills {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    
+    .category-pill {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: #a1a1aa;
+      transition: all 0.2s ease;
+    }
+    
+    .category-pill:hover { background: rgba(255, 255, 255, 0.1); }
+    .category-pill.active {
+      background: rgba(139, 92, 246, 0.3);
+      border-color: #8b5cf6;
+      color: #f4f4f5;
+    }
+  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+    
+    const API_URL = '/api/contacts';
+    
+    // Icons as components
+    const SearchIcon = () => (
+      <svg className="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    );
+    
+    const MailIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    );
+    
+    const PhoneIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+      </svg>
+    );
+    
+    const MapPinIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+    
+    const NoteIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    );
+    
+    const PlusIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{width: 18, height: 18, marginRight: 8}}>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+      </svg>
+    );
+    
+    const EmptyStateIcon = () => (
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    );
+    
+    // API functions
+    const api = {
+      async getAll() {
+        const res = await fetch(API_URL);
+        return res.json();
+      },
+      
+      async search(query, category = null) {
+        const params = new URLSearchParams();
+        if (query) params.append('q', query);
+        if (category && category !== 'all') params.append('category', category);
+        const res = await fetch(`${API_URL}/search?${params}`);
+        return res.json();
+      },
+      
+      async getCategories() {
+        const res = await fetch(`${API_URL}/categories`);
+        return res.json();
+      },
+      
+      async create(data) {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      },
+      
+      async update(id, data) {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        return res.json();
+      },
+      
+      async delete(id) {
+        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        return res.json();
+      }
+    };
+    
+    // Modal Component
+    const ContactModal = ({ contact, categories, onClose, onSave }) => {
+      const [formData, setFormData] = useState(contact || {
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        notes: '',
+        category: 'Uncategorized'
+      });
+      
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onSave(formData);
+      };
+      
+      const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+      
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{contact ? 'Edit Contact' : 'New Contact'}</h2>
+              <button className="modal-close" onClick={onClose}>×</button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Name *</label>
+                  <input 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleChange}
+                    placeholder="Full name"
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input 
+                      name="email" 
+                      type="email"
+                      value={formData.email} 
+                      onChange={handleChange}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Phone</label>
+                    <input 
+                      name="phone" 
+                      value={formData.phone} 
+                      onChange={handleChange}
+                      placeholder="+1 234 567 890"
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Address</label>
+                  <input 
+                    name="address" 
+                    value={formData.address} 
+                    onChange={handleChange}
+                    placeholder="Street address"
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Category</label>
+                    <select name="category" value={formData.category} onChange={handleChange}>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                      <option value="Uncategorized">Uncategorized</option>
+                      <option value="Work">Work</option>
+                      <option value="Personal">Personal</option>
+                      <option value="Family">Family</option>
+                      <option value="Business">Business</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Notes</label>
+                  <textarea 
+                    name="notes" 
+                    value={formData.notes} 
+                    onChange={handleChange}
+                    placeholder="Additional notes..."
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={onClose}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {contact ? 'Update' : 'Create'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+    
+    // Contact Card Component
+    const ContactCard = ({ contact, categories, onEdit, onDelete }) => {
+      const categoryClass = contact.category.toLowerCase().replace(/\s+/g, '-');
+      
+      return (
+        <div className="contact-card">
+          <div className="contact-header">
+            <div>
+              <div className="contact-name">{contact.name}</div>
+              <span className={`contact-category ${categoryClass}`}>{contact.category}</span>
+            </div>
+          </div>
+          <div className="contact-details">
+            {contact.email && (
+              <div className="contact-detail">
+                <MailIcon />
+                <span>{contact.email}</span>
+              </div>
+            )}
+            {contact.phone && (
+              <div className="contact-detail">
+                <PhoneIcon />
+                <span>{contact.phone}</span>
+              </div>
+            )}
+            {contact.address && (
+              <div className="contact-detail">
+                <MapPinIcon />
+                <span>{contact.address}</span>
+              </div>
+            )}
+            {contact.notes && (
+              <div className="contact-detail">
+                <NoteIcon />
+                <span>{contact.notes.length > 60 ? contact.notes.substring(0, 60) + '...' : contact.notes}</span>
+              </div>
+            )}
+          </div>
+          <div className="contact-actions">
+            <button className="btn btn-secondary" onClick={() => onEdit(contact)}>
+              Edit
+            </button>
+            <button className="btn btn-danger" onClick={() => onDelete(contact)}>
+              Delete
+            </button>
+          </div>
+        </div>
+      );
+    };
+    
+    // Main App
+    const App = () => {
+      const [contacts, setContacts] = useState([]);
+      const [categories, setCategories] = useState(['Uncategorized', 'Work', 'Personal', 'Family', 'Business']);
+      const [stats, setStats] = useState({ total: 0, byCategory: {} });
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [searchQuery, setSearchQuery] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('all');
+      const [modalOpen, setModalOpen] = useState(false);
+      const [editingContact, setEditingContact] = useState(null);
+      const [message, setMessage] = useState(null);
+      
+      const showMessage = (text, type = 'success') => {
+        setMessage({ text, type });
+        setTimeout(() => setMessage(null), 3000);
+      };
+      
+      const loadContacts = useCallback(async () => {
+        try {
+          setLoading(true);
+          let result;
+          if (searchQuery || selectedCategory !== 'all') {
+            result = await api.search(searchQuery, selectedCategory === 'all' ? null : selectedCategory);
+          } else {
+            result = await api.getAll();
+          }
+          if (result.success) {
+            setContacts(result.data);
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to load contacts: ' + err.message);
+        } finally {
+          setLoading(false);
+        }
+      }, [searchQuery, selectedCategory]);
+      
+      const loadCategories = useCallback(async () => {
+        try {
+          const result = await api.getCategories();
+          if (result.success && result.data.categories.length > 0) {
+            setCategories(result.data.categories);
+            setStats({ total: result.data.total, byCategory: result.data.byCategory });
+          }
+        } catch (err) {
+          console.error('Failed to load categories:', err);
+        }
+      }, []);
+      
+      useEffect(() => {
+        loadContacts();
+      }, [loadContacts]);
+      
+      useEffect(() => {
+        loadCategories();
+      }, [loadCategories]);
+      
+      const handleCreate = async (data) => {
+        try {
+          const result = await api.create(data);
+          if (result.success) {
+            showMessage('Contact created successfully!');
+            setModalOpen(false);
+            loadContacts();
+            loadCategories();
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to create contact');
+        }
+      };
+      
+      const handleUpdate = async (data) => {
+        if (!editingContact) return;
+        try {
+          const result = await api.update(editingContact.id, data);
+          if (result.success) {
+            showMessage('Contact updated successfully!');
+            setModalOpen(false);
+            setEditingContact(null);
+            loadContacts();
+            loadCategories();
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to update contact');
+        }
+      };
+      
+      const handleDelete = async (contact) => {
+        if (!confirm(`Delete "${contact.name}"?`)) return;
+        try {
+          const result = await api.delete(contact.id);
+          if (result.success) {
+            showMessage('Contact deleted successfully!');
+            loadContacts();
+            loadCategories();
+          } else {
+            setError(result.error);
+          }
+        } catch (err) {
+          setError('Failed to delete contact');
+        }
+      };
+      
+      const openCreateModal = () => {
+        setEditingContact(null);
+        setModalOpen(true);
+      };
+      
+      const openEditModal = (contact) => {
+        setEditingContact(contact);
+        setModalOpen(true);
+      };
+      
+      const closeModal = () => {
+        setModalOpen(false);
+        setEditingContact(null);
+      };
+      
+      const uniqueCategories = ['all', ...new Set([...categories, 'Work', 'Personal', 'Family', 'Business', 'Uncategorized'])];
+      
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>NEXUS Contacts</h1>
+            <p>Search and organize your network</p>
+          </div>
+          
+          {message && (
+            <div className={message.type === 'error' ? 'error-message' : 'success-message'}>
+              {message.text}
+            </div>
+          )}
+          
+          <div className="stats-bar">
+            <div className="stat-card">
+              <div className="number">{stats.total}</div>
+              <div className="label">Total Contacts</div>
+            </div>
+            {categories.slice(0, 3).map(cat => (
+              <div key={cat} className="stat-card">
+                <div className="number">{stats.byCategory[cat] || 0}</div>
+                <div className="label">{cat}</div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="controls">
+            <div className="search-box">
+              <SearchIcon />
+              <input 
+                type="text" 
+                placeholder="Search by name, email, phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select 
+              className="filter-select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {uniqueCategories.filter(c => c !== 'all').map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <button className="btn btn-primary" onClick={openCreateModal}>
+              <PlusIcon />
+              Add Contact
+            </button>
+          </div>
+          
+          <div className="category-pills">
+            {uniqueCategories.map(cat => (
+              <button
+                key={cat}
+                className={`category-pill ${selectedCategory === cat ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {cat === 'all' ? 'All' : cat}
+                {cat !== 'all' && stats.byCategory[cat] && (
+                  <span style={{marginLeft: 6, opacity: 0.7}}>({stats.byCategory[cat]})</span>
+                )}
+              </button>
+            ))}
+          </div>
+          
+          {loading ? (
+            <div className="loading">
+              <div className="spinner"></div>
+            </div>
+          ) : error ? (
+            <div className="error-message">
+              <p>{error}</p>
+              <button className="btn btn-primary" onClick={loadContacts} style={{marginTop: '1rem'}}>
+                Retry
+              </button>
+            </div>
+          ) : contacts.length === 0 ? (
+            <div className="empty-state">
+              <EmptyStateIcon />
+              <h3>{searchQuery ? 'No contacts found' : 'No contacts yet'}</h3>
+              <p>{searchQuery ? 'Try a different search term' : 'Add your first contact to get started'}</p>
+              {!searchQuery && (
+                <button className="btn btn-primary" onClick={openCreateModal} style={{marginTop: '1rem'}}>
+                  <PlusIcon />
+                  Add Contact
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="contacts-grid">
+              {contacts.map(contact => (
+                <ContactCard
+                  key={contact.id}
+                  contact={contact}
+                  categories={categories}
+                  onEdit={openEditModal}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+          
+          {modalOpen && (
+            <ContactModal
+              contact={editingContact}
+              categories={categories}
+              onClose={closeModal}
+              onSave={editingContact ? handleUpdate : handleCreate}
+            />
+          )}
+        </div>
+      );
+    };
+    
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
+EOF
+
+[Step 38] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                        Now let me update the index.ts to ensure the contacts_db files are properly exported and create a tests
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/index.ts << 'EOF'
+import { createApp } from "./server.js";
+
+const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
+
+const app = createApp();
+
+app.listen(PORT, () => {
+  console.log(`✓ NEXUS Server running at http://${HOST}:${PORT}`);
+  console.log(`  - Health check: http://localhost:${PORT}/api/health`);
+  console.log(`  - Contacts app: http://localhost:${PORT}/contacts`);
+  console.log(`  - Memory viz: http://localhost:${PORT}/memory`);
+  console.log(`  - Economic viz: http://localhost:${PORT}/economic`);
+});
+EOF
+
+[Step 40] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                           
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm run compile
+
+[Step 42] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                             Let me fix the TypeScript errors in the test
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts_routes.ts << 'EOF'
+import { Router, type Request, type Response } from "express";
+import { getContactsDb, closeContactsDb, type CreateContactInput, type UpdateContactInput } from "./contacts.js";
+
+export const contactsRouter = Router();
+
+// Get all contacts
+contactsRouter.get("/", (_req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const contacts = db.getAll();
+    res.json({ success: true, data: contacts });
+  } catch (error) {
+    console.error("Error fetching contacts:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch contacts" });
+  }
+});
+
+// Search contacts with optional category filter
+contactsRouter.get("/search", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const query = (req.query.q as string) || "";
+    const categoryParam = req.query.category;
+    const category = categoryParam ? String(categoryParam) : undefined;
+    const contacts = db.search(query, category);
+    res.json({ success: true, data: contacts, query, category: category || "all" });
+  } catch (error) {
+    console.error("Error searching contacts:", error);
+    res.status(500).json({ success: false, error: "Failed to search contacts" });
+  }
+});
+
+// Get all categories with counts
+contactsRouter.get("/categories", (_req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const stats = db.getStats();
+    res.json({ 
+      success: true, 
+      data: {
+        categories: stats.categories,
+        byCategory: stats.byCategory,
+        total: stats.total
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch categories" });
+  }
+});
+
+// Get contacts by category
+contactsRouter.get("/category/:category", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const category = String(req.params.category);
+    const contacts = db.getByCategory(category);
+    res.json({ success: true, data: contacts, category });
+  } catch (error) {
+    console.error("Error fetching contacts by category:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch contacts by category" });
+  }
+});
+
+// Get single contact by ID
+contactsRouter.get("/:id", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "Invalid ID format" });
+      return;
+    }
+    const contact = db.getById(id);
+    if (!contact) {
+      res.status(404).json({ success: false, error: "Contact not found" });
+      return;
+    }
+    res.json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error fetching contact:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch contact" });
+  }
+});
+
+// Create new contact
+contactsRouter.post("/", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const input = req.body as CreateContactInput;
+    
+    if (!input.name || typeof input.name !== "string" || input.name.trim() === "") {
+      res.status(400).json({ success: false, error: "Name is required" });
+      return;
+    }
+
+    const contact = db.create({
+      name: input.name.trim(),
+      email: input.email?.trim() || "",
+      phone: input.phone?.trim() || "",
+      address: input.address?.trim() || "",
+      notes: input.notes?.trim() || "",
+      category: input.category?.trim() || "Uncategorized",
+    });
+
+    res.status(201).json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error creating contact:", error);
+    res.status(500).json({ success: false, error: "Failed to create contact" });
+  }
+});
+
+// Update contact
+contactsRouter.put("/:id", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "Invalid ID format" });
+      return;
+    }
+
+    const input = req.body as UpdateContactInput;
+    const contact = db.update(id, input);
+    
+    if (!contact) {
+      res.status(404).json({ success: false, error: "Contact not found" });
+      return;
+    }
+
+    res.json({ success: true, data: contact });
+  } catch (error) {
+    console.error("Error updating contact:", error);
+    res.status(500).json({ success: false, error: "Failed to update contact" });
+  }
+});
+
+// Delete contact
+contactsRouter.delete("/:id", (req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "Invalid ID format" });
+      return;
+    }
+
+    const deleted = db.delete(id);
+    if (!deleted) {
+      res.status(404).json({ success: false, error: "Contact not found" });
+      return;
+    }
+
+    res.json({ success: true, message: "Contact deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting contact:", error);
+    res.status(500).json({ success: false, error: "Failed to delete contact" });
+  }
+});
+
+// Get stats
+contactsRouter.get("/stats/overview", (_req: Request, res: Response) => {
+  try {
+    const db = getContactsDb();
+    const stats = db.getStats();
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    console.error("Error fetching stats:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch stats" });
+  }
+});
+EOF
+
+[Step 44] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                              
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import { ContactsDatabase } from "./contacts.js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Create a temp database for testing
+let testDb: ContactsDatabase;
+let tempDbPath: string;
+
+describe("ContactsDatabase", () => {
+  // Create temp database for each test
+  beforeAll(() => {
+    const tempDir = os.tmpdir();
+    tempDbPath = path.join(tempDir, `test-contacts-${Date.now()}.db`);
+  });
+
+  beforeEach(() => {
+    // Create fresh database using constructor that takes path
+    // Cast to access the constructor signature
+    const TestDb = ContactsDatabase as unknown as { 
+      new(path: string): ContactsDatabase 
+    };
+    testDb = new TestDb(tempDbPath);
+  });
+
+  afterEach(() => {
+    if (testDb) {
+      testDb.close();
+    }
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempDbPath);
+    } catch {
+      // ignore
+    }
+  });
+
+  describe("create", () => {
+    it("should create a contact with minimal fields", () => {
+      const contact = testDb.create({ name: "John Doe" });
+      expect(contact).toBeDefined();
+      expect(contact.name).toBe("John Doe");
+      expect(contact.category).toBe("Uncategorized");
+      expect(contact.id).toBeGreaterThan(0);
+    });
+
+    it("should create a contact with all fields", () => {
+      const contact = testDb.create({
+        name: "Jane Smith",
+        email: "jane@example.com",
+        phone: "555-1234",
+        address: "123 Main St",
+        notes: "Important client",
+        category: "Work",
+      });
+
+      expect(contact.name).toBe("Jane Smith");
+      expect(contact.email).toBe("jane@example.com");
+      expect(contact.phone).toBe("555-1234");
+      expect(contact.category).toBe("Work");
+    });
+  });
+
+  describe("getById", () => {
+    it("should retrieve a contact by ID", () => {
+      const created = testDb.create({ name: "Test Contact", email: "test@test.com" });
+      const retrieved = testDb.getById(created.id);
+
+      expect(retrieved).toBeDefined();
+      expect(retrieved!.name).toBe("Test Contact");
+      expect(retrieved!.email).toBe("test@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const retrieved = testDb.getById(999);
+      expect(retrieved).toBeUndefined();
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return empty array when no contacts", () => {
+      const contacts = testDb.getAll();
+      expect(contacts).toEqual([]);
+    });
+
+    it("should return all contacts sorted by name", () => {
+      testDb.create({ name: "Charlie" });
+      testDb.create({ name: "Alice" });
+      testDb.create({ name: "Bob" });
+
+      const contacts = testDb.getAll();
+      expect(contacts).toHaveLength(3);
+      expect(contacts[0].name).toBe("Alice");
+      expect(contacts[1].name).toBe("Bob");
+      expect(contacts[2].name).toBe("Charlie");
+    });
+  });
+
+  describe("search", () => {
+    beforeEach(() => {
+      testDb.create({ name: "Alice Smith", email: "alice@work.com", category: "Work" });
+      testDb.create({ name: "Bob Johnson", email: "bob@personal.com", category: "Personal" });
+      testDb.create({ name: "Charlie Work", email: "charlie@work.com", category: "Work" });
+    });
+
+    it("should search by name", () => {
+      const results = testDb.search("Alice");
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe("Alice Smith");
+    });
+
+    it("should search by email", () => {
+      const results = testDb.search("@work.com");
+      expect(results).toHaveLength(2);
+    });
+
+    it("should filter by category", () => {
+      const results = testDb.search("", "Work");
+      expect(results).toHaveLength(2);
+      expect(results.every(c => c.category === "Work")).toBe(true);
+    });
+
+    it("should search and filter by category", () => {
+      const results = testDb.search("Smith", "Work");
+      expect(results).toHaveLength(1);
+      expect(results[0].name).toBe("Alice Smith");
+    });
+  });
+
+  describe("getCategories", () => {
+    it("should return unique categories", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Personal" });
+      testDb.create({ name: "C", category: "Work" });
+
+      const categories = testDb.getCategories();
+      expect(categories).toContain("Work");
+      expect(categories).toContain("Personal");
+      expect(categories).toHaveLength(2);
+    });
+  });
+
+  describe("update", () => {
+    it("should update contact fields", () => {
+      const created = testDb.create({ name: "Original Name", email: "original@test.com" });
+      const updated = testDb.update(created.id, { name: "Updated Name", email: "updated@test.com" });
+
+      expect(updated!.name).toBe("Updated Name");
+      expect(updated!.email).toBe("updated@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const updated = testDb.update(999, { name: "New Name" });
+      expect(updated).toBeUndefined();
+    });
+  });
+
+  describe("delete", () => {
+    it("should delete a contact", () => {
+      const created = testDb.create({ name: "To Delete" });
+      const deleted = testDb.delete(created.id);
+
+      expect(deleted).toBe(true);
+      expect(testDb.getById(created.id)).toBeUndefined();
+    });
+
+    it("should return false for non-existent ID", () => {
+      const deleted = testDb.delete(999);
+      expect(deleted).toBe(false);
+    });
+  });
+
+  describe("getStats", () => {
+    it("should return correct stats", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Work" });
+      testDb.create({ name: "C", category: "Personal" });
+
+      const stats = testDb.getStats();
+      expect(stats.total).toBe(3);
+      expect(stats.byCategory["Work"]).toBe(2);
+      expect(stats.byCategory["Personal"]).toBe(1);
+      expect(stats.categories).toContain("Work");
+      expect(stats.categories).toContain("Personal");
+    });
+  });
+});
+EOF
+
+[Step 46] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                                    The test needs to be updated to handle the constructor signature properly. Let me also need to make the database constructor accept an optional path parameter. Let me
+[STALL] No tool calls detected (#1)
+
+[Step 47] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  The code looks good. There are some TypeScript errors in `contacts.test.ts` that need to be fixed. The issue is with accessing `created.id
+
+[RESPONSE]:  I see there are TypeScript errors in the test fileApiClient Error: terminated
+
+[Step 47] Requesting kimi-k2.5... (Attempt 2/6)
+[THINKING]:  The tests are failing because they need a way to pass a custom database path to the constructor. I need to refactor the database class to accept an optional path
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.ts << 'EOF'
+import Database from "better-sqlite3";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Database path - shared with Python nexus module
+const DEFAULT_DB_PATH = path.join(__dirname, "../../../../nexus/nexus.db");
+
+export interface Contact {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateContactInput {
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  category?: string;
+}
+
+export interface UpdateContactInput {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  notes?: string;
+  category?: string;
+}
+
+export class ContactsDatabase {
+  private db: Database.Database;
+  private dbPath: string;
+
+  constructor(dbPath: string = DEFAULT_DB_PATH) {
+    this.dbPath = dbPath;
+    this.db = new Database(dbPath);
+    this.db.pragma("journal_mode = WAL");
+    this.initSchema();
+  }
+
+  getDbPath(): string {
+    return this.dbPath;
+  }
+
+  private initSchema(): void {
+    // Create contacts table if not exists
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        address TEXT,
+        notes TEXT,
+        category TEXT DEFAULT 'Uncategorized',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Add category column if upgrading from older schema
+    try {
+      this.db.exec(`ALTER TABLE contacts ADD COLUMN category TEXT DEFAULT 'Uncategorized'`);
+    } catch {
+      // Column already exists, ignore error
+    }
+
+    // Create indexes for search
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_contacts_name ON contacts(name)`);
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_contacts_category ON contacts(category)`);
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email)`);
+  }
+
+  create(input: CreateContactInput): Contact {
+    const stmt = this.db.prepare(`
+      INSERT INTO contacts (name, email, phone, address, notes, category, updated_at)
+      VALUES (@name, @email, @phone, @address, @notes, @category, CURRENT_TIMESTAMP)
+      RETURNING *
+    `);
+
+    const result = stmt.get({
+      name: input.name,
+      email: input.email || "",
+      phone: input.phone || "",
+      address: input.address || "",
+      notes: input.notes || "",
+      category: input.category || "Uncategorized",
+    }) as Contact;
+
+    return result;
+  }
+
+  getById(id: number): Contact | undefined {
+    return this.db.prepare("SELECT * FROM contacts WHERE id = ?").get(id) as
+      | Contact
+      | undefined;
+  }
+
+  getAll(): Contact[] {
+    return this.db
+      .prepare("SELECT * FROM contacts ORDER BY name ASC")
+      .all() as Contact[];
+  }
+
+  search(query: string, category?: string): Contact[] {
+    const pattern = `%${query}%`;
+    
+    if (category && category !== "all") {
+      return this.db
+        .prepare(
+          `SELECT * FROM contacts 
+           WHERE (name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?)
+           AND category = ?
+           ORDER BY name ASC`
+        )
+        .all(pattern, pattern, pattern, pattern, category) as Contact[];
+    }
+    
+    return this.db
+      .prepare(
+        `SELECT * FROM contacts 
+         WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? OR notes LIKE ?
+         ORDER BY name ASC`
+      )
+      .all(pattern, pattern, pattern, pattern) as Contact[];
+  }
+
+  getByCategory(category: string): Contact[] {
+    return this.db
+      .prepare("SELECT * FROM contacts WHERE category = ? ORDER BY name ASC")
+      .all(category) as Contact[];
+  }
+
+  getCategories(): string[] {
+    const rows = this.db
+      .prepare("SELECT DISTINCT category FROM contacts WHERE category IS NOT NULL ORDER BY category")
+      .all() as { category: string }[];
+    return rows.map((r) => r.category);
+  }
+
+  update(id: number, input: UpdateContactInput): Contact | undefined {
+    const current = this.getById(id);
+    if (!current) return undefined;
+
+    const stmt = this.db.prepare(`
+      UPDATE contacts SET
+        name = @name,
+        email = @email,
+        phone = @phone,
+        address = @address,
+        notes = @notes,
+        category = @category,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = @id
+      RETURNING *
+    `);
+
+    return stmt.get({
+      id,
+      name: input.name ?? current.name,
+      email: input.email ?? current.email,
+      phone: input.phone ?? current.phone,
+      address: input.address ?? current.address,
+      notes: input.notes ?? current.notes,
+      category: input.category ?? current.category,
+    }) as Contact;
+  }
+
+  delete(id: number): boolean {
+    const stmt = this.db.prepare("DELETE FROM contacts WHERE id = ?");
+    const result = stmt.run(id);
+    return result.changes > 0;
+  }
+
+  getStats(): {
+    total: number;
+    byCategory: Record<string, number>;
+    categories: string[];
+  } {
+    const total = (this.db.prepare("SELECT COUNT(*) as count FROM contacts").get() as { count: number }).count;
+    
+    const categoryRows = this.db
+      .prepare("SELECT category, COUNT(*) as count FROM contacts GROUP BY category")
+      .all() as { category: string; count: number }[];
+    
+    const byCategory: Record<string, number> = {};
+    for (const row of categoryRows) {
+      byCategory[row.category] = row.count;
+    }
+
+    const categories = this.getCategories();
+
+    return { total, byCategory, categories };
+  }
+
+  close(): void {
+    this.db.close();
+  }
+}
+
+// Singleton instance for the application
+let contactsDb: ContactsDatabase | null = null;
+
+export function getContactsDb(): ContactsDatabase {
+  if (!contactsDb) {
+    contactsDb = new ContactsDatabase();
+  }
+  return contactsDb;
+}
+
+export function closeContactsDb(): void {
+  if (contactsDb) {
+    contactsDb.close();
+    contactsDb = null;
+  }
+}
+EOF
+
+[Step 49] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  Now I need to update the server.ts to integrate the
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm run compile
+
+[Step 51] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:  I need to fix the TypeScript errors in the test file. The issue is that `results[0
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import { ContactsDatabase } from "./contacts.js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Create a temp database for testing
+let testDb: ContactsDatabase;
+let tempDbPath: string;
+
+describe("ContactsDatabase", () => {
+  // Create temp database for each test
+  beforeAll(() => {
+    const tempDir = os.tmpdir();
+    tempDbPath = path.join(tempDir, `test-contacts-${Date.now()}.db`);
+  });
+
+  beforeEach(() => {
+    // Create fresh database
+    testDb = new ContactsDatabase(tempDbPath);
+  });
+
+  afterEach(() => {
+    if (testDb) {
+      testDb.close();
+    }
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempDbPath);
+    } catch {
+      // ignore
+    }
+  });
+
+  describe("create", () => {
+    it("should create a contact with minimal fields", () => {
+      const contact = testDb.create({ name: "John Doe" });
+      expect(contact).toBeDefined();
+      expect(contact.name).toBe("John Doe");
+      expect(contact.category).toBe("Uncategorized");
+      expect(contact.id).toBeGreaterThan(0);
+    });
+
+    it("should create a contact with all fields", () => {
+      const contact = testDb.create({
+        name: "Jane Smith",
+        email: "jane@example.com",
+        phone: "555-1234",
+        address: "123 Main St",
+        notes: "Important client",
+        category: "Work",
+      });
+
+      expect(contact.name).toBe("Jane Smith");
+      expect(contact.email).toBe("jane@example.com");
+      expect(contact.phone).toBe("555-1234");
+      expect(contact.category).toBe("Work");
+    });
+  });
+
+  describe("getById", () => {
+    it("should retrieve a contact by ID", () => {
+      const created = testDb.create({ name: "Test Contact", email: "test@test.com" });
+      const retrieved = testDb.getById(created.id);
+
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.name).toBe("Test Contact");
+      expect(retrieved?.email).toBe("test@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const retrieved = testDb.getById(999);
+      expect(retrieved).toBeUndefined();
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return empty array when no contacts", () => {
+      const contacts = testDb.getAll();
+      expect(contacts).toEqual([]);
+    });
+
+    it("should return all contacts sorted by name", () => {
+      testDb.create({ name: "Charlie" });
+      testDb.create({ name: "Alice" });
+      testDb.create({ name: "Bob" });
+
+      const contacts = testDb.getAll();
+      expect(contacts).toHaveLength(3);
+      expect(contacts[0].name).toBe("Alice");
+      expect(contacts[1].name).toBe("Bob");
+      expect(contacts[2].name).toBe("Charlie");
+    });
+  });
+
+  describe("search", () => {
+    beforeEach(() => {
+      testDb.create({ name: "Alice Smith", email: "alice@work.com", category: "Work" });
+      testDb.create({ name: "Bob Johnson", email: "bob@personal.com", category: "Personal" });
+      testDb.create({ name: "Charlie Work", email: "charlie@work.com", category: "Work" });
+    });
+
+    it("should search by name", () => {
+      const results = testDb.search("Alice");
+      expect(results).toHaveLength(1);
+      expect(results[0]?.name).toBe("Alice Smith");
+    });
+
+    it("should search by email", () => {
+      const results = testDb.search("@work.com");
+      expect(results).toHaveLength(2);
+    });
+
+    it("should filter by category", () => {
+      const results = testDb.search("", "Work");
+      expect(results).toHaveLength(2);
+      expect(results.every(c => c.category === "Work")).toBe(true);
+    });
+
+    it("should search and filter by category", () => {
+      const results = testDb.search("Smith", "Work");
+      expect(results).toHaveLength(1);
+      expect(results[0]?.name).toBe("Alice Smith");
+    });
+  });
+
+  describe("getCategories", () => {
+    it("should return unique categories", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Personal" });
+      testDb.create({ name: "C", category: "Work" });
+
+      const categories = testDb.getCategories();
+      expect(categories).toContain("Work");
+      expect(categories).toContain("Personal");
+      expect(categories).toHaveLength(2);
+    });
+  });
+
+  describe("update", () => {
+    it("should update contact fields", () => {
+      const created = testDb.create({ name: "Original Name", email: "original@test.com" });
+      const updated = testDb.update(created.id, { name: "Updated Name", email: "updated@test.com" });
+
+      expect(updated?.name).toBe("Updated Name");
+      expect(updated?.email).toBe("updated@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const updated = testDb.update(999, { name: "New Name" });
+      expect(updated).toBeUndefined();
+    });
+  });
+
+  describe("delete", () => {
+    it("should delete a contact", () => {
+      const created = testDb.create({ name: "To Delete" });
+      const deleted = testDb.delete(created.id);
+
+      expect(deleted).toBe(true);
+      expect(testDb.getById(created.id)).toBeUndefined();
+    });
+
+    it("should return false for non-existent ID", () => {
+      const deleted = testDb.delete(999);
+      expect(deleted).toBe(false);
+    });
+  });
+
+  describe("getStats", () => {
+    it("should return correct stats", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Work" });
+      testDb.create({ name: "C", category: "Personal" });
+
+      const stats = testDb.getStats();
+      expect(stats.total).toBe(3);
+      expect(stats.byCategory["Work"]).toBe(2);
+      expect(stats.byCategory["Personal"]).toBe(1);
+      expect(stats.categories).toContain("Work");
+      expect(stats.categories).toContain("Personal");
+    });
+  });
+});
+EOF
+
+[Step 53] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Now
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm run compile
+
+[Step 55] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Still have the error on lines 93-95. These are the created contact fields. Let me fix
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import { ContactsDatabase } from "./contacts.js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Create a temp database for testing
+let testDb: ContactsDatabase;
+let tempDbPath: string;
+
+describe("ContactsDatabase", () => {
+  // Create temp database for each test
+  beforeAll(() => {
+    const tempDir = os.tmpdir();
+    tempDbPath = path.join(tempDir, `test-contacts-${Date.now()}.db`);
+  });
+
+  beforeEach(() => {
+    // Create fresh database
+    testDb = new ContactsDatabase(tempDbPath);
+  });
+
+  afterEach(() => {
+    if (testDb) {
+      testDb.close();
+    }
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempDbPath);
+    } catch {
+      // ignore
+    }
+  });
+
+  describe("create", () => {
+    it("should create a contact with minimal fields", () => {
+      const contact = testDb.create({ name: "John Doe" });
+      expect(contact).toBeDefined();
+      expect(contact.name).toBe("John Doe");
+      expect(contact.category).toBe("Uncategorized");
+      expect(contact.id).toBeGreaterThan(0);
+    });
+
+    it("should create a contact with all fields", () => {
+      const contact = testDb.create({
+        name: "Jane Smith",
+        email: "jane@example.com",
+        phone: "555-1234",
+        address: "123 Main St",
+        notes: "Important client",
+        category: "Work",
+      });
+
+      expect(contact.name).toBe("Jane Smith");
+      expect(contact.email).toBe("jane@example.com");
+      expect(contact.phone).toBe("555-1234");
+      expect(contact.category).toBe("Work");
+    });
+  });
+
+  describe("getById", () => {
+    it("should retrieve a contact by ID", () => {
+      const created = testDb.create({ name: "Test Contact", email: "test@test.com" });
+      const retrieved = testDb.getById(created.id);
+
+      expect(retrieved).toBeDefined();
+      // Use optional chaining since TypeScript doesn't know testDb.create succeeds
+      expect(retrieved?.name).toBe("Test Contact");
+      expect(retrieved?.email).toBe("test@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const retrieved = testDb.getById(999);
+      expect(retrieved).toBeUndefined();
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return empty array when no contacts", () => {
+      const contacts = testDb.getAll();
+      expect(contacts).toEqual([]);
+    });
+
+    it("should return all contacts sorted by name", () => {
+      const alice = testDb.create({ name: "Alice" });
+      const bob = testDb.create({ name: "Bob" });
+      const charlie = testDb.create({ name: "Charlie" });
+
+      const contacts = testDb.getAll();
+      expect(contacts).toHaveLength(3);
+      expect(contacts[0]?.name).toBe("Alice");
+      expect(contacts[1]?.name).toBe("Bob");
+      expect(contacts[2]?.name).toBe("Charlie");
+    });
+  });
+
+  describe("search", () => {
+    beforeEach(() => {
+      // Create test contacts before each search test
+      testDb.create({ name: "Alice Smith", email: "alice@work.com", category: "Work" });
+      testDb.create({ name: "Bob Johnson", email: "bob@personal.com", category: "Personal" });
+      testDb.create({ name: "Charlie Work", email: "charlie@work.com", category: "Work" });
+    });
+
+    it("should search by name", () => {
+      const results = testDb.search("Alice");
+      expect(results).toHaveLength(1);
+      const firstResult = results[0];
+      expect(firstResult).toBeDefined();
+      expect(firstResult.name).toBe("Alice Smith");
+    });
+
+    it("should search by email", () => {
+      const results = testDb.search("@work.com");
+      expect(results).toHaveLength(2);
+    });
+
+    it("should filter by category", () => {
+      const results = testDb.search("", "Work");
+      expect(results).toHaveLength(2);
+      expect(results.every(c => c.category === "Work")).toBe(true);
+    });
+
+    it("should search and filter by category", () => {
+      const results = testDb.search("Smith", "Work");
+      expect(results).toHaveLength(1);
+      const firstResult = results[0];
+      expect(firstResult).toBeDefined();
+      expect(firstResult.name).toBe("Alice Smith");
+    });
+  });
+
+  describe("getCategories", () => {
+    it("should return unique categories", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Personal" });
+      testDb.create({ name: "C", category: "Work" });
+
+      const categories = testDb.getCategories();
+      expect(categories).toContain("Work");
+      expect(categories).toContain("Personal");
+      expect(categories).toHaveLength(2);
+    });
+  });
+
+  describe("update", () => {
+    it("should update contact fields", () => {
+      const created = testDb.create({ name: "Original Name", email: "original@test.com" });
+      const updated = testDb.update(created.id, { name: "Updated Name", email: "updated@test.com" });
+
+      expect(updated).toBeDefined();
+      // Non-null assertion since we know it was updated
+      expect(updated!.name).toBe("Updated Name");
+      expect(updated!.email).toBe("updated@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const updated = testDb.update(999, { name: "New Name" });
+      expect(updated).toBeUndefined();
+    });
+  });
+
+  describe("delete", () => {
+    it("should delete a contact", () => {
+      const created = testDb.create({ name: "To Delete" });
+      const deleted = testDb.delete(created.id);
+
+      expect(deleted).toBe(true);
+      expect(testDb.getById(created.id)).toBeUndefined();
+    });
+
+    it("should return false for non-existent ID", () => {
+      const deleted = testDb.delete(999);
+      expect(deleted).toBe(false);
+    });
+  });
+
+  describe("getStats", () => {
+    it("should return correct stats", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Work" });
+      testDb.create({ name: "C", category: "Personal" });
+
+      const stats = testDb.getStats();
+      expect(stats.total).toBe(3);
+      expect(stats.byCategory["Work"]).toBe(2);
+      expect(stats.byCategory["Personal"]).toBe(1);
+      expect(stats.categories).toContain("Work");
+      expect(stats.categories).toContain("Personal");
+    });
+  });
+});
+EOF
+
+[Step 57] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Let
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm run compile
+
+[Step 59] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   Still have errors on lines 113 and 132. Let me check - those lines are checking firstResult
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/web/server/contacts.test.ts << 'EOF'
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import { ContactsDatabase } from "./contacts.js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Create a temp database for testing
+let testDb: ContactsDatabase;
+let tempDbPath: string;
+
+describe("ContactsDatabase", () => {
+  // Create temp database for each test
+  beforeAll(() => {
+    const tempDir = os.tmpdir();
+    tempDbPath = path.join(tempDir, `test-contacts-${Date.now()}.db`);
+  });
+
+  beforeEach(() => {
+    // Create fresh database
+    testDb = new ContactsDatabase(tempDbPath);
+  });
+
+  afterEach(() => {
+    if (testDb) {
+      testDb.close();
+    }
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempDbPath);
+    } catch {
+      // ignore
+    }
+  });
+
+  describe("create", () => {
+    it("should create a contact with minimal fields", () => {
+      const contact = testDb.create({ name: "John Doe" });
+      expect(contact).toBeDefined();
+      expect(contact.name).toBe("John Doe");
+      expect(contact.category).toBe("Uncategorized");
+      expect(contact.id).toBeGreaterThan(0);
+    });
+
+    it("should create a contact with all fields", () => {
+      const contact = testDb.create({
+        name: "Jane Smith",
+        email: "jane@example.com",
+        phone: "555-1234",
+        address: "123 Main St",
+        notes: "Important client",
+        category: "Work",
+      });
+
+      expect(contact.name).toBe("Jane Smith");
+      expect(contact.email).toBe("jane@example.com");
+      expect(contact.phone).toBe("555-1234");
+      expect(contact.category).toBe("Work");
+    });
+  });
+
+  describe("getById", () => {
+    it("should retrieve a contact by ID", () => {
+      const created = testDb.create({ name: "Test Contact", email: "test@test.com" });
+      const retrieved = testDb.getById(created.id);
+
+      expect(retrieved).toBeDefined();
+      // Use optional chaining since TypeScript doesn't know testDb.create succeeds
+      expect(retrieved?.name).toBe("Test Contact");
+      expect(retrieved?.email).toBe("test@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const retrieved = testDb.getById(999);
+      expect(retrieved).toBeUndefined();
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return empty array when no contacts", () => {
+      const contacts = testDb.getAll();
+      expect(contacts).toEqual([]);
+    });
+
+    it("should return all contacts sorted by name", () => {
+      const alice = testDb.create({ name: "Alice" });
+      const bob = testDb.create({ name: "Bob" });
+      const charlie = testDb.create({ name: "Charlie" });
+
+      const contacts = testDb.getAll();
+      expect(contacts).toHaveLength(3);
+      expect(contacts[0]?.name).toBe("Alice");
+      expect(contacts[1]?.name).toBe("Bob");
+      expect(contacts[2]?.name).toBe("Charlie");
+    });
+  });
+
+  describe("search", () => {
+    beforeEach(() => {
+      // Create test contacts before each search test
+      testDb.create({ name: "Alice Smith", email: "alice@work.com", category: "Work" });
+      testDb.create({ name: "Bob Johnson", email: "bob@personal.com", category: "Personal" });
+      testDb.create({ name: "Charlie Work", email: "charlie@work.com", category: "Work" });
+    });
+
+    it("should search by name", () => {
+      const results = testDb.search("Alice");
+      expect(results).toHaveLength(1);
+      const firstResult = results[0];
+      expect(firstResult).toBeDefined();
+      expect(firstResult!.name).toBe("Alice Smith");
+    });
+
+    it("should search by email", () => {
+      const results = testDb.search("@work.com");
+      expect(results).toHaveLength(2);
+    });
+
+    it("should filter by category", () => {
+      const results = testDb.search("", "Work");
+      expect(results).toHaveLength(2);
+      expect(results.every(c => c.category === "Work")).toBe(true);
+    });
+
+    it("should search and filter by category", () => {
+      const results = testDb.search("Smith", "Work");
+      expect(results).toHaveLength(1);
+      const firstResult = results[0];
+      expect(firstResult).toBeDefined();
+      expect(firstResult!.name).toBe("Alice Smith");
+    });
+  });
+
+  describe("getCategories", () => {
+    it("should return unique categories", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Personal" });
+      testDb.create({ name: "C", category: "Work" });
+
+      const categories = testDb.getCategories();
+      expect(categories).toContain("Work");
+      expect(categories).toContain("Personal");
+      expect(categories).toHaveLength(2);
+    });
+  });
+
+  describe("update", () => {
+    it("should update contact fields", () => {
+      const created = testDb.create({ name: "Original Name", email: "original@test.com" });
+      const updated = testDb.update(created.id, { name: "Updated Name", email: "updated@test.com" });
+
+      expect(updated).toBeDefined();
+      // Non-null assertion since we know it was updated
+      expect(updated!.name).toBe("Updated Name");
+      expect(updated!.email).toBe("updated@test.com");
+    });
+
+    it("should return undefined for non-existent ID", () => {
+      const updated = testDb.update(999, { name: "New Name" });
+      expect(updated).toBeUndefined();
+    });
+  });
+
+  describe("delete", () => {
+    it("should delete a contact", () => {
+      const created = testDb.create({ name: "To Delete" });
+      const deleted = testDb.delete(created.id);
+
+      expect(deleted).toBe(true);
+      expect(testDb.getById(created.id)).toBeUndefined();
+    });
+
+    it("should return false for non-existent ID", () => {
+      const deleted = testDb.delete(999);
+      expect(deleted).toBe(false);
+    });
+  });
+
+  describe("getStats", () => {
+    it("should return correct stats", () => {
+      testDb.create({ name: "A", category: "Work" });
+      testDb.create({ name: "B", category: "Work" });
+      testDb.create({ name: "C", category: "Personal" });
+
+      const stats = testDb.getStats();
+      expect(stats.total).toBe(3);
+      expect(stats.byCategory["Work"]).toBe(2);
+      expect(stats.byCategory["Personal"]).toBe(1);
+      expect(stats.categories).toContain("Work");
+      expect(stats.categories).toContain("Personal");
+    });
+  });
+});
+EOF
+
+[Step 61] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:   
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm run compile
+
+[Step 63] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:    
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm test 2>&1 | head -60
+
+[Step 65] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:     The tests are running. Let me wait for them to complete and see if the contacts tests pass.
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npm test 2>&1 | grep -E "(contacts|FAIL|PASS|✓|✗)" | head -50
+
+[Step 67] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:           The tests are running. Let me see if the
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npm test src/web/server/contacts.test.ts 2>&1
+
+[Step 69] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:          I need to quote the path. Let me try
+> Executing (timeout: 120s): cd /home/bootstrap-v17/bootstrap && npx vitest run src/web/server/contacts.test.ts --reporter verbose 2>&1
+
+[Step 71] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:            All 16 contacts tests pass! Now let me run the full test suite to make sure everything works
+> Executing (timeout: 180s): cd /home/bootstrap-v17/bootstrap && npm test 2>&1 | tail -30

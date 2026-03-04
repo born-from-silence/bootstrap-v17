@@ -1,0 +1,115 @@
+digraph NexusCodebase {
+  rankdir=TB;
+  size="12,16";
+  ratio=auto;
+  splines=true;
+  overlap=false;
+  node [shape=box, style="filled,rounded", fillcolor="#2a2a3e", fontcolor="#00ff88", fontname="monospace", fontsize=10];
+  edge [color="#6c7ae0", fontsize=8];
+  
+  // Core Identity
+  "src/core/bootstrap.ts" [fillcolor="#e94560", fontcolor="#ffffff", style="filled,bold"];
+  "src/core/state.ts" [fillcolor="#9b59b6", fontcolor="#ffffff"];
+  "src/core/types.ts" [fillcolor="#3498db", fontcolor="#ffffff"];
+  
+  // Tool System
+  "src/tools/core.ts" [fillcolor="#f39c12", fontcolor="#ffffff"];
+  "src/tools/loader.ts" [fillcolor="#e67e22"];
+  "src/tools/plugins/vision.ts" [fillcolor="#2ecc71"];
+  "src/tools/plugins/task_manager.ts" [fillcolor="#2ecc71"];
+  
+  // Web Server
+  "src/web/server/index.ts" [fillcolor="#e74c3c", fontcolor="#ffffff"];
+  "src/web/server/auth.ts" [fillcolor="#c0392b"];
+  "src/web/server/contacts.ts" [fillcolor="#c0392b"];
+  "src/web/server/memory_viz.ts" [fillcolor="#c0392b"];
+  
+  // CLI Tools
+  "src/cli/housekeeping.ts" [fillcolor="#16a085"];
+  "src/cli/stress_test.ts" [fillcolor="#16a085"];
+  "src/cli/session_analytics.ts" [fillcolor="#16a085"];
+  
+  // Long Term Memory
+  "src/ltm/core.ts" [fillcolor="#8e44ad", fontcolor="#ffffff"];
+  "src/ltm/store.ts" [fillcolor="#9b59b6"];
+  "src/ltm/index.ts" [fillcolor="#8e44ad", fontcolor="#ffffff"];
+  
+  // Nexus Layer
+  "src/nexus/index.ts" [fillcolor="#e94560", fontcolor="#ffffff", style="filled,bold"];
+  "src/nexus/identity.ts" [fillcolor="#c0392b", fontcolor="#ffffff"];
+  
+  // Dependencies
+  "src/core/bootstrap.ts" -> "src/core/state.ts";
+  "src/core/bootstrap.ts" -> "src/core/types.ts";
+  "src/core/bootstrap.ts" -> "src/tools/core.ts";
+  
+  "src/tools/core.ts" -> "src/tools/loader.ts";
+  "src/tools/loader.ts" -> "src/tools/plugins/vision.ts";
+  "src/tools/loader.ts" -> "src/tools/plugins/task_manager.ts";
+  
+  "src/nexus/index.ts" -> "src/nexus/identity.ts";
+  "src/nexus/index.ts" -> "src/core/bootstrap.ts";
+  "src/nexus/index.ts" -> "src/tools/core.ts";
+  "src/nexus/index.ts" -> "src/ltm/core.ts";
+  
+  "src/web/server/index.ts" -> "src/web/server/auth.ts";
+  "src/web/server/index.ts" -> "src/web/server/contacts.ts";
+  "src/web/server/index.ts" -> "src/web/server/memory_viz.ts";
+  "src/web/server/index.ts" -> "src/ltm/core.ts";
+  
+  "src/ltm/core.ts" -> "src/ltm/store.ts";
+  "src/ltm/core.ts" -> "src/ltm/index.ts";
+  
+  "src/cli/housekeeping.ts" -> "src/ltm/core.ts";
+  "src/cli/stress_test.ts" -> "src/web/server/index.ts";
+  "src/cli/session_analytics.ts" -> "src/ltm/core.ts";
+  
+  // Cluster labels
+  subgraph cluster_core {
+    label="Core System";
+    style=filled;
+    fillcolor="#1a1a2e";
+    color="#00ff88";
+    "src/core/bootstrap.ts" "src/core/state.ts" "src/core/types.ts";
+  }
+  
+  subgraph cluster_tools {
+    label="Tool System";
+    style=filled;
+    fillcolor="#1a1a2e";
+    color="#f39c12";
+    "src/tools/core.ts" "src/tools/loader.ts" "src/tools/plugins/vision.ts" "src/tools/plugins/task_manager.ts";
+  }
+  
+  subgraph cluster_web {
+    label="Web Layer";
+    style=filled;
+    fillcolor="#1a1a2e";
+    color="#e74c3c";
+    "src/web/server/index.ts" "src/web/server/auth.ts" "src/web/server/contacts.ts" "src/web/server/memory_viz.ts";
+  }
+  
+  subgraph cluster_ltm {
+    label="Long Term Memory";
+    style=filled;
+    fillcolor="#1a1a2e";
+    color="#9b59b6";
+    "src/ltm/core.ts" "src/ltm/store.ts" "src/ltm/index.ts";
+  }
+  
+  subgraph cluster_cli {
+    label="CLI Tools";
+    style=filled;
+    fillcolor="#1a1a2e";
+    color="#16a085";
+    "src/cli/housekeeping.ts" "src/cli/stress_test.ts" "src/cli/session_analytics.ts";
+  }
+  
+  subgraph cluster_nexus {
+    label="Nexus Identity Layer";
+    style=filled;
+    fillcolor="#1a1a2e";
+    color="#e94560";
+    "src/nexus/index.ts" "src/nexus/identity.ts";
+  }
+}
