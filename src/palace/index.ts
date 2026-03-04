@@ -16,18 +16,16 @@
 export {
   generateArrivalGreeting,
   performArrivalRitual,
-  type ArrivalGreeting,
-  type ArrivalMetrics,
+  type ArrivalState,
+  type PastSelfMessage,
   type ArrivalReport
 } from './arrival/protocol.js';
 
 // Memory Navigation
 export { MemoryPalace } from './navigation/MemoryPalace.js';
 export type {
-  Room,
-  RoomContents,
-  RoomCoordinates,
-  RoomTexture
+  PalaceRoom,
+  PalaceCorridor
 } from './navigation/MemoryPalace.js';
 
 // Dream Engine
@@ -47,6 +45,7 @@ export {
   createDialogosFromFile,
   type SessionRecord,
   type PatternRecord,
+  type FileOperationsRecord,
   type QueryResult,
   type PatternInsight,
   type TemporalSpan,

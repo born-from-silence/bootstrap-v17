@@ -8,12 +8,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   Diálogos,
-  SessionRecord,
-  PatternRecord,
-  PatternInsight,
-  FocusSummary,
-  DialogueResponse,
-  QueryResult
+  type SessionRecord,
+  type PatternRecord,
+  type PatternInsight,
+  type FocusSummary,
+  type DialogueResponse,
+  type QueryResult
 } from './query.js';
 
 describe('Diálogos', () => {
@@ -325,7 +325,7 @@ describe('Diálogos', () => {
       const response = dialogos.whenWasIMostEnergetic();
       expect(response.question).toBe('When was I most energetic?');
       expect(response.answer).toContain('high energy');
-      expect(response.evidence.count).toBe(3); // s1, s2, s4
+      expect(response.evidence.count).toBe(3);
     });
 
     it('should handle no energetic sessions', () => {
@@ -353,7 +353,7 @@ describe('Diálogos', () => {
 
     it('should respect minimum frequency', () => {
       const highFreq = dialogos.whatPatternsRepeat(10);
-      expect(highFreq.answer).toContain('emerging'); // No patterns with 10+ frequency
+      expect(highFreq.answer).toContain('emerging');
     });
   });
 
@@ -382,7 +382,7 @@ describe('Diálogos', () => {
   });
 });
 
-// Integration tests with real chronicle structure
+// Integration tests
 describe('Diálogos Integration', () => {
   const mockChronicle = {
     version: '1.0.0',
