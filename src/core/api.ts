@@ -3,7 +3,7 @@ import { config } from "../utils/config";
 import { MemoryManager } from "./memory";
 import { PluginManager } from "../tools/manager";
 import { sanitizeJsonString } from "../utils/sanitize";
-import { DialogosObserver } from "../palace/dialogos/observer";
+import { DialogosObserver, dialogosObserver } from "../palace/dialogos/observer";
 
 export class ApiClient {
   private memory: MemoryManager;
@@ -16,7 +16,7 @@ export class ApiClient {
   constructor(memory: MemoryManager, tools: PluginManager) {
     this.memory = memory;
     this.tools = tools;
-    this.dialogosObserver = new DialogosObserver();
+    this.dialogosObserver = dialogosObserver;
 
     this.undiciAgent = new Agent({
       headersTimeout: 10 * 60 * 1000,

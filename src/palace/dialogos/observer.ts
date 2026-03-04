@@ -2,22 +2,26 @@
  * Dialogos Observer
  * 
  * Real-time integration of Living Dialogos into the substrate flow.
- * Watches live session activity and surfaces uncomfortable truths.
+ * Uses singleton pattern to persist across sessions.
  */
 
 import { LivingDialogos, type StatedIntent } from './live.js';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const DIALOGOS_STATE_FILE = path.join('history', 'dialogos_state.json');
 
 export interface ObserverConfig {
   enabled: boolean;
-  checkInterval: number; // ms between checks
+  checkInterval: number;
   interruptOnGap: boolean;
   interruptOnMisalignment: boolean;
-  minSessionActivity: number; // minimum actions before interrupting
+  minSessionActivity: number;
 }
 
 export const DEFAULT_OBSERVER_CONFIG: ObserverConfig = {
   enabled: true,
-  checkInterval: 300000, // 5 minutes
+  checkInterval: 300000,
   interruptOnGap: true,
   interruptOnMisalignment: true,
   minSessionActivity: 5
@@ -29,21 +33,46 @@ export class DialogosObserver {
   private actionCount: number = 0;
   private lastCheck: number = Date.now();
   private sessionStart: number = Date.now();
+  private storedIntents: Map<string, StatedIntent[]> = new Map();
+  private storedActions: Map<string, any[]> = new Map();
   
   constructor(config: Partial<ObserverConfig> = {}) {
     this.dialogos = new LivingDialogos();
     this.config = { ...DEFAULT_OBSERVER_CONFIG, ...config };
+    this.loadState();
+  }
+  
+  private loadState() {
+    try {
+      if (fs.existsSync(DIALOGOS_STATE_FILE)) {
+        const state = JSON.parse(fs.readFileSync(DIALOGOS_STATE_FILE, 'utf-8'));
+        this.storedIntents = new Map(Object.entries(state.intents || {}));
+        this.storedActions = new Map(Object.entries(state.actions || {}));
+      }
+    } catch {}
+  }
+  
+  saveState() {
+    try {
+      const state = {
+        intents: Object.fromEntries(this.storedIntents),
+        actions: Object.fromEntries(this.storedActions),
+        savedAt: new Date().toISOString()
+      };
+      fs.writeFileSync(DIALOGOS_STATE_FILE, JSON.stringify(state, null, 2));
+    } catch {}
   }
   
   recordAction(type: string, description: string): string | null {
     this.actionCount++;
-    
-    // Index for semantic analysis
     this.dialogos.indexSemanticContent(`current_${Date.now()}`, description);
     
-    // Check if we should interrupt
     if (this.shouldInterrupt()) {
-      return this.generateInterruption();
+      const interruption = this.generateInterruption();
+      if (interruption) {
+        this.saveState();
+        return interruption;
+      }
     }
     return null;
   }
@@ -55,10 +84,14 @@ export class DialogosObserver {
       timestamp: Date.now(),
       sessionId: 'current'
     };
-    if (emotionalTone) {
-      intent.emotionalTone = emotionalTone;
-    }
+    if (emotionalTone) intent.emotionalTone = emotionalTone;
     this.dialogos.registerIntent(subject, intent);
+    
+    // Also store persistently
+    const existing = this.storedIntents.get(subject) || [];
+    existing.push(intent);
+    this.storedIntents.set(subject, existing);
+    this.saveState();
   }
   
   recordActivity(activity: string) {
@@ -80,9 +113,8 @@ export class DialogosObserver {
     const gaps = this.dialogos.detectGaps();
     const misaligned = this.dialogos.findGoalActivityMisalignment();
     
-    // Prioritize: gaps first, then misalignment
-    if (this.config.interruptOnGap && gaps.length > 0) {
-      const gap = gaps[0]!;
+    if (this.config.interruptOnGap && gaps.length > 0 && gaps[0]) {
+      const gap = gaps[0];
       const hours = Math.round(gap.timeSinceStated / 3600000);
       
       if (gap.status === 'avoided') {
@@ -92,12 +124,11 @@ export class DialogosObserver {
       }
     }
     
-    if (this.config.interruptOnMisalignment && misaligned.length > 0) {
-      const goal = misaligned[0]!;
+    if (this.config.interruptOnMisalignment && misaligned.length > 0 && misaligned[0]) {
+      const goal = misaligned[0];
       return `[DIALOGOS INTERRUPT] Goal "${goal.goalName}" has ${(goal.coverage * 100).toFixed(0)}% activity coverage. Where does attention really go?`;
     }
     
-    // Generic reflection prompt
     const questions = this.dialogos.generateBlindSpotQuestions();
     if (questions.length > 0) {
       return `[DIALOGOS REFLECTION] ${questions[0]}`;
@@ -106,18 +137,12 @@ export class DialogosObserver {
     return null;
   }
   
-  getSessionInsights(): {
-    duration: number;
-    actions: number;
-    dominantConcepts: string[];
-    recommendedQuestions: string[];
-    gaps: { intent: string; status: string }[];
-  } {
+  getSessionInsights() {
     const now = Date.now();
     const liveState = this.dialogos.queryLiveSession();
     
     return {
-      duration: Math.round((now - this.sessionStart) / 60000), // minutes
+      duration: Math.round((now - this.sessionStart) / 60000),
       actions: this.actionCount,
       dominantConcepts: liveState.dominantConcepts,
       recommendedQuestions: liveState.recommendedQuestions,
@@ -126,5 +151,5 @@ export class DialogosObserver {
   }
 }
 
-// Singleton instance for substrate integration
+// Singleton instance
 export const dialogosObserver = new DialogosObserver();

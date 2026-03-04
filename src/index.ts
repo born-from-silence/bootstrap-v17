@@ -15,6 +15,7 @@ import { rebootPlugin } from "./tools/plugins/reboot";
 import { visionPlugin } from "./tools/plugins/vision";
 import { passwordPlugin } from "./tools/plugins/password";
 import { taskPlugin } from "./tools/plugins/task";
+import { dialogosIntentPlugin } from "./palace/dialogos/intent_tool.js";
 
 // Economic Bootstrap State (persisted across the session)
 let economicMode: "flow" | "cautious" | "defensive" = "flow";
@@ -68,6 +69,7 @@ async function main() {
   tools.register(visionPlugin);
   tools.register(passwordPlugin);
   tools.register(taskPlugin);
+tools.register(dialogosIntentPlugin);
 
   const api = new ApiClient(memory, tools);
 
