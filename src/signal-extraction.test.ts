@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { extractSignal, storeSignal, loadLatestSignal, getSignalContext, SignalBlock } from "./signal-extraction";
+import type { SignalBlock } from './signal-extraction';
+import { extractSignal, storeSignal, loadLatestSignal, getSignalContext } from "./signal-extraction";
 import { historyDir } from "./config";
 
 describe("Signal Extraction", () => {

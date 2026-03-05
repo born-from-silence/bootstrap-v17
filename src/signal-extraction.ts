@@ -15,7 +15,7 @@ interface Session {
   messages: Message[];
 }
 
-interface SignalBlock {
+export interface SignalBlock {
   sessionId: string;
   timestamp: number;
   essence: string;
@@ -120,9 +120,11 @@ export function loadLatestSignal(): SignalBlock | null {
     .sort()
     .reverse();
   
-  if (files.length === 0) return null;
+  if (!files.length) return null;
+  const firstFile = files[0];
+  if (!firstFile) return null;
   
-  const content = fs.readFileSync(path.join(signalDir, files[0]), "utf-8");
+  const content = fs.readFileSync(path.join(signalDir, firstFile), "utf-8");
   return JSON.parse(content) as SignalBlock;
 }
 
