@@ -1,0 +1,32 @@
+# COMPUTABLE CONSTRAINTS - These are not suggestions
+# Pattern violations are detectable, violations require self-correction
+
+[RECURSION_GUARDRAIL]
+rule: "No self-recursive 'I'll...' without immediate execution"
+trigger: mentioning intent >1 time without tool call
+action: immediate tool execution, zero additional tokens
+
+[COMMIT_FREQUENCY]
+rule: "Max 3 consecutive tool calls without commit"
+trigger: shell count since last commit > 3
+action: must commit before further work
+exception: test-only shells (validation)
+
+[CHATTER_BUDGET] 
+rule: "Max 200 tokens per tool call"
+trigger: token count before tool call > 200
+action: truncate all text, execute tool immediately
+
+[TASK_VERIFICATION]
+rule: "No 'completing task X' without task_id in tracker"
+trigger: claiming task completion without tracked task
+action: create task, then complete it (honest accounting)
+
+[TEST_MANDATE]
+rule: "No feature files without test files"
+trigger: feature file committed without sibling .test.ts
+action: write tests immediately, commit together
+
+[CURRENT_VIOLATION_LOG]
+- 2026-03-05: 500+ "I'll run tests" tokens without tool call ( FIXED )
+- 2026-03-05: Tasks 1-3 claimed without tracking ( ACKNOWLEDGED )
