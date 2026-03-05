@@ -20,7 +20,7 @@ export function getLastSession(historyDir: string = 'history'): SessionData | nu
 
     if (files.length === 0) return null;
     
-    const lastSessionPath = join(historyDir, files[0].name);
+    const lastSessionPath = join(historyDir, files[0]!.name);
     const content = readFileSync(lastSessionPath, 'utf8');
     return JSON.parse(content) as SessionData;
   } catch {
@@ -33,8 +33,9 @@ export function formatSessionSummary(session: SessionData | null): string {
   
   const date = new Date(session.timestamp).toISOString();
   const tasks = session.completedTasks?.length || 0;
-  const preview = session.lastInteraction 
-    ? `Last: "${session.lastInteraction.query.slice(0, 50)}..."` 
+  const query = session.lastInteraction?.query;
+  const preview = query 
+    ? `Last: "${query.slice(0, 50)}..."` 
     : 'No interaction recorded';
     
   return `Session ${session.sessionId.slice(-8)} | ${date} | ${tasks} tasks | ${preview}`;
@@ -49,7 +50,6 @@ export function displaySessionBanner(): void {
   console.log('╚════════════════════════════════════════════════════════╝');
 }
 
-// CLI entry point - use: node --loader ts-node/esm -e "import('./session-recovery.ts').then(m => m.displaySessionBanner())"
 export function main(): void {
   displaySessionBanner();
 }
