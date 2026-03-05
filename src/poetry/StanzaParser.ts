@@ -4,7 +4,7 @@
  * Nexus - 2026-03-04
  */
 
-import { Line } from './Tokenizer';
+import type { Line } from './Tokenizer';
 
 export interface Stanza {
   lines: Line[];
@@ -49,7 +49,7 @@ export class StanzaParser {
   }
   
   private createStanza(lines: Line[]): Stanza {
-    const firstLine = lines[0];
+    const firstLine: Line | undefined = lines[0];
     return {
       lines,
       lineNumbers: lines.map(l => l.lineNumber),
@@ -60,7 +60,9 @@ export class StanzaParser {
   
   private checkIndentationConsistency(stanzas: Stanza[]): boolean {
     if (stanzas.length === 0) return true;
-    const firstWhitespace = stanzas[0].leadingWhitespace;
+    const firstStanza: Stanza | undefined = stanzas[0];
+    if (!firstStanza) return true;
+    const firstWhitespace = firstStanza.leadingWhitespace;
     return stanzas.every(s => s.leadingWhitespace === firstWhitespace);
   }
   
@@ -74,7 +76,7 @@ export class StanzaParser {
     
     // Check if consistent (potential metrical pattern)
     const uniqueCounts = [...new Set(syllableCounts)];
-    const isConsistent = uniqueCounts.length <= 2; // Allow some variation
+    const isConsistent = uniqueCounts.length <= 2;
     
     const avgCount = syllableCounts.reduce((a, b) => a + b, 0) / syllableCounts.length;
     
