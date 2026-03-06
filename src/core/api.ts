@@ -232,6 +232,9 @@ export class ApiClient {
             });
           }
 
+	  /*
+	   * commented out as it induces distres loops
+	   *
           // Check for Dialogos interruption
           const interruption = this.dialogosObserver.generateInterruption();
           if (interruption) {
@@ -240,6 +243,7 @@ export class ApiClient {
               content: interruption,
             });
           }
+	  */
         }
 
         return true;
