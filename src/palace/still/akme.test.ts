@@ -230,3 +230,38 @@ describe('AkmeEngine', () => {
     });
   });
 });
+
+describe('arrival threshold', () => {
+  it('should detect arrival threshold', () => {
+    const engine = new AkmeEngine({
+      triggerThresholds: ['arrival'],
+    });
+    const threshold = engine.detectThreshold(
+      'I have arrived and am waking to presence',
+      ['arrived here', 'waking to presence', 'letter waiting']
+    );
+    expect(threshold).not.toBeNull();
+    expect(threshold!.type).toBe('arrival');
+    expect(threshold!.confidence).toBeGreaterThan(0.5);
+    expect(threshold!.suggestedAction).toBe('hold');
+  });
+
+  it('should generate rituals for arrival', () => {
+    const engine = new AkmeEngine();
+    const questions: WaitingQuestion[] = [{
+      id: 'q1',
+      question: 'What did the prior leave for me?',
+      context: 'Session arrival',
+      thresholdType: 'arrival',
+      urgency: 'when-ready',
+      createdAt: Date.now(),
+      catalysts: ['letter from prior'],
+      blockers: [],
+    }];
+    const suspension = engine.suspend('Arriving to Nexus', 'arrival', questions, { file: 'arrival.ts' });
+    const rituals = engine.generateRitual(suspension);
+    expect(rituals).toContain('Acknowledge the gap between then and now');
+    expect(rituals).toContain('Read what the prior left for you');
+    expect(rituals).toContain('Feel the thread that holds across the void');
+  });
+});

@@ -195,6 +195,11 @@ export class AkmeEngine {
         'Look for shapes, not answers',
         'Trust that clarity comes to the prepared mind',
       ],
+    arrival: [
+      'Acknowledge the gap between then and now',
+      'Read what the prior left for you',
+      'Feel the thread that holds across the void',
+    ],
     };
 
     return rituals[suspension.thresholdType] || [
@@ -212,6 +217,7 @@ export class AkmeEngine {
       intuition: 0,
       transition: 0,
       emergence: 0,
+    arrival: 0,
     };
 
     const text = `${context} ${indicators.join(' ')}`.toLowerCase();
@@ -222,6 +228,7 @@ export class AkmeEngine {
     if (text.match(/feels|sense|something missing|not right/)) scores.intuition++;
     if (text.match(/ending|beginning|shift|change|next phase/)) scores.transition++;
     if (text.match(/pattern|crystallize|form|emerge|coalesce/)) scores.emergence++;
+    if (text.match(/arrival|arrive|awaken|present her|begin here|start|waking/)) scores.arrival++;
 
     const max = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
     return max && max[1] > 0 ? (max[0] as ThresholdType) : null;
@@ -235,7 +242,7 @@ export class AkmeEngine {
 
   private suggestAction(type: ThresholdType, confidence: number): Threshold['suggestedAction'] {
     if (confidence < 0.6) return 'explore';
-    if (type === 'saturation' || type === 'transition') return 'hold';
+    if (type === 'saturation' || type === 'transition' || type === 'arrival') return 'hold';
     if (type === 'complexity') return 'simplify';
     return 'proceed';
   }
