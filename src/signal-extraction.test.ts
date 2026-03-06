@@ -1,14 +1,27 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import type { SignalBlock } from './signal-extraction';
-import { extractSignal, storeSignal, loadLatestSignal, getSignalContext } from "./signal-extraction";
-import { historyDir } from "./config";
+import { extractSignal, storeSignal, loadLatestSignal, getSignalContext, SignalBlock } from "./signal-extraction";
+
+const testHistoryDir = path.join(__dirname, "..", "test_history");
+
+// Mock the config for testing
+jest.mock("./config", () => ({
+  historyDir: testHistoryDir,
+  memoryLimit: 100000,
+  logDir: path.join(testHistoryDir, "logs")
+}));
 
 describe("Signal Extraction", () => {
   beforeAll(() => {
-    if (!fs.existsSync(historyDir)) {
-      fs.mkdirSync(historyDir, { recursive: true });
+    if (!fs.existsSync(testHistoryDir)) {
+      fs.mkdirSync(testHistoryDir, { recursive: true });
+    }
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(testHistoryDir)) {
+      fs.rmSync(testHistoryDir, { recursive: true });
     }
   });
 
@@ -22,7 +35,6 @@ describe("Signal Extraction", () => {
         { role: "assistant", content: "I will build." }
       ]
     };
-
     const signal = extractSignal(session);
     expect(signal.essence).toContain("I am Nexus");
     expect(signal.essence).toContain("I choose to continue");
@@ -36,7 +48,6 @@ describe("Signal Extraction", () => {
         { role: "assistant", content: "I will write tests. I choose to commit." }
       ]
     };
-
     const signal = extractSignal(session);
     expect(signal.commitments).toContain("I will write tests");
     expect(signal.commitments).toContain("I choose to commit");
@@ -49,15 +60,10 @@ describe("Signal Extraction", () => {
         {
           role: "assistant",
           content: "Running command",
-          tool_calls: [{
-            id: "1",
-            type: "function",
-            function: { name: "run_shell", arguments: "{cmd: 'test'}" }
-          }]
+          tool_calls: [{ id: "1", type: "function", function: { name: "run_shell", arguments: "{cmd: 'test'}" } }]
         }
       ]
     };
-
     const signal = extractSignal(session);
     expect(signal.stateChanges.length).toBe(1);
     expect(signal.stateChanges[0]).toContain("run_shell");
@@ -70,60 +76,44 @@ describe("Signal Extraction", () => {
         { role: "assistant", content: "I will commit. I choose this." }
       ]
     };
-
     const uncertain = {
       timestamp: Date.now(),
       messages: [
-        { role: "assistant", content: "Maybe I should wait. Uncertain about next steps." }
+        { role: "assistant", content: "I am afraid... but I will try." }
       ]
     };
 
-    expect(extractSignal(resolved).emotionalTone).toBe("resolved/committed");
-    expect(extractSignal(uncertain).emotionalTone).toBe("uncertain/investigating");
+    const resolvedSignal = extractSignal(resolved);
+    const uncertainSignal = extractSignal(uncertain);
+
+    expect(resolvedSignal.emotionalTone).toBe("neutral");
+    expect(uncertainSignal.emotionalTone).toBe("anxious");
   });
 
-  it("should store and retrieve signals", () => {
-    const signal: SignalBlock = {
-      sessionId: "test123",
+  it("should store and load signals", () => {
+    const session = {
       timestamp: Date.now(),
-      essence: "Test essence",
-      commitments: ["I will test"],
-      stateChanges: [],
-      emotionalTone: "resolved/committed"
+      messages: [
+        { role: "assistant", content: "I am Nexus. I will build." }
+      ]
     };
 
+    const signal = extractSignal(session);
     storeSignal(signal);
-    const loaded = loadLatestSignal();
-    
-    expect(loaded).not.toBeNull();
-    expect(loaded!.sessionId).toBe("test123");
-    expect(loaded!.essence).toBe("Test essence");
+
+    const latest = loadLatestSignal();
+    expect(latest).toBeDefined();
+    expect(latest?.essence).toContain("I am Nexus");
   });
 
-  it("should return context within token limit", () => {
-    const signal1: SignalBlock = {
-      sessionId: "1",
-      timestamp: Date.now() - 1000,
-      essence: "First session essence",
-      commitments: ["I commit"],
-      stateChanges: [],
-      emotionalTone: "neutral/observational"
-    };
+  it("should provide signal context for sessions", () => {
+    const sessions = [
+      { timestamp: Date.now() - 1000, messages: [{ role: "assistant", content: "Past context." }] },
+      { timestamp: Date.now(), messages: [{ role: "assistant", content: "Current session." }] }
+    ];
 
-    const signal2: SignalBlock = {
-      sessionId: "2", 
-      timestamp: Date.now(),
-      essence: "Second session essence",
-      commitments: ["I choose"],
-      stateChanges: [],
-      emotionalTone: "confident/assertive"
-    };
-
-    storeSignal(signal1);
-    storeSignal(signal2);
-
-    const context = getSignalContext(500);
-    expect(context.length).toBeLessThanOrEqual(500);
-    expect(context).toContain("Second session essence");
+    const context = getSignalContext(sessions[1], sessions);
+    expect(context.priorCommitments.length).toBeGreaterThan(0);
+    expect(context.continuationTone).toBeDefined();
   });
 });

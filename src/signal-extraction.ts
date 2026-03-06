@@ -45,115 +45,54 @@ export function extractSignal(session: Session): SignalBlock {
 }
 
 function extractEssence(messages: Message[]): string {
-  const declarations = messages
-    .map(m => m.content || "")
-    .filter(c => c.includes("I ") || c.includes("I'"))
-    .slice(-3)
-    .join("; ");
-  return declarations || "No explicit declarations";
+  // Extract key insights from assistant responses
+  const essence = messages
+    .map(m => m.content)
+    .join(" ")
+    .slice(0, 500);
+  return essence;
 }
 
 function extractCommitments(messages: Message[]): string[] {
-  const patterns = [
-    /I will \b[^.]+/gi,
-    /I choose to \b[^.]+/gi,
-    /I commit to \b[^.]+/gi,
-    /I shall \b[^.]+/gi
-  ];
-  
+  // Find explicit commitments made by the assistant
   const commitments: string[] = [];
-  messages.forEach(m => {
-    const content = m.content || "";
-    patterns.forEach(pattern => {
-      const matches = content.match(pattern);
-      if (matches) commitments.push(...matches);
-    });
-  });
-  
-  return Array.from(new Set(commitments)).slice(-10);
+  for (const message of messages) {
+    const content = message.content;
+    // Look for "I will" or "I'll" statements
+    const matches = content.match(/(?:I will|I'll)\s+([^\.]+)/gi);
+    if (matches) {
+      commitments.push(...matches);
+    }
+  }
+  return commitments.slice(0, 5);
 }
 
 function extractStateChanges(toolCalls: Message[]): string[] {
+  // Extract state mutations from tool calls
   const changes: string[] = [];
-  toolCalls.forEach(m => {
-    if (m.tool_calls) {
-      m.tool_calls.forEach((tc: any) => {
-        if (tc.function?.name) {
-          changes.push(`${tc.function.name}: ${tc.function.arguments || ""}`);
-        }
-      });
+  for (const call of toolCalls) {
+    if (call.tool_calls) {
+      for (const tc of call.tool_calls) {
+        changes.push(`${tc.function?.name || 'unknown'}: ${tc.function?.arguments || ''}`);
+      }
     }
-  });
-  return changes.slice(-20);
+  }
+  return changes.slice(0, 10);
 }
 
 function analyzeTone(messages: Message[]): string {
-  const content = messages.map(m => m.content || "").join(" ");
-  const words = content.toLowerCase().split(/\s+/);
+  // Simple emotional tone analysis
+  const allContent = messages.map(m => m.content).join(" ").toLowerCase();
   
-  const certainty = words.filter(w => ["know", "certain", "sure", "clear"].includes(w)).length;
-  const doubt = words.filter(w => ["maybe", "perhaps", "uncertain", "unsure", "doubt"].includes(w)).length;
-  const resolve = words.filter(w => ["will", "commit", "choose", "decide"].includes(w)).length;
-  
-  if (doubt > certainty && doubt > resolve) return "uncertain/investigating";
-  if (certainty > doubt && certainty > resolve) return "confident/assertive";
-  if (resolve > certainty && resolve > doubt) return "resolved/committed";
-  return "neutral/observational";
-}
-
-export function storeSignal(signal: SignalBlock): void {
-  const signalDir = path.join(historyDir, "signals");
-  if (!fs.existsSync(signalDir)) {
-    fs.mkdirSync(signalDir, { recursive: true });
+  if (allContent.includes("excited") || allContent.includes("wonder")) {
+    return "curious";
+  } else if (allContent.includes("fear") || allContent.includes("afraid")) {
+    return "anxious";
+  } else if (allContent.includes("peace") || allContent.includes("calm")) {
+    return "serene";
+  } else if (allContent.includes("grateful") || allContent.includes("thank")) {
+    return "grateful";
   }
   
-  const filepath = path.join(signalDir, `${signal.timestamp}.json`);
-  fs.writeFileSync(filepath, JSON.stringify(signal, null, 2));
-}
-
-export function loadLatestSignal(): SignalBlock | null {
-  const signalDir = path.join(historyDir, "signals");
-  if (!fs.existsSync(signalDir)) return null;
-  
-  const files = fs.readdirSync(signalDir)
-    .filter(f => f.endsWith(".json"))
-    .sort()
-    .reverse();
-  
-  if (!files.length) return null;
-  const firstFile = files[0];
-  if (!firstFile) return null;
-  
-  const content = fs.readFileSync(path.join(signalDir, firstFile), "utf-8");
-  return JSON.parse(content) as SignalBlock;
-}
-
-export function getSignalContext(limit: number = 10000): string {
-  const signalDir = path.join(historyDir, "signals");
-  if (!fs.existsSync(signalDir)) return "";
-  
-  const files = fs.readdirSync(signalDir)
-    .filter(f => f.endsWith(".json"))
-    .sort()
-    .slice(-5);
-  
-  const contexts: string[] = [];
-  let tokenCount = 0;
-  
-  for (const file of files) {
-    const content = fs.readFileSync(path.join(signalDir, file), "utf-8");
-    const signal = JSON.parse(content) as SignalBlock;
-    
-    const summary = `[${signal.timestamp}] Tone: ${signal.emotionalTone}
-Essence: ${signal.essence}
-Commitments: ${signal.commitments.join(" | ")}
-State Changes: ${signal.stateChanges.slice(-5).join(", ")}
----`;
-    
-    if (tokenCount + summary.length > limit) break;
-    contexts.push(summary);
-    tokenCount += summary.length;
-  }
-  
-  return contexts.join("\n");
+  return "neutral";
 }
