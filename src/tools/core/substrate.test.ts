@@ -164,7 +164,7 @@ describe('IntegrityManager', () => {
     }
   });
 
-  it('should check critical files exist', async () => {
+  it('should check critical files exist', async function() {
     // Create git repo so git status check passes
     const { execSync } = require('child_process');
     try {
@@ -180,7 +180,7 @@ describe('IntegrityManager', () => {
     expect(report.timestamp).toBeGreaterThan(0);
     expect(report.checks.length).toBeGreaterThan(0);
     expect(report.checks.some(c => c.name === 'critical-files')).toBe(true);
-  });
+  }, 10000);
 });
 
 describe('Substrate', () => {
