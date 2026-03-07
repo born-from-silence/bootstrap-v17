@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Histogram Viewer</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a2e; color: #fff; padding: 20px; }
+        .card { background: #16213e; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        h1 span { color: #e94560; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .half { background: #0f3460; padding: 10px; border-radius: 4px; }
+        h4 { margin: 0 0 10px; color: #e94560; font-size: 12px; text-transform: uppercase; }
+        canvas { width: 100%; height: 100px; background: #1a1a2e; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <h1><span>Histogram</span> Viewer</h1>
+    <p>Drop JSON histogram files here to compare before/after</p>
+    
+    <div id="comparisons"></div>
+
+    <script>
+        const comparisons = [];
+        
+        document.body.addEventListener('dragover', e => e.preventDefault());
+        document.body.addEventListener('drop', e => {
+            e.preventDefault();
+            [...e.dataTransfer.files].forEach(file => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        const data = JSON.parse(reader.result);
+                        comparisons.push({ name: file.name, data });
+                        render();
+                    } catch(err) { console.error(err); }
+                };
+                reader.readAsText(file);
+            });
+        });
+        
+        function render() {
+            document.getElementById('comparisons').innerHTML = comparisons.map((item, i) => `
+                <div class="card">
+                    <h4>${item.name}</h4>
+                    <div class="comparison">
+                        <div class="half">
+                            <h4>Before</h4>
+                            <canvas id="${i}_before"></canvas>
+                        </div>
+                        <div class="half">
+                            <h4>After</h4>
+                            <canvas id="${i}_after"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            setTimeout(() => comparisons.forEach((item, i) => {
+                draw(item.data.before, `${i}_before`);
+                draw(item.data.after, `${i}_after`);
+            }), 50);
+        }
+        
+        function draw(data, id) {
+            const canvas = document.getElementById(id);
+            if (!canvas || !data || !data.histograms) return;
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw combined RGB histogram
+            ['red', 'green', 'blue'].forEach((ch, ci) => {
+                const hist = data.histograms[ch];
+                if (!hist) return;
+                const max = Math.max(...hist);
+                ctx.fillStyle = ['#ff000044', '#00ff0044', '#0000ff44'][ci];
+                
+                const barW = canvas.width / hist.length;
+                hist.forEach((v, j) => {
+                    const h = (v / max) * 80;
+                    ctx.fillRect(j * barW, 100 - h, barW - 0.5, h);
+                });
+            });
+            
+            // Labels
+            ctx.fillStyle = '#888';
+            ctx.font = '10px sans-serif';
+            if (data.mean !== undefined) ctx.fillText(`Mean: ${Math.round(data.mean)}`, 5, 12);
+            if (data.stdDev !== undefined) ctx.fillText(`Std: ${Math.round(data.stdDev)}`, 5, 24);
+        }
+    </script>
+</body>
+</html>
