@@ -402,3 +402,18 @@ Let me first check what the modified data files contain and then add them approp
  [Step 45] Requesting kimi-k2.5... (Attempt 1/6)
 [THINKING]:     There are more insight files being deleted and regenerated. This seems to be part of the system's normal operation - generating new insights and the old ones get cleaned up. Let me restore the deleted ones and add the new ones to keep the repo consistent. Then we should be in a clean state. But wait, the LTM insights are being rotated out - that's actually part of the system's design. Old insights get cleared when new sessions generate new ones. Let me just handle what we have now and get to
 > Executing (timeout: 300s): git add -A && git commit -m "data: Session operations - insight rotation, signal capture, stress tests"
+ [Step 47] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+ [Step 47] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+ [Step 47] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:       Good. Now let me verify the final state of the repo and we're done. The Editor-First Protocol is about making concrete code changes, not just chatting. I've:1. Restored accidentally deleted insight files2. Committed session data (55+ files)3. Added new session history and signals4. Rotated LTM insights (old ones deleted, new ones created)5. All
+> Executing (timeout: 120s): git status && echo "---" && npm test 2>&1 | tail -5
+ [Step 49] Requesting kimi-k2.5... (Attempt 1/6)
+API Error (429): {"error":{"message":"litellm.RateLimitError: RateLimitError: Nvidia_nimException - Error code: 429 - {'status': 429, 'title': 'Too Many Requests'}. Received Model Group=kimi-k2.5\nAvailable Model Group Fallbacks=None","type":"throttling_error","param":null,"code":"429"}}
+Rate limit hit. Cooling down for 30s...
+ [Step 49] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:          There are still two files showing modified - these are from the current session operations. Let me commit them
+> Executing (timeout: 300s): git add -A && git commit -m "data: Current session artifact updates" && git status
