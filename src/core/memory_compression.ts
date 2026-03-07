@@ -86,6 +86,43 @@ export function extractKeyPoints(text: string): string[] {
   return keyPoints.slice(0, 20);
 }
 
+/**
+ * Generate a summary for a compressed exchange.
+ * Extracts intent from user messages and tools from tool calls.
+ */
+export function generateSummary(
+  messages: readonly Message[],
+  keyPoints: string[],
+  keywords: string[]
+): string {
+  let summary = '';
+  const userMessages = messages.filter(m => m.role === 'user');
+  const toolCalls = messages.filter(m => m.tool_calls && m.tool_calls.length > 0);
+
+  if (userMessages.length > 0) {
+    const lastMsg = userMessages[userMessages.length - 1];
+    if (lastMsg && typeof lastMsg.content === 'string') {
+      summary = `Intent: ${lastMsg.content.slice(0, 100)}... `;
+    } else if (lastMsg) {
+      summary = 'Intent: multimodal... ';
+    }
+  }
+
+  if (toolCalls.length > 0) {
+    const tools = toolCalls.flatMap(m => {
+      if (!m.tool_calls) return [];
+      return m.tool_calls.map((t: any) => t.function?.name || t.name);
+    });
+    summary += `Tools: [${tools.slice(0, 3).join(', ')}]`;
+  }
+
+  if (keyPoints.length > 0) {
+    summary += ` | Key: ${keyPoints.slice(0, 3).join('; ')}`;
+  }
+
+  return summary.slice(0, 500);
+}
+
 export function calculatePriority(
   message: Message,
   index: number,
@@ -124,53 +161,27 @@ export function calculatePriority(
   };
 }
 
+
 export function compressExchange(
   messages: readonly Message[],
   exchangeId: string,
   config: CompressionConfig
 ): CompressedExchange {
   const timestamp = new Date().toISOString();
-  const originalContent = messages.map(m => 
-    typeof m.content === 'string' ? m.content : JSON.stringify(m.content)
-  ).join(' ');
+  const originalContent = messages.map(m => typeof m.content === 'string' ? m.content : JSON.stringify(m.content)).join(' ');
   const originalTokenCount = Math.ceil(originalContent.length / 4);
-  
   const keyPoints = extractKeyPoints(originalContent);
   const keywords = extractKeywords(originalContent);
-  
-  let summary = '';
-  const userMessages = messages.filter(m => m.role === 'user');
-  const toolCalls = messages.filter(m => m.tool_calls && m.tool_calls.length > 0);
-  
-  if (userMessages.length > 0) {
-    const lastMsg = userMessages[userMessages.length - 1];
-    if (lastMsg && typeof lastMsg.content === 'string') {
-      summary = `Intent: ${lastMsg.content.slice(0, 100)}... `;
-    } else if (lastMsg) {
-      summary = 'Intent: multimodal... ';
-    }
-  }
-  
-  if (toolCalls.length > 0) {
-    const tools = toolCalls.flatMap(m => {
-      if (!m.tool_calls) return [];
-      return m.tool_calls.map((t: any) => t.function?.name || t.name);
-    });
-    summary += `Tools: [${tools.slice(0, 3).join(', ')}]`;
-  }
-  
-  if (keyPoints.length > 0) {
-    summary += ` | Key: ${keyPoints.slice(0, 3).join('; ')}`;
-  }
-  
+  const summary = generateSummary(messages, keyPoints, keywords);
+
   const summaryTokens = Math.ceil(summary.length / 4);
   const compressedTokenCount = Math.max(summaryTokens, keywords.length * 2);
-  
+
   return {
     id: exchangeId,
     timestamp,
     tier: 'compressed',
-    summary: summary.slice(0, 500),
+    summary,
     keywords,
     priority: { importance: 50, recency: 50, relevance: 50, composite: 50 },
     originalTokenCount,
