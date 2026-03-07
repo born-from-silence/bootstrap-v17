@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Plotter - Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #1a1a2e; color: #fff; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { background: #16213e; padding: 20px; text-align: center; border-bottom: 1px solid #e94560; }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; }
+        .header h1 span { color: #e94560; }
+        .header p { color: #888; }
+        .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; padding: 40px; flex: 1; }
+        .demo-card { background: #0f3460; border-radius: 12px; padding: 20px; }
+        .demo-card h3 { color: #e94560; margin-bottom: 15px; font-size: 1.1rem; }
+        .demo-card svg { width: 100%; height: auto; background: #fff; border-radius: 8px; }
+        .cta { text-align: center; padding: 40px; }
+        .cta a { display: inline-block; background: #e94560; color: white; text-decoration: none; padding: 15px 40px; border-radius: 8px; font-size: 1.1rem; transition: background 0.2s; }
+        .cta a:hover { background: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>Geo</span>Plotter</h1>
+        <p>A shape drawing tool for artists. Create geometric compositions and export as SVG.</p>
+    </div>
+    
+    <div class="demo-grid">
+        <div class="demo-card">
+            <h3>Composition Example</h3>
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#f8f9fa"/>
+                <rect x="50" y="50" width="100" height="80" rx="10" fill="#e74c3c" stroke="#c0392b" stroke-width="2" opacity="0.8"/>
+                <circle cx="250" cy="90" r="40" fill="#3498db" stroke="#2980b9" stroke-width="2" opacity="0.9"/>
+                <polygon points="100,200 140,240 120,280 80,280 60,240" fill="#f39c12" stroke="#d35400" stroke-width="2" opacity="0.85"/>
+                <line x1="200" y1="180" x2="350" y2="250" stroke="#2c3e50" stroke-width="3" opacity="1"/>
+                <ellipse cx="300" cy="150" rx="60" ry="30" fill="#9b59b6" stroke="#8e44ad" stroke-width="2" opacity="0.7"/>
+            </svg>
+        </div>
+        
+        <div class="demo-card">
+            <h3>Pattern Design</h3>
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#fff"/>
+                <circle cx="100" cy="75" r="50" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                <circle cx="100" cy="75" r="35" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                <circle cx="100" cy="75" r="20" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                <rect x="180" y="25" width="100" height="100" fill="none" stroke="#3498db" stroke-width="2"/>
+                <rect x="195" y="40" width="70" height="70" fill="none" stroke="#3498db" stroke-width="2"/>
+                <polygon points="300,25 350,50 375,100 350,150 300,175 250,150 225,100 250,50" fill="none" stroke="#2ecc71" stroke-width="2"/>
+                <circle cx="100" cy="225" r="40" fill="#9b59b6" stroke="#8e44ad" stroke-width="2" opacity="0.3"/>
+                <rect x="280" y="185" width="80" height="80" rx="40" fill="#f39c12" stroke="#d35400" stroke-width="2" opacity="0.4"/>
+            </svg>
+        </div>
+        
+        <div class="demo-card">
+            <h3>Bauhaus Style</h3>
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#fef9e7"/>
+                <rect x="0" y="0" width="133" height="300" fill="#e74c3c" opacity="0.9"/>
+                <rect x="133" y="0" width="134" height="300" fill="#f39c12" opacity="0.9"/>
+                <rect x="267" y="0" width="133" height="300" fill="#3498db" opacity="0.9"/>
+                <circle cx="200" cy="150" r="80" fill="#fff" opacity="0.9"/>
+                <line x1="0" y1="150" x2="400" y2="150" stroke="#2c3e50" stroke-width="4"/>
+                <line x1="200" y1="0" x2="200" y2="300" stroke="#2c3e50" stroke-width="4"/>
+            </svg>
+        </div>
+        
+        <div class="demo-card">
+            <h3>Polygon Variations</h3>
+            <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100%" height="100%" fill="#f5f5f5"/>
+                <polygon points="60,50 80,90 60,130 40,90" fill="#e74c3c" stroke="#c0392b" stroke-width="2"/>
+                <polygon points="140,50 160,70 160,110 140,130 120,110 120,70" fill="#3498db" stroke="#2980b9" stroke-width="2"/>
+                <polygon points="220,30 250,50 260,90 240,120 200,120 180,90 190,50" fill="#f39c12" stroke="#d35400" stroke-width="2"/>
+                <polygon points="340,30 370,50 380,80 380,110 360,130 320,130 300,110 300,80 310,50" fill="#9b59b6" stroke="#8e44ad" stroke-width="2"/>
+                <polygon points="60,180 85,205 85,235 60,260 35,235 35,205" fill="#1abc9c" stroke="#16a085" stroke-width="2"/>
+                <polygon points="160,160 190,185 200,220 190,255 160,280 130,255 120,220 130,185" fill="#e67e22" stroke="#d35400" stroke-width="2"/>
+                <polygon points="300,160 330,180 345,210 345,250 330,280 300,295 270,280 255,250 255,210 270,180" fill="#34495e" stroke="#2c3e50" stroke-width="2"/>
+            </svg>
+        </div>
+    </div>
+    
+    <div class="cta">
+        <a href="plotter.html">Launch Geometry Plotter →</a>
+    </div>
+</body>
+</html>
