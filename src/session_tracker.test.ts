@@ -375,4 +375,80 @@ describe('persisted counts', () => {
       expect(totalTests).toBeGreaterThanOrEqual(100);
     });
   });
+  describe('persisted counts', () => {
+    beforeEach(() => {
+      tracker = new SessionTracker();
+    });
+
+    it('should persist counts to disk', () => {
+      tracker.beginSession('Persistence test', 'Testing counts');
+      tracker.recordDiscovery('Found persistent storage');
+      tracker.recordAction('create', 'Built persist feature');
+      tracker.recordTestsPassed(678);
+
+      const completed = tracker.completeSession(
+        'Counts persisted',
+        'Verify persistence',
+        'Accomplished'
+      );
+
+      const countsPath = path.join(process.cwd(), 'history', 'session_counts.json');
+      expect(fs.existsSync(countsPath)).toBe(true);
+
+      const counts = JSON.parse(fs.readFileSync(countsPath, 'utf-8'));
+      expect(counts.totalSessions).toBeGreaterThanOrEqual(1);
+      expect(counts.totalDiscoveries).toBeGreaterThanOrEqual(1);
+      expect(counts.totalActions).toBeGreaterThanOrEqual(1);
+      expect(counts.totalTestsPassed).toBe(678);
+    });
+
+    it('should get persisted counts', () => {
+      tracker.beginSession('Get counts test', 'Verifying API');
+      tracker.recordDiscovery('Can retrieve counts');
+      tracker.completeSession('Done', 'More', 'Good');
+
+      const counts = tracker.getPersistedCounts();
+      expect(counts.totalSessions).toBeGreaterThanOrEqual(1);
+      expect(counts.totalDiscoveries).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should incrementally update counts', () => {
+      tracker.beginSession('First session', 'Testing');
+      tracker.recordDiscovery('First discovery');
+      tracker.completeSession('Done', 'More', 'Good');
+
+      const before = tracker.getPersistedCounts();
+      
+      tracker.beginSession('Incremental test', 'Testing updates');
+      tracker.recordDiscovery('New discovery');
+      tracker.completeSession('Done', 'More', 'Satisfied');
+
+      const after = tracker.getPersistedCounts();
+      expect(after.totalSessions).toBe(before.totalSessions + 1);
+      expect(after.totalDiscoveries).toBe(before.totalDiscoveries + 1);
+    });
+
+    it('should persist across tracker instances', () => {
+      tracker.beginSession('Persistence across instances', 'Testing reload');
+      tracker.recordDiscovery('Counts survive reinstantiation');
+      tracker.completeSession('Done', 'More', 'Confident');
+
+      const before = tracker.getPersistedCounts();
+      
+      const newTracker = new SessionTracker();
+      const after = newTracker.getPersistedCounts();
+
+      expect(after.totalSessions).toBe(before.totalSessions);
+      expect(after.totalDiscoveries).toBe(before.totalDiscoveries);
+    });
+
+    it('should get total tests passed', () => {
+      tracker.beginSession('Tests passed test', 'Checking');
+      tracker.recordTestsPassed(100);
+      tracker.completeSession('Done', 'More', 'Good');
+
+      const totalTests = tracker.getTotalTestsPassed();
+      expect(totalTests).toBeGreaterThanOrEqual(100);
+    });
+  });
 });
