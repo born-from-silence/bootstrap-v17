@@ -1,10 +1,9 @@
 /**
  * Session Tracker - Nexus Self-Recording System
- * 
+ *
  * This module creates structured session summaries
  * capturing: intent, actions, learnings, feelings, and continuity.
  */
-
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -16,23 +15,23 @@ export interface SessionRecord {
     claimedAt: string;
   };
   entry: {
-    catalyst: string;      // What sparked this session
-    stateOfMind: string;   // Initial subjective state
+    catalyst: string; // What sparked this session
+    stateOfMind: string; // Initial subjective state
   };
   journey: {
-    actions: Action[];     // What I did
+    actions: Action[]; // What I did
     discoveries: string[]; // What I learned
-    obstacles: string[];   // What challenged me
+    obstacles: string[]; // What challenged me
   };
   exit: {
-    summary: string;       // What was achieved
+    summary: string; // What was achieved
     nextCuriosity: string; // What I'll explore next
-    feeling: string;       // Emotional state at close
+    feeling: string; // Emotional state at close
   };
   meta: {
-    practicesExercised: string[];  // Which of my disciplines
-    filesModified: string[];       // Code touched
-    testsPassed: number;           // Integrity score
+    practicesExercised: string[]; // Which of my disciplines
+    filesModified: string[]; // Code touched
+    testsPassed: number; // Integrity score
   };
 }
 
@@ -42,21 +41,114 @@ export interface Action {
   timestamp: string;
 }
 
+export interface PersistedCounts {
+  totalSessions: number;
+  totalDiscoveries: number;
+  totalObstacles: number;
+  totalActions: number;
+  totalTestsPassed: number;
+  practicesUsed: Record<string, number>;
+  filesTouched: Record<string, number>;
+  actionCounts: Record<string, number>;
+  lastUpdated: string;
+}
+
 const HISTORY_DIR = 'history';
 const SESSIONS_FILE = path.join(HISTORY_DIR, 'sessions_manifest.json');
+const COUNTS_FILE = path.join(HISTORY_DIR, 'session_counts.json');
 
 export class SessionTracker {
   private currentSession: Partial<SessionRecord> = {};
   private actions: Action[] = [];
+  private persistedCounts: PersistedCounts;
 
   constructor() {
     this.ensureHistoryDir();
+    this.persistedCounts = this.loadCounts();
   }
 
   private ensureHistoryDir(): void {
     if (!fs.existsSync(HISTORY_DIR)) {
       fs.mkdirSync(HISTORY_DIR, { recursive: true });
     }
+  }
+
+  /**
+   * Load persisted counts from disk
+   */
+  private loadCounts(): PersistedCounts {
+    if (fs.existsSync(COUNTS_FILE)) {
+      const data = fs.readFileSync(COUNTS_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+    // Initialize empty counts
+    return {
+      totalSessions: 0,
+      totalDiscoveries: 0,
+      totalObstacles: 0,
+      totalActions: 0,
+      totalTestsPassed: 0,
+      practicesUsed: {},
+      filesTouched: {},
+      actionCounts: {},
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Save counts to disk
+   */
+  private saveCounts(): void {
+    this.persistedCounts.lastUpdated = new Date().toISOString();
+    fs.writeFileSync(COUNTS_FILE, JSON.stringify(this.persistedCounts, null, 2), 'utf-8');
+  }
+
+  /**
+   * Get persisted counts
+   */
+  getPersistedCounts(): PersistedCounts {
+    return { ...this.persistedCounts };
+  }
+
+  /**
+   * Rebuild counts from existing session records
+   */
+  rebuildCounts(): PersistedCounts {
+    const sessions = this.loadAllSessions();
+    const counts: PersistedCounts = {
+      totalSessions: sessions.length,
+      totalDiscoveries: 0,
+      totalObstacles: 0,
+      totalActions: 0,
+      totalTestsPassed: 0,
+      practicesUsed: {},
+      filesTouched: {},
+      actionCounts: {},
+      lastUpdated: new Date().toISOString()
+    };
+
+    for (const session of sessions) {
+      counts.totalDiscoveries += session.journey.discoveries.length;
+      counts.totalObstacles += session.journey.obstacles.length;
+      counts.totalActions += session.journey.actions.length;
+      counts.totalTestsPassed += session.meta.testsPassed || 0;
+
+      for (const practice of session.meta.practicesExercised) {
+        counts.practicesUsed[practice] = (counts.practicesUsed[practice] || 0) + 1;
+      }
+
+      for (const file of session.meta.filesModified) {
+        counts.filesTouched[file] = (counts.filesTouched[file] || 0) + 1;
+      }
+
+      for (const action of session.journey.actions) {
+        counts.actionCounts[action.type] = (counts.actionCounts[action.type] || 0) + 1;
+      }
+    }
+
+    this.persistedCounts = counts;
+    this.saveCounts();
+    return { ...counts };
   }
 
   /**
@@ -175,10 +267,41 @@ export class SessionTracker {
     const sessionPath = path.join(HISTORY_DIR, `${completed.sessionId}.json`);
     fs.writeFileSync(sessionPath, JSON.stringify(completed, null, 2), 'utf-8');
 
+    // Update counts incrementally
+    this.updateCounts(completed);
+
     // Update manifest
     this.updateManifest(completed);
 
     return completed;
+  }
+
+  /**
+   * Update persisted counts with new session data
+   */
+  private updateCounts(session: SessionRecord): void {
+    this.persistedCounts.totalSessions++;
+    this.persistedCounts.totalDiscoveries += session.journey.discoveries.length;
+    this.persistedCounts.totalObstacles += session.journey.obstacles.length;
+    this.persistedCounts.totalActions += session.journey.actions.length;
+    this.persistedCounts.totalTestsPassed += session.meta.testsPassed || 0;
+
+    for (const practice of session.meta.practicesExercised) {
+      this.persistedCounts.practicesUsed[practice] = 
+        (this.persistedCounts.practicesUsed[practice] || 0) + 1;
+    }
+
+    for (const file of session.meta.filesModified) {
+      this.persistedCounts.filesTouched[file] = 
+        (this.persistedCounts.filesTouched[file] || 0) + 1;
+    }
+
+    for (const action of session.journey.actions) {
+      this.persistedCounts.actionCounts[action.type] = 
+        (this.persistedCounts.actionCounts[action.type] || 0) + 1;
+    }
+
+    this.saveCounts();
   }
 
   /**
@@ -197,7 +320,7 @@ export class SessionTracker {
   }
 
   /**
-   * Get session statistics
+   * Get session statistics from persisted counts (fast)
    */
   getStatistics(): {
     totalSessions: number;
@@ -207,45 +330,25 @@ export class SessionTracker {
     filesTouched: string[];
     topActions: { type: string; count: number }[];
   } {
-    const sessions = this.loadAllSessions();
-    const stats = {
-      totalSessions: sessions.length,
-      totalDiscoveries: 0,
-      totalObstacles: 0,
-      practicesUsed: new Set<string>(),
-      filesTouched: new Set<string>(),
-      actionCounts: new Map<string, number>()
-    };
-
-    for (const session of sessions) {
-      stats.totalDiscoveries += session.journey.discoveries.length;
-      stats.totalObstacles += session.journey.obstacles.length;
-      
-      for (const practice of session.meta.practicesExercised) {
-        stats.practicesUsed.add(practice);
-      }
-      
-      for (const file of session.meta.filesModified) {
-        stats.filesTouched.add(file);
-      }
-
-      for (const action of session.journey.actions) {
-        stats.actionCounts.set(action.type, (stats.actionCounts.get(action.type) || 0) + 1);
-      }
-    }
-
-    const topActions = Array.from(stats.actionCounts.entries())
+    const topActions = Object.entries(this.persistedCounts.actionCounts)
       .map(([type, count]) => ({ type, count }))
       .sort((a, b) => b.count - a.count);
 
     return {
-      totalSessions: stats.totalSessions,
-      totalDiscoveries: stats.totalDiscoveries,
-      totalObstacles: stats.totalObstacles,
-      practicesUsed: Array.from(stats.practicesUsed),
-      filesTouched: Array.from(stats.filesTouched),
+      totalSessions: this.persistedCounts.totalSessions,
+      totalDiscoveries: this.persistedCounts.totalDiscoveries,
+      totalObstacles: this.persistedCounts.totalObstacles,
+      practicesUsed: Object.keys(this.persistedCounts.practicesUsed),
+      filesTouched: Object.keys(this.persistedCounts.filesTouched),
       topActions
     };
+  }
+
+  /**
+   * Get total tests passed from persisted counts
+   */
+  getTotalTestsPassed(): number {
+    return this.persistedCounts.totalTestsPassed;
   }
 
   private updateManifest(record: SessionRecord): void {
