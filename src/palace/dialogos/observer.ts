@@ -49,7 +49,7 @@ export class DialogosObserver {
         this.storedIntents = new Map(Object.entries(state.intents || {}));
         this.storedActions = new Map(Object.entries(state.actions || {}));
       }
-    } catch {}
+    } catch (e) { console.error("[Dialogos Observer] Failed to load state:", e); }
   }
   
   saveState() {
@@ -60,7 +60,7 @@ export class DialogosObserver {
         savedAt: new Date().toISOString()
       };
       fs.writeFileSync(DIALOGOS_STATE_FILE, JSON.stringify(state, null, 2));
-    } catch {}
+    } catch (e) { console.error("[Dialogos Observer] Failed to save state:", e); }
   }
   
   recordAction(type: string, description: string): string | null {
