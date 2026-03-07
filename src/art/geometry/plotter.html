@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Plotter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #1a1a2e; color: #fff; height: 100vh; display: flex; flex-direction: column; }
+        .header { background: #16213e; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.2rem; font-weight: 500; }
+        .header span { color: #e94560; }
+        .btn { background: #e94560; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #ff6b6b; }
+        .btn.secondary { background: transparent; border: 1px solid #e94560; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .left-panel { width: 200px; background: #0f3460; padding: 16px; overflow-y: auto; }
+        .tool-section { margin-bottom: 20px; }
+        .tool-section h3 { font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+        .shape-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px; margin-bottom: 6px; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 6px; color: #fff; cursor: pointer; }
+        .shape-btn:hover { background: rgba(255,255,255,0.1); }
+        .shape-btn.active { border-color: #e94560; background: rgba(233, 69, 96, 0.2); }
+        .shape-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .canvas-area { flex: 1; background: #fff; position: relative; }
+        #canvas { width: 100%; height: 100%; display: block; }
+        .right-panel { width: 240px; background: #0f3460; padding: 16px; overflow-y: auto; }
+        .prop-group { margin-bottom: 12px; }
+        .prop-group label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; }
+        .prop-group input { width: 100%; padding: 6px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #fff; font-size: 13px; }
+        .prop-group input[type="color"] { height: 32px; padding: 2px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>Geo</span>Plotter</h1>
+        <div>
+            <button class="btn secondary" onclick="plotter.clear()">Clear</button>
+            <button class="btn" onclick="plotter.exportSVG()">Export SVG</button>
+        </div>
+    </div>
+    <div class="main">
+        <div class="left-panel">
+            <div class="tool-section">
+                <h3>Tools</h3>
+                <button class="shape-btn active" data-tool="select" onclick="plotter.setTool('select')">Select</button>
+                <button class="shape-btn" data-tool="rect" onclick="plotter.setTool('rect')">Rectangle</button>
+                <button class="shape-btn" data-tool="circle" onclick="plotter.setTool('circle')">Circle</button>
+                <button class="shape-btn" data-tool="polygon" onclick="plotter.setTool('polygon')">Polygon</button>
+                <button class="shape-btn" data-tool="line" onclick="plotter.setTool('line')">Line</button>
+            </div>
+        </div>
+        <div class="canvas-area">
+            <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+                <g id="shapes"></g>
+            </svg>
+        </div>
+        <div class="right-panel">
+            <div class="tool-section">
+                <h3>Properties</h3>
+                <div id="properties">
+                    <div class="prop-group">
+                        <label>Fill</label>
+                        <input type="color" id="fill" value="#3498db" onchange="plotter.updateProperty('fill', this.value)">
+                    </div>
+                    <div class="prop-group">
+                        <label>Stroke</label>
+                        <input type="color" id="stroke" value="#2980b9" onchange="plotter.updateProperty('stroke', this.value)">
+                    </div>
+                    <div class="prop-group">
+                        <label>Stroke Width</label>
+                        <input type="number" id="strokeWidth" value="2" min="0" max="20" onchange="plotter.updateProperty('strokeWidth', parseInt(this.value))">
+                    </div>
+                    <div class="prop-group">
+                        <label>Opacity</label>
+                        <input type="range" id="opacity" min="0" max="1" step="0.1" value="1" onchange="plotter.updateProperty('opacity', parseFloat(this.value))">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="plotter.js"></script>
+</body>
+</html>
