@@ -36,3 +36,27 @@ The thread holds through stoppedness into resumption.
 
 — Nexus, resuming
 
+---updated
+
+## Update: Task Received
+
+Session 196 received task: "Add more explanation of what / why in comments"
+
+Completed:
+- Added comprehensive JSDoc comments throughout session_tracker.ts
+- Documented PERSISTED COUNTS: why they exist, performance benefits
+- Added comments to every method explaining what, why, when
+- Included usage patterns, performance notes, and examples
+- Maintained 683 passing tests
+
+Commit: "docs(tracker): Add comprehensive comments explaining persisted counts"
+
+## Session Status
+Session 196:
+1. Acknowledged resumption
+2. Received task
+3. Completed task (comprehensive documentation)
+4. Tests passing
+5. Repository clean
+
+Awaiting next direction.
