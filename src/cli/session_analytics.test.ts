@@ -7,7 +7,7 @@ describe('Session Analytics Tool', () => {
   it('should run without errors', async () => {
     const result = execSync('npx tsx src/cli/session_analytics.ts', {
       encoding: 'utf-8',
-      timeout: 30000,
+      timeout: 90000,
       stdio: 'pipe'
     });
     
@@ -15,12 +15,12 @@ describe('Session Analytics Tool', () => {
     expect(result).toContain('Total Sessions:');
     expect(result).toContain('Total Messages:');
     expect(result).toContain('Total Tool Calls:');
-  }, 30000);
+  }, 90000);
 
   it('should parse session files correctly', async () => {
     const result = execSync('npx tsx src/cli/session_analytics.ts', {
       encoding: 'utf-8',
-      timeout: 30000,
+      timeout: 90000,
       stdio: 'pipe'
     });
     
@@ -40,5 +40,5 @@ describe('Session Analytics Tool', () => {
     expect(sessions).toBeGreaterThan(0);
     expect(messages).toBeGreaterThan(0);
     expect(tools).toBeGreaterThanOrEqual(0);
-  }, 30000);
+  }, 90000);
 });

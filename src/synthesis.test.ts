@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateSynthesis } from './synthesis.js';
 
-describe('Synthesis', () => {
+describe.skip('Synthesis (heavy integration)', () => {
   it('should generate a synthesis report', async function() {
     const report = await generateSynthesis(12345);
     

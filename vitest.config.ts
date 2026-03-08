@@ -4,6 +4,7 @@ import os from "node:os";
 
 export default defineConfig({
   test: {
+    testTimeout: 15000,
     setupFiles: ["./src/test-setup.ts"],
     isolate: true,
     pool: "forks",

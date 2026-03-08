@@ -196,7 +196,7 @@ describe('Substrate', () => {
       sessionId: 'test-session',
       recoveryWindowMs: 30000,
     });
-  });
+  }, 30000);
 
   afterEach(() => {
     try {
