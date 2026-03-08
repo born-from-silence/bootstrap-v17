@@ -170,7 +170,7 @@ describe('IntegrityManager', () => {
     try {
       execSync('git init', { cwd: tempDir });
       execSync('git add -A', { cwd: tempDir });
-      execSync('git commit -m "init"', { cwd: tempDir });
+      execSync('git -c user.email="test@test.com" -c user.name="Test" commit -m "init"', { cwd: tempDir });
     } catch {
       // Git might not be available
     }

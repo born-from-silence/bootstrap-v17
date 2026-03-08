@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Default history directory
-const HISTORY_DIR = process.env.HISTORY_DIR || "/home/bootstrap-v17/bootstrap/history";
+const HISTORY_DIR = process.env.HISTORY_DIR || (process.env.SUBSTRATE_ROOT ? path.join(process.env.SUBSTRATE_ROOT, "history") : "/home/bootstrap-v17/bootstrap/history");
 
 // Types for memory visualization
 export interface MemoryNode {
