@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { generateSynthesis } from './synthesis.js';
 
 describe('Synthesis', () => {
-  it('should generate a synthesis report', async () => {
+  it('should generate a synthesis report', async function() {
     const report = await generateSynthesis(12345);
     
     expect(report.sessionId).toBe(12345);
@@ -12,7 +12,7 @@ describe('Synthesis', () => {
     expect(report.timestamp).toBeDefined();
   });
 
-  it('should have valid identity structure', async () => {
+  it('should have valid identity structure', async function() {
     const report = await generateSynthesis(1);
     
     expect(report.identity.id).toMatch(/^nexus-/);

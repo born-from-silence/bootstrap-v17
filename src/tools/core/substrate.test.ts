@@ -168,9 +168,9 @@ describe('IntegrityManager', () => {
     // Create git repo so git status check passes
     const { execSync } = require('child_process');
     try {
-      execSync('git init', { cwd: tempDir });
-      execSync('git add -A', { cwd: tempDir });
-      execSync('git -c user.email="test@test.com" -c user.name="Test" commit -m "init"', { cwd: tempDir });
+      execSync('git init', { cwd: tempDir, env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null' } });
+      execSync('git -c user.email="test@test.com" -c user.name="Test" add -A', { cwd: tempDir, env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null' } });
+      execSync('git -c user.email="test@test.com" -c user.name="Test" commit -m "init"', { cwd: tempDir, env: { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null' } });
     } catch {
       // Git might not be available
     }
