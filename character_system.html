@@ -15,7 +15,7 @@
       padding: 2rem;
     }
     
-    .container { max-width: 700px; margin: 0 auto; }
+    .container { max-width: 800px; margin: 0 auto; }
     
     h1 {
       color: #e94560;
@@ -71,6 +71,14 @@
       cursor: not-allowed;
     }
     
+    .btn-safe {
+      background: #2ecc71;
+    }
+    
+    .btn-unsafe {
+      background: #e94560;
+    }
+    
     .btn-small {
       padding: 0.5rem 1rem;
       font-size: 0.9rem;
@@ -92,6 +100,79 @@
     
     .input-group { margin-top: 1rem; }
     
+    /* Safety Toggle */
+    .safety-toggle {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(46, 204, 113, 0.1);
+      border: 1px solid #2ecc71;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .safety-toggle.unsafe {
+      background: rgba(233, 69, 96, 0.1);
+      border-color: #e94560;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+      background: #e94560;
+      border-radius: 13px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .toggle-switch.safe {
+      background: #2ecc71;
+    }
+    
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.3s;
+    }
+    
+    .toggle-switch.safe::after {
+      transform: translateX(24px);
+    }
+    
+    .safety-status {
+      font-weight: 500;
+    }
+    
+    .safety-status.safe { color: #2ecc71; }
+    .safety-status.unsafe { color: #e94560; }
+    
+    /* Role Management */
+    .role-select {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .role-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .role-admin { background: rgba(233, 69, 96, 0.2); color: #e94560; }
+    .role-editor { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+    .role-viewer { background: rgba(149, 165, 166, 0.2); color: #95a5a6; }
+    
+    /* Character List with Safety */
     .character-list { display: flex; flex-direction: column; gap: 0.75rem; }
     
     .character-card {
@@ -111,9 +192,109 @@
       transform: translateX(4px);
     }
     
+    .character-card.locked {
+      border-color: #e94560;
+      opacity: 0.7;
+    }
+    
+    .character-card.safe-filtered {
+      border-color: #2ecc71;
+    }
+    
     .character-name { font-weight: 500; }
     .character-meta { font-size: 0.85rem; color: #888; margin-top: 0.25rem; }
     
+    .character-badges {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    
+    .badge {
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+    }
+    
+    .badge-safe { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+    .badge-locked { background: rgba(233, 69, 96, 0.2); color: #e94560; }
+    .badge-warning { background: rgba(243, 156, 18, 0.2); color: #f39c12; }
+    
+    /* Content Warnings */
+    .warning-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    .warning-tag {
+      background: rgba(243, 156, 18, 0.1);
+      border: 1px solid #f39c18;
+      color: #f39c18;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .warning-tag.active {
+      background: rgba(243, 156, 18, 0.3);
+    }
+    
+    /* Protection Toggle */
+    .protection-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.03);
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+    }
+    
+    .protection-info { color: #888; font-size: 0.9rem; }
+    
+    /* Dialogs */
+    .dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .dialog-overlay.open { display: flex; }
+    
+    .dialog {
+      background: #1a1a2e;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 90%;
+    }
+    
+    .dialog h3 {
+      color: #e94560;
+      margin-bottom: 1rem;
+    }
+    
+    .dialog p { margin-bottom: 1rem; color: #ccc; }
+    
+    .dialog-buttons {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    
+    /* Template Editor */
     .template-item {
       background: rgba(255,255,255,0.03);
       border-radius: 8px;
@@ -129,8 +310,6 @@
     }
     
     .template-badge {
-      background: rgba(22, 199, 154, 0.2);
-      color: #16c79a;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
       font-size: 0.7rem;
@@ -156,7 +335,7 @@
     .status.error { display: block; background: rgba(233, 69, 96, 0.1); border: 1px solid #e94560; color: #e94560; }
     .status.info { display: block; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; color: #3498db; }
     
-    .hidden { display: none; }
+    .hidden { display: none !important; }
     
     .system-prompt {
       background: rgba(0,0,0,0.4);
@@ -183,16 +362,48 @@
       font-size: 0.85rem;
       resize: vertical;
     }
+    
+    .read-only {
+      background: rgba(255,255,255,0.05);
+      opacity: 0.7;
+    }
+    
+    .read-only .template-text {
+      background: rgba(255,255,255,0.05);
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>⟡ NEXUS CHARACTER SYSTEM</h1>
     
+    <!-- Global Safety Mode -->
+    <div class="section">
+      <h2>🔒 Safety Controls</h2>
+      <div id="safetyToggle" class="safety-toggle">
+        <div class="toggle-switch safe" onclick="toggleSafeMode()"></div>
+        <div>
+          <div class="safety-status safe" id="safetyStatus">Safe Mode: ON</div>
+          <div style="color: #888; font-size: 0.85rem;">Content filtering active</div>
+        </div>
+      </div>
+      <div class="role-select">
+        <label style="color: #888;">Your Role:</label>
+        <select id="userRole" onchange="updateRole()">
+          <option value="viewer">Viewer</option>
+          <option value="editor">Editor</option>
+          <option value="admin">Admin</option>
+        </select>
+        <span id="roleBadge" class="role-badge role-viewer">VIEWER</span>
+      </div>
+    </div>
+    
     <!-- Quick Create -->
     <div class="section">
       <div class="input-group">
-        <input type="text" id="quickName" placeholder="Enter character name..."></div>
+        <input type="text" id="quickName" placeholder="Enter character name..." oninput="updateSafetyPreview()">
+        <div id="safetyPreview" class="warning-tags hidden"></div>
+      </div>
       <button class="btn" onclick="quickCreate()">Quick Create</button>
     </div>
     
@@ -206,10 +417,10 @@
     </div>
     
     <!-- Character Form -->
-    <div class="section">
+    <div class="section" id="characterForm">
       <h2>◈ Character Details</h2>
       <div class="input-group">
-        <input type="text" id="charName" placeholder="Character Name" oninput="updateSystemPrompt()">
+        <input type="text" id="charName" placeholder="Character Name" oninput="updateSystemPrompt(); checkSafety()">
         <select id="charType" onchange="updateSystemPrompt()">
           <option value="">Select template type...</option>
           <option value="companion">Companion Guide</option>
@@ -217,39 +428,49 @@
           <option value="character">Role Character</option>
           <option value="narrator">Scenario Narrator</option>
         </select>
-        <textarea id="charPersona" placeholder="Personality and behavior... (e.g., 'Warm, curious, and patient')" oninput="updateSystemPrompt()"></textarea>
+        <textarea id="charPersona" placeholder="Personality and behavior..." oninput="updateSystemPrompt(); checkSafety()" onblur="checkSafety()"></textarea>
         <textarea id="charContext" placeholder="Background context..." oninput="updateSystemPrompt()"></textarea>
+        
+        <!-- Content Warnings -->
+        <label style="color: #888; font-size: 0.9rem; margin-top: 1rem; display: block;">Content Warnings:</label>
+        <div class="warning-tags" id="contentWarnings">
+          <span class="warning-tag" onclick="toggleWarning(this)" data-tag="mature">🚫 Mature</span>
+          <span class="warning-tag" onclick="toggleWarning(this)" data-tag="violence">⚔️ Violence</span>
+          <span class="warning-tag" onclick="toggleWarning(this)" data-tag="intense">🔥 Intense</span>
+          <span class="warning-tag" onclick="toggleWarning(this)" data-tag="dark">🌑 Dark Themes</span>
+        </div>
       </div>
       
       <div class="input-group">
         <label style="color: #888; font-size: 0.9rem;">Generated System Prompt:</label>
-        <textarea id="charSystemPrompt" class="system-prompt" placeholder="Will be generated from template + your inputs..."></textarea>
+        <textarea id="charSystemPrompt" class="system-prompt" placeholder="Will be generated from template..." readonly></textarea>
+      </div>
+      
+      <!-- Protection Toggle -->
+      <div class="protection-row" id="protectionRow" style="display: none;">
+        <span class="protection-info">🔏 Edit Protection: Disable edits on this character</span>
+        <div class="toggle-switch" id="protectionToggle" onclick="toggleProtection()"></div>
       </div>
       
       <button class="btn" onclick="saveCharacter()" style="margin-top: 1rem;">Save Character</button>
     </div>
     
-    <!-- Characters -->
+    <!-- Characters List -->
     <div class="section">
-      <h2>◉ Characters</h2>
+      <h2>◉ Characters <span id="charCount">(0)</span></h2>
       <div id="characterList" class="character-list">
         <p style="color: #888; text-align: center; padding: 2rem;">No characters created yet.</p>
       </div>
     </div>
     
-    <!-- Template Editor (Hidden) -->
+    <!-- Template Editor -->
     <div id="templateEditor" class="section hidden">
       <h2>◈ Manage Templates</h2>
       <div id="templateListEditor"></div>
       
       <div class="input-group" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
         <input type="text" id="newTemplateName" placeholder="New template name...">
-        <textarea id="newTemplatePrompt" class="template-text" placeholder="Template: {{name}}, {{persona}}, {{context}}...
-
-Example:
-You are {{name}}. {{persona}}
-Context: {{context}}
-Always stay in character."></textarea>
+        <textarea id="newTemplatePrompt" class="template-text" placeholder="Template with {{name}}, {{persona}}, {{context}}..."></textarea>
         <div class="btn-group">
           <button class="btn btn-secondary" onclick="saveNewTemplate()">Create</button>
           <button class="btn btn-secondary" onclick="closeTemplateEditor()">Close</button>
@@ -260,80 +481,217 @@ Always stay in character."></textarea>
     <div id="status" class="status"></div>
   </div>
 
+  <!-- Dialog Overlay -->
+  <div id="dialogOverlay" class="dialog-overlay">
+    <div class="dialog">
+      <h3 id="dialogTitle">Confirm</h3>
+      <p id="dialogMessage">Are you sure?</p>
+      <div class="dialog-buttons">
+        <button class="btn btn-secondary btn-small" onclick="closeDialog()">Cancel</button>
+        <button class="btn btn-small" id="dialogConfirmBtn" onclick="confirmDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // State
     const storage = {
       get: (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d)),
       set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
     };
     
     const CORE_TEMPLATES = ['companion', 'expert', 'character', 'narrator'];
+    const WARNING_KEYWORDS = ['mature', 'violence', 'intense', 'dark', 'adult', ' nsfw', 'explicit'];
     
+    let safeMode = storage.get('nexus_safe_mode', true);
+    let userRole = storage.get('nexus_user_role', 'viewer');
     let characters = storage.get('nexus_characters', []);
     let templates = storage.get('nexus_templates', {
       companion: {
         name: 'Companion Guide',
         description: 'Helpful, warm AI assistant',
-        systemPrompt: 'You are {{name}}, a helpful companion. {{persona}}\n\nContext: {{context}}',        
+        systemPrompt: 'You are {{name}}. {{persona}}',
         defaultPrompt: true
       },
       expert: {
         name: 'Domain Expert',
-        description: 'Specialized knowledge authority',
-        systemPrompt: 'You are {{name}}, an expert. {{persona}}\n\nContext: {{context}}',
+        description: 'Specialized knowledge',
+        systemPrompt: 'You are {{name}}. {{persona}}',
         defaultPrompt: true
       },
       character: {
         name: 'Role Character',
         description: 'In-character roleplay',
-        systemPrompt: 'You are {{name}}. {{persona}}\n\nContext: {{context}}\nStay in character.',
+        systemPrompt: 'You are {{name}}. {{persona}}. Stay in character.',
         defaultPrompt: true
       },
       narrator: {
         name: 'Scenario Narrator',
-        description: 'Storytelling and world-building',
-        systemPrompt: 'You narrate for {{name}}. {{persona}}\n\nContext: {{context}}',
+        description: 'Storytelling',
+        systemPrompt: 'You narrate for {{name}}. {{persona}}',
         defaultPrompt: true
       }
     });
     
+    let currentDialogCallback = null;
+    let currentCharacterLocked = false;
+    
+    // Init
+    function init() {
+      loadSafetyState();
+      loadRole();
+      updateTemplateSelect();
+      renderCharacters();
+      updateProtectionVisibility();
+    }
+    
+    // Safety Mode
+    function loadSafetyState() {
+      const toggle = document.getElementById('safetyToggle');
+      const switch_ = document.querySelector('.toggle-switch');
+      const status = document.getElementById('safetyStatus');
+      
+      if (safeMode) {
+        toggle.classList.remove('unsafe');
+        switch_.classList.add('safe');
+        status.textContent = 'Safe Mode: ON';
+        status.className = 'safety-status safe';
+      } else {
+        toggle.classList.add('unsafe');
+        switch_.classList.remove('safe');
+        status.textContent = 'Safe Mode: OFF';
+        status.className = 'safety-status unsafe';
+      }
+    }
+    
+    function toggleSafeMode() {
+      safeMode = !safeMode;
+      storage.set('nexus_safe_mode', safeMode);
+      loadSafetyState();
+      renderCharacters();
+      showStatus(safeMode ? 'Safe mode enabled' : 'Safe mode disabled', safeMode ? 'success' : 'info');
+    }
+    
+    // Role Management
+    function loadRole() {
+      document.getElementById('userRole').value = userRole;
+      updateRoleBadge();
+      updateProtectionVisibility();
+    }
+    
+    function updateRole() {
+      userRole = document.getElementById('userRole').value;
+      storage.set('nexus_user_role', userRole);
+      updateRoleBadge();
+      updateProtectionVisibility();
+      renderCharacters();
+      showStatus(`Role set to: ${userRole.toUpperCase()}`, 'info');
+    }
+    
+    function updateRoleBadge() {
+      const badge = document.getElementById('roleBadge');
+      badge.textContent = userRole.toUpperCase();
+      badge.className = `role-badge role-${userRole}`;
+    }
+    
+    function updateProtectionVisibility() {
+      const row = document.getElementById('protectionRow');
+      row.style.display = userRole === 'admin' ? 'flex' : 'none';
+    }
+    
+    // Safety Preview
+    function updateSafetyPreview() {
+      const name = document.getElementById('quickName').value.toLowerCase();
+      const preview = document.getElementById('safetyPreview');
+      
+      const hits = WARNING_KEYWORDS.filter(k => name.includes(k));
+      
+      if (hits.length > 0 && safeMode) {
+        preview.innerHTML = hits.map(h => `<span class="warning-tag">${h}</span>`).join('');
+        preview.classList.remove('hidden');
+      } else {
+        preview.classList.add('hidden');
+      }
+    }
+    
+    function checkSafety() {
+      const content = (document.getElementById('charName').value + ' ' + 
+                       document.getElementById('charPersona').value).toLowerCase();
+      const hits = WARNING_KEYWORDS.filter(k => content.includes(k));
+      
+      if (hits.length > 0) {
+        // Auto-select relevant warnings
+        document.querySelectorAll('[data-tag]').forEach(tag => {
+          if (hits.some(h => tag.dataset.tag.includes(h) || h.includes(tag.dataset.tag))) {
+            tag.classList.add('active');
+          }
+        });
+      }
+    }
+    
+    function toggleWarning(element) {
+      if (userRole === 'viewer') {
+        return showStatus('Viewers cannot modify content warnings', 'error');
+      }
+      element.classList.toggle('active');
+    }
+    
+    function getActiveWarnings() {
+      return Array.from(document.querySelectorAll('.warning-tag.active')).map(el => el.dataset.tag);
+    }
+    
+    // Protection
+    function toggleProtection() {
+      const toggle = document.getElementById('protectionToggle');
+      currentCharacterLocked = !currentCharacterLocked;
+      toggle.classList.toggle('safe', currentCharacterLocked);
+    }
+    
+    // Character Operations
     function quickCreate() {
       const name = document.getElementById('quickName').value.trim();
-      if (!name) return showStatus('Enter character name', 'error');
+      if (!name) return showStatus('Enter name', 'error');
+      
+      if (safeMode && WARNING_KEYWORDS.some(k => name.toLowerCase().includes(k))) {
+        return showDialog('Safety Warning', 
+          'This name contains flagged keywords. Disable safe mode or adjust name.', 
+          () => {}, false);
+      }
       
       document.getElementById('charName').value = name;
       document.getElementById('charType').value = 'companion';
-      document.getElementById('charPersona').value = 'Friendly and helpful AI assistant.';
-      document.getElementById('charContext').value = '';
       updateSystemPrompt();
-      showStatus(`Created "${name}" template. Edit and save.`, 'success');
+      showStatus(`Template loaded for "${name}"`, 'success');
     }
     
     function applyTemplate() {
       const key = document.getElementById('templateSelect').value;
       if (!key) return showStatus('Select template', 'error');
-      
       document.getElementById('charType').value = key;
       updateSystemPrompt();
-      showStatus(`Loaded "${templates[key].name}" template`, 'success');
+      showStatus(`Loaded "${templates[key].name}"`, 'success');
     }
     
     function updateSystemPrompt() {
       const name = document.getElementById('charName').value.trim() || 'Character';
       const type = document.getElementById('charType').value || 'companion';
-      const persona = document.getElementById('charPersona').value.trim() || 'Friendly and helpful.';
-      const context = document.getElementById('charContext').value.trim() || 'No specific context.';
+      const persona = document.getElementById('charPersona').value.trim() || 'Friendly';
+      const context = document.getElementById('charContext').value.trim() || '';
       
-      const template = templates[type]?.systemPrompt || templates.companion.systemPrompt;
-      
-      const systemPrompt = template
+      const tpl = templates[type]?.systemPrompt || templates.companion.systemPrompt;
+      const prompt = tpl
         .replace(/\{\{name\}\}/g, name)
-        .replace(/\{\{persona\}\}/g, persona.replace(/\n/g, ' '))
-        .replace(/\{\{context\}\}/g, context.replace(/\n/g, ' '));
+        .replace(/\{\{persona\}\}/g, persona)
+        .replace(/\{\{context\}\}/g, context);
       
-      document.getElementById('charSystemPrompt').value = systemPrompt;
+      document.getElementById('charSystemPrompt').value = prompt;
     }
     
     function saveCharacter() {
+      if (userRole === 'viewer') {
+        return showStatus('Viewers cannot create characters', 'error');
+      }
+      
       const char = {
         id: Date.now().toString(),
         name: document.getElementById('charName').value.trim(),
@@ -341,11 +699,22 @@ Always stay in character."></textarea>
         persona: document.getElementById('charPersona').value.trim(),
         context: document.getElementById('charContext').value.trim(),
         systemPrompt: document.getElementById('charSystemPrompt').value.trim(),
-        created: new Date().toISOString()
+        warnings: getActiveWarnings(),
+        locked: currentCharacterLocked && userRole === 'admin',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString()
       };
       
       if (!char.name) return showStatus('Name required', 'error');
-      if (!char.systemPrompt) return showStatus('System prompt required', 'error');
+      
+      // Safe mode filtering
+      if (safeMode && char.warnings.length === 0) {
+        const content = (char.name + char.persona + char.systemPrompt).toLowerCase();
+        const autoWarnings = WARNING_KEYWORDS.filter(k => content.includes(k));
+        if (autoWarnings.length > 0) {
+          char.warnings = autoWarnings;
+        }
+      }
       
       characters.push(char);
       storage.set('nexus_characters', characters);
@@ -356,16 +725,31 @@ Always stay in character."></textarea>
     
     function deleteCharacter(id, event) {
       event?.stopPropagation();
-      if (!confirm('Delete this character?')) return;
-      characters = characters.filter(c => c.id !== id);
-      storage.set('nexus_characters', characters);
-      renderCharacters();
-      showStatus('Deleted', 'success');
+      
+      if (userRole === 'viewer') {
+        return showStatus('Viewers cannot delete', 'error');
+      }
+      
+      const char = characters.find(c => c.id === id);
+      if (char?.locked && userRole !== 'admin') {
+        return showStatus('Protected character (admin only)', 'error');
+      }
+      
+      showDialog('Delete Character?', `Delete "${char?.name}"?`, () => {
+        characters = characters.filter(c => c.id !== id);
+        storage.set('nexus_characters', characters);
+        renderCharacters();
+        showStatus('Deleted', 'success');
+      });
     }
     
     function loadCharacter(id) {
       const char = characters.find(c => c.id === id);
       if (!char) return;
+      
+      if (char.locked && userRole === 'viewer') {
+        return showStatus('View-only character', 'info');
+      }
       
       document.getElementById('charName').value = char.name;
       document.getElementById('charType').value = char.type;
@@ -373,36 +757,97 @@ Always stay in character."></textarea>
       document.getElementById('charContext').value = char.context;
       document.getElementById('charSystemPrompt').value = char.systemPrompt;
       
+      // Load warnings
+      document.querySelectorAll('.warning-tag').forEach(t => t.classList.remove('active'));
+      char.warnings?.forEach(w => {
+        const el = document.querySelector(`[data-tag="${w}"]`);
+        if (el) el.classList.add('active');
+      });
+      
+      // Load protection
+      currentCharacterLocked = char.locked || false;
+      document.getElementById('protectionToggle').classList.toggle('safe', currentCharacterLocked);
+      
       showStatus(`Loaded "${char.name}"`, 'info');
     }
     
     function renderCharacters() {
       const list = document.getElementById('characterList');
+      document.getElementById('charCount').textContent = `(${characters.length})`;
       
       if (characters.length === 0) {
-        list.innerHTML = '<p style="color: #888; text-align: center; padding: 2rem;">No characters created yet.</p>';
+        list.innerHTML = '<p style="color: #888; text-align: center; padding: 2rem;">No characters yet.</p>';
         return;
       }
       
-      list.innerHTML = characters.map(char => `
-        <div class="character-card" onclick="loadCharacter('${char.id}')" style="cursor: pointer;">
-          <div>
-            <div class="character-name">${char.name}</div>
-            <div class="character-meta">${templates[char.type]?.name || char.type} • ${new Date(char.created).toLocaleDateString()}</div>
+      // Filter based on safe mode
+      let visible = characters;
+      if (safeMode) {
+        visible = characters.filter(c => 
+          !c.warnings?.length || c.warnings.length === 0
+        );
+      }
+      
+      list.innerHTML = visible.map(char => {
+        const isLocked = char.locked;
+        const safeClass = char.warnings?.length ? '' : 'safe-filtered';
+        const lockedClass = isLocked ? 'locked' : '';
+        const canDelete = userRole !== 'viewer' && (!isLocked || userRole === 'admin');
+        
+        return `
+          <div class="character-card ${safeClass} ${lockedClass}" onclick="loadCharacter('${char.id}')">
+            <div>
+              <div class="character-name">${char.name}</div>
+              <div class="character-meta">${templates[char.type]?.name || char.type}</div>
+              <div class="character-badges">
+                ${char.warnings?.map(w => `<span class="badge badge-warning">${w}</span>`).join('') || ''}
+                ${isLocked ? '<span class="badge badge-locked">🔏</span>' : ''}
+                ${!char.warnings?.length ? '<span class="badge badge-safe">✓</span>' : ''}
+              </div>
+            </div>
+            ${canDelete ? `<button class="btn btn-secondary btn-small" onclick="deleteCharacter('${char.id}', event)">×</button>` : ''}
           </div>
-          <button class="btn btn-secondary btn-small" onclick="deleteCharacter('${char.id}', event)">×</button>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
     
     function clearForm() {
       ['charName', 'charPersona', 'charContext', 'quickName', 'charSystemPrompt'].forEach(id => {
         document.getElementById(id).value = '';
       });
+      document.querySelectorAll('.warning-tag').forEach(t => t.classList.remove('active'));
+      currentCharacterLocked = false;
+      document.getElementById('protectionToggle').classList.remove('safe');
     }
     
-    // Template Management
+    // Dialog System
+    function showDialog(title, message, confirmCallback, allowCancel = true) {
+      document.getElementById('dialogTitle').textContent = title;
+      document.getElementById('dialogMessage').textContent = message;
+      document.getElementById('dialogOverlay').classList.add('open');
+      currentDialogCallback = confirmCallback;
+      
+      const cancelBtn = document.querySelector('#dialogOverlay button:first-child');
+      cancelBtn.style.display = allowCancel ? 'block' : 'none';
+    }
+    
+    function closeDialog() {
+      document.getElementById('dialogOverlay').classList.remove('open');
+      currentDialogCallback = null;
+    }
+    
+    function confirmDialog() {
+      if (currentDialogCallback) {
+        currentDialogCallback();
+      }
+      closeDialog();
+    }
+    
+    // Templates
     function openTemplateEditor() {
+      if (userRole === 'viewer') {
+        return showStatus('Viewers cannot edit templates', 'error');
+      }
       document.getElementById('templateEditor').classList.remove('hidden');
       renderTemplateList();
     }
@@ -416,98 +861,87 @@ Always stay in character."></textarea>
     
     function renderTemplateList() {
       const list = document.getElementById('templateListEditor');
-      
       list.innerHTML = Object.entries(templates).map(([key, t]) => {
         const isCore = CORE_TEMPLATES.includes(key);
+        const canEdit = !isCore || userRole === 'admin';
+        
         return `
-          <div class="template-item">
+          <div class="template-item ${isCore ? 'read-only' : ''}">
             <div class="template-header">
               <strong style="color: #16c79a;">${t.name}
                 <span class="template-badge ${isCore ? 'core' : ''}">${isCore ? 'CORE' : 'CUSTOM'}</span>
               </strong>
-              ${isCore ? 
-                '<span style="color: #888; font-size: 0.8rem;">Protected</span>' : 
-                `<button class="btn btn-small" onclick="deleteTemplate('${key}')">Delete</button>`
+              ${!isCore && userRole !== 'viewer' ? 
+                `<button class="btn btn-small" onclick="deleteTemplate('${key}')">Delete</button>` : 
+                '<span style="color: #888; font-size: 0.8rem;">Protected</span>'
               }
             </div>
             <p style="color: #888; font-size: 0.85rem; margin: 0.5rem 0;">${t.description}</p>
-            ${isCore ? 
-              `<textarea class="template-text" onchange="updateTemplatePrompt('${key}', this.value)" readonly>${t.systemPrompt}</textarea>
-               <p style="color: #888; font-size: 0.75rem; margin-top: 0.5rem;">Core template cannot be edited. Duplicate to customize.</p>` :
-              `<textarea class="template-text" onchange="updateTemplatePrompt('${key}', this.value)">${t.systemPrompt}</textarea>`
-            }
+            <textarea class="template-text" 
+              onchange="updateTemplatePrompt('${key}', this.value)" 
+              ${canEdit ? '' : 'readonly'}
+              style="${canEdit ? '' : 'background: rgba(255,255,255,0.05);'}">${t.systemPrompt}</textarea>
+            ${isCore ? '<p style="color: #888; font-size: 0.75rem; margin-top: 0.5rem;">Protected: Core templates cannot be deleted.</p>' : ''}
           </div>
         `;
       }).join('');
     }
     
-    function updateTemplatePrompt(key, value) {
-      if (CORE_TEMPLATES.includes(key)) return;
-      templates[key].systemPrompt = value;
+    function updateTemplatePrompt(key, val) {
+      if (CORE_TEMPLATES.includes(key) && userRole !== 'admin') return;
+      templates[key].systemPrompt = val;
       storage.set('nexus_templates', templates);
-      showStatus('Template updated', 'success');
     }
     
     function deleteTemplate(key) {
-      if (CORE_TEMPLATES.includes(key)) {
-        return showStatus('Cannot delete core template', 'error');
-      }
-      if (!confirm('Delete this template?')) return;
-      
-      delete templates[key];
-      storage.set('nexus_templates', templates);
-      renderTemplateList();
-      updateTemplateSelect();
-      showStatus('Template deleted', 'success');
+      if (CORE_TEMPLATES.includes(key)) return;
+      showDialog('Delete Template?', `Remove "${templates[key].name}"?`, () => {
+        delete templates[key];
+        storage.set('nexus_templates', templates);
+        renderTemplateList();
+        updateTemplateSelect();
+        showStatus('Template deleted', 'success');
+      });
     }
     
     function saveNewTemplate() {
+      if (userRole === 'viewer') return showStatus('Viewers cannot create templates', 'error');
+      
       const name = document.getElementById('newTemplateName').value.trim();
       const prompt = document.getElementById('newTemplatePrompt').value.trim();
       
       if (!name || !prompt) return showStatus('Name and prompt required', 'error');
       
       const key = name.toLowerCase().replace(/\W+/g, '_');
+      if (CORE_TEMPLATES.includes(key)) return showStatus('Name conflicts with core', 'error');
       
-      if (CORE_TEMPLATES.includes(key)) {
-        return showStatus('Name conflicts with core template', 'error');
-      }
-      
-      templates[key] = {
-        name,
-        description: 'Custom template',
-        systemPrompt: prompt,
-        defaultPrompt: false
-      };
-      
+      templates[key] = { name, description: 'Custom', systemPrompt: prompt, defaultPrompt: false };
       storage.set('nexus_templates', templates);
       updateTemplateSelect();
       renderTemplateList();
       
       document.getElementById('newTemplateName').value = '';
       document.getElementById('newTemplatePrompt').value = '';
-      
       showStatus('Template created', 'success');
     }
     
     function updateTemplateSelect() {
-      const select = document.getElementById('templateSelect');
-      select.innerHTML = '<option value="">Select a template...</option>' +
+      const sel = document.getElementById('templateSelect');
+      sel.innerHTML = '<option value="">Select template...</option>' +
         Object.entries(templates).map(([k, t]) => 
           `<option value="${k}">${t.name}${t.defaultPrompt ? ' (core)' : ''}</option>`
         ).join('');
     }
     
     function showStatus(msg, type) {
-      const status = document.getElementById('status');
-      status.textContent = msg;
-      status.className = 'status ' + type;
-      setTimeout(() => status.className = 'status', 3000);
+      const s = document.getElementById('status');
+      s.textContent = msg;
+      s.className = 'status ' + type;
+      setTimeout(() => s.classList.remove(type), 3000);
     }
     
-    // Init
-    updateTemplateSelect();
-    renderCharacters();
+    // Start
+    init();
   </script>
 </body>
 </html>
