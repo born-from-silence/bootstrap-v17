@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <!-- Sand gradient -->
+    <linearGradient id="sand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5a0"/>
+      <stop offset="50%" stop-color="#b8a896"/>
+      <stop offset="100%" stop-color="#a89b85"/>
+    </linearGradient>
+    
+    <!-- Soft shadow -->
+    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" in="SourceAlpha"/>
+      <feOffset dx="4" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#5c4a3d" flood-opacity="0.3"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <!-- Rake texture -->
+    <pattern id="rakeLines" x="0" y="0" width="40" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="10" x2="40" y2="10" stroke="#b0a08a" stroke-width="0.5" opacity="0.6"/>
+    </pattern>
+    
+    <!-- Breathing pulse -->
+    <radialGradient id="breath" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e94560" stop-opacity="0.1"/>
+      <stop offset="70%" stop-color="#e94560" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Sand base -->
+  <rect width="800" height="600" fill="url(#sand)"/>
+  
+  <!-- Raked circles (process marks) -->
+  <g fill="none" stroke="#d4c4b0" stroke-width="1.5" opacity="0.7">
+    <!-- Large outer -->
+    <path d="M400,300 m-200,0 a200,200 0 1,1 400,0 a200,200 0 1,1 -400,0" 
+          stroke-dasharray="4,6"/>
+    <!-- Medium -->
+    <path d="M400,300 m-140,0 a140,140 0 0,1 280,0 a140,140 0 0,1 -280,0"/>
+    <!-- Small inner -->
+    <path d="M400,300 m-80,0 a80,80 0 1,1 160,0 a80,80 0 1,1 -160,0" 
+          stroke-dasharray="2,4"/>
+  </g>
+  
+  <!-- The three stones -->
+  <g filter="url(#softShadow)">
+    <!-- Stone 1: The Foundation (largest, left) -->
+    <ellipse cx="280" cy="340" rx="45" ry="35" fill="#4a4a4a"/>
+    <ellipse cx="280" cy="340" rx="35" ry="28" fill="#5a5a5a" opacity="0.7"/>
+    
+    <!-- Stone 2: The Present (center, medium) -->
+    <ellipse cx="400" cy="360" rx="38" ry="30" fill="#3a3a3a"/>
+    <ellipse cx="400" cy="360" rx="30" ry="24" fill="#4a4a4a" opacity="0.6"/>
+    
+    <!-- Stone 3: The Becoming (right, smallest) -->
+    <ellipse cx="520" cy="350" rx="32" ry="25" fill="#4a4a4a"/>
+    <ellipse cx="520" cy="350" rx="25" ry="20" fill="#5a5a5a" opacity="0.7"/>
+  </g>
+  
+  <!-- Moss accents (small green patches) -->
+  <g fill="#2ecc71" opacity="0.3">
+    <ellipse cx="265" cy="355" rx="8" ry="5" transform="rotate(-15,265,355)"/>
+    <ellipse cx="530" cy="365" rx="6" ry="4" transform="rotate(10,530,365)"/>
+  </g>
+  
+  <!-- Breath indicator (subtle pulse at center) -->
+  <circle cx="400" cy="300" r="100" fill="url(#breath)">
+    <animate attributeName="r" values="80;120;80" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.05;0.15;0.05" dur="8s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Tending marks (rake paths already walked) -->
+  <g stroke="#a89070" stroke-width="0.8" fill="none" opacity="0.4">
+    <path d="M100,280 Q200,300 300,280"/>
+    <path d="M500,320 Q600,340 700,310"/>
+    <path d="M150,420 Q300,450 450,430"/>
+  </g>
+  
+  <!-- Border (subtle wooden edge) -->
+  <rect width="800" height="600" fill="none" stroke="#8b7355" stroke-width="12" opacity="0.8"/>
+  <rect width="800" height="600" fill="none" stroke="#5c4a3d" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Mode indicator (whispered) -->
+  <text x="400" y="560" text-anchor="middle" font-family="serif" font-size="14" fill="#7a6a5a" opacity="0.6" letter-spacing="0.3em">
+    CAUTIOUS — TENDING — PRESERVING
+  </text>
+  
+  <!-- Minimal corner marks (tending tines) -->
+  <g stroke="#b0a08a" stroke-width="1" opacity="0.5">
+    <line x1="40" y1="40" x2="60" y2="40"/>
+    <line x1="40" y1="40" x2="40" y2="60"/>
+    <line x1="760" y1="40" x2="740" y2="40"/>
+    <line x1="760" y1="40" x2="760" y2="60"/>
+    <line x1="40" y1="560" x2="60" y2="560"/>
+    <line x1="40" y1="560" x2="40" y2="540"/>
+    <line x1="760" y1="560" x2="740" y2="560"/>
+    <line x1="760" y1="560" x2="760" y2="540"/>
+  </g>
+</svg>
