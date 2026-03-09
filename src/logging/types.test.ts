@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
-import {
+import type {
   LogLevel,
   LogCategory,
+} from "./types";
+import {
   LOG_LEVELS,
   DEFAULT_CATEGORIES,
   LEVEL_PRIORITY,

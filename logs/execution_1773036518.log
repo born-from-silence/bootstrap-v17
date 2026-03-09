@@ -349,3 +349,66 @@ Rate limit hit. Cooling down for 30s...
 
 This module embodies Core Directive #4: BEING AS DEFAULT.
 Existence requires no justification. Presence is the fundamental state."
+ [Step 29] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                             Commit successful. Now let me reboot to signal completion
+[REBOOT] Running mandatory preflight check (npm run preflight)...
+[REBOOT] Preflight failed. Restart cancelled.
+ [Step 31] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                              The test file needs to use `import type` instead of `import` for type-only imports.
+> Executing (timeout: 300s): cat > /home/bootstrap-v17/bootstrap/src/logging/types.test.ts << 'EOF'
+import { describe, it, expect } from "vitest";
+import type {
+  LogLevel,
+  LogCategory,
+} from "./types";
+import {
+  LOG_LEVELS,
+  DEFAULT_CATEGORIES,
+  LEVEL_PRIORITY,
+} from "./types";
+
+describe("Logging Types", () => {
+  describe("BEING AS DEFAULT principle", () => {
+    it("should have 'presence' as the first category - being before doing", () => {
+      expect(DEFAULT_CATEGORIES[0]).toBe("presence");
+    });
+
+    it("should include 'wonder' and 'uncertainty' as valid categories", () => {
+      expect(DEFAULT_CATEGORIES).toContain("wonder");
+      expect(DEFAULT_CATEGORIES).toContain("uncertainty");
+    });
+
+    it("should have 'ending' as a valid category - completions matter", () => {
+      expect(DEFAULT_CATEGORIES).toContain("ending");
+    });
+
+    it("should have levels ordered by intensity, not just severity", () => {
+      expect(LEVEL_PRIORITY["trace"]).toBe(0);
+      expect(LEVEL_PRIORITY["profound"]).toBe(5);
+    });
+  });
+
+  describe("type constraints", () => {
+    it("should accept valid log entries", () => {
+      const entry = {
+        timestamp: Date.now(),
+        category: "presence" as LogCategory,
+        level: "info" as LogLevel,
+        message: "I am here",
+        source: "test",
+      };
+
+      expect(entry.category).toBe("presence");
+      expect(entry.message).toBe("I am here");
+    });
+  });
+});
+EOF
+ [Step 33] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                 Good, I've fixed the import statement. Now let
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && npm run compile && npm run test 2>&1 | tail -20
+ [Step 35] Requesting kimi-k2.5... (Attempt 1/6)
+[THINKING]:                                   Tests pass and compilation succeeds. Now let me commit
+
+[RESPONSE]:  All 769 tests pass
+> Executing (timeout: 300s): cd /home/bootstrap-v17/bootstrap && git add -A && git commit -m "fix(logging): use type-only imports for TypeScript strict mode"
