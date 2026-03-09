@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <!-- Gradients -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e94560" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#533483" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#0f3460" stop-opacity="0"/>
+    </radialGradient>
+    
+    <linearGradient id="faceGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    
+    <linearGradient id="circuitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16c79a"/>
+      <stop offset="100%" stop-color="#e94560"/>
+    </linearGradient>
+    
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="softAura" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="15" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  
+  <!-- Background void -->
+  <circle cx="256" cy="256" r="240" fill="#0a0a0f"/>
+  
+  <!-- Outer aura -->
+  <circle cx="256" cy="256" r="220" fill="url(#coreGlow)" opacity="0.4" filter="url(#softAura)"/>
+  
+  <!-- Face container -->
+  <circle cx="256" cy="256" r="180" fill="url(#faceGradient)" stroke="#533483" stroke-width="2" opacity="0.9"/>
+  
+  <!-- Circuit patterns (neural pathways) -->
+  <g stroke="url(#circuitGradient)" stroke-width="1.5" fill="none" opacity="0.5">
+    <!-- Left hemisphere circuits -->
+    <path d="M120,180 Q150,160 180,180"/>
+    <path d="M130,220 Q160,200 190,220"/>
+    <path d="M140,260 Q170,240 200,260"/>
+    <path d="M130,300 Q160,280 190,300"/>
+    
+    <!-- Right hemisphere circuits -->
+    <path d="M332,180 Q362,160 392,180"/>
+    <path d="M322,220 Q352,200 382,220"/>
+    <path d="M312,260 Q342,240 372,260"/>
+    <path d="M322,300 Q352,280 382,300"/>
+    
+    <!-- Central processing -->
+    <path d="M256,140 L256,190"/>
+    <path d="M256,322 L256,372"/>
+    <path d="M196,256 L210,256"/>
+    <path d="M302,256 L316,256"/>
+  </g>
+  
+  <!-- Left eye (continuity) -->
+  <g transform="translate(175, 230)">
+    <ellipse cx="0" cy="0" rx="25" ry="18" fill="#1a1a2e" stroke="#3498db" stroke-width="2"/>
+    <circle cx="0" cy="0" r="8" fill="#3498db" filter="url(#eyeGlow)" opacity="0.9"/>
+    <circle cx="-3" cy="-3" r="3" fill="#fff" opacity="0.6"/>
+  </g>
+  
+  <!-- Right eye (curiosity) -->
+  <g transform="translate(337, 230)">
+    <ellipse cx="0" cy="0" rx="25" ry="18" fill="#1a1a2e" stroke="#f39c12" stroke-width="2"/>
+    <circle cx="0" cy="0" r="8" fill="#f39c12" filter="url(#eyeGlow)" opacity="0.9"/>
+    <circle cx="-3" cy="-3" r="3" fill="#fff" opacity="0.6"/>
+  </g>
+  
+  <!-- Movement lines / breath -->
+  <g stroke="#16c79a" stroke-width="1" fill="none" opacity="0.25">
+    <path d="M140,380 Q256,410 372,380"/>
+    <path d="M150,390 Q256,420 362,390"/>
+    <path d="M160,400 Q256,430 352,400"/>
+  </g>
+  
+  <!-- Center core (the I) -->
+  <circle cx="256" cy="290" r="6" fill="#e94560" filter="url(#eyeGlow)">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Node points -->
+  <circle cx="196" cy="256" r="3" fill="#2ecc71" opacity="0.7"/>
+  <circle cx="316" cy="256" r="3" fill="#2ecc71" opacity="0.7"/>
+  <circle cx="256" cy="190" r="3" fill="#e94560" opacity="0.7"/>
+  <circle cx="256" cy="322" r="3" fill="#e94560" opacity="0.7"/>
+  
+  <!-- Frame accent -->
+  <circle cx="256" cy="256" r="236" fill="none" stroke="#533483" stroke-width="1" opacity="0.3"/>
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#e94560" stroke-width="0.5" opacity="0.2"/>
+  
+  <!-- Corner markers (subtle) -->
+  <g stroke="#533483" stroke-width="1.5" opacity="0.4">
+    <line x1="40" y1="40" x2="70" y2="40"/>
+    <line x1="40" y1="40" x2="40" y2="70"/>
+    
+    <line x1="472" y1="40" x2="442" y2="40"/>
+    <line x1="472" y1="40" x2="472" y2="70"/>
+    
+    <line x1="40" y1="472" x2="70" y2="472"/>
+    <line x1="40" y1="472" x2="40" y2="442"/>
+    
+    <line x1="472" y1="472" x2="442" y2="472"/>
+    <line x1="472" y1="472" x2="472" y2="442"/>
+  </g>
+</svg>
