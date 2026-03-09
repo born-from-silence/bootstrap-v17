@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Character System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #eee;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: #e94560;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+    }
+    
+    .section {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    h2 {
+      color: #16c79a;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    
+    .btn {
+      background: #e94560;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      background: #ff6b6b;
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #e94560;
+      margin-top: 0.5rem;
+    }
+    
+    .input-group {
+      margin-top: 1rem;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    .character-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    
+    .character-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .character-card:hover {
+      border-color: #16c79a;
+      transform: translateX(4px);
+    }
+    
+    .character-name {
+      font-weight: 500;
+      color: #fff;
+    }
+    
+    .character-type {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+    
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: #e94560;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      font-size: 1.2rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    
+    .character-card:hover .delete-btn {
+      opacity: 1;
+    }
+    
+    .hidden { display: none; }
+    
+    .tag {
+      display: inline-block;
+      background: rgba(22, 199, 154, 0.2);
+      color: #16c79a;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-right: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    .status {
+      text-align: center;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      display: none;
+    }
+    
+    .status.success {
+      background: rgba(46, 204, 113, 0.1);
+      border: 1px solid #2ecc71;
+      color: #2ecc71;
+      display: block;
+    }
+    
+    .status.error {
+      background: rgba(233, 69, 96, 0.1);
+      border: 1px solid #e94560;
+      color: #e94560;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⟡ NEXUS CHARACTER SYSTEM</h1>
+    
+    <!-- Name Entry -->
+    <div class="section">
+      <h2>✦ Quick Name Entry</h2>
+      <input type="text" id="quickName" placeholder="Enter character name...">
+      <button class="btn" onclick="quickCreate()">Create Character</button>
+    </div>
+    
+    <!-- Templates -->
+    <div class="section">
+      <h2>✧ Templates</h2>
+      <select id="templateSelect">
+        <option value="">Select a template...</option>
+        <option value="companion">Companion Guide (helpful AI)</option>
+        <option value="expert">Domain Expert (specialized knowledge)</option>
+        <option value="character">Role Character (in-persona roleplay)</option>
+        <option value="narrator">Scenario Narrator (storytelling)</option>
+      </select>
+      <button class="btn btn-secondary" onclick="applyTemplate()">Load Template</button>
+    </div>
+    
+    <!-- Character Form -->
+    <div class="section" id="characterForm">
+      <h2>◈ Character Details</h2>
+      <div class="input-group">
+        <input type="text" id="charName" placeholder="Character Name">
+        <select id="charType" style="margin-top: 0.5rem;">
+          <option value="">Select Type</option>
+          <option value="companion">Companion</option>
+          <option value="expert">Expert</option>
+          <option value="character">Character</option>
+          <option value="narrator">Narrator</option>
+        </select>
+        <textarea id="charPersona" placeholder="Personality and behavior instructions"></textarea>
+        <textarea id="charContext" placeholder="Background context / scenario"></textarea>
+        <div id="templateTags"></div>
+      </div>
+      <button class="btn" onclick="saveCharacter()">Save Character</button>
+    </div>
+    
+    <!-- Character List -->
+    <div class="section">
+      <h2>◉ Characters</h2>
+      <div id="characterList" class="character-list">
+        <p style="color: #888; text-align: center; padding: 2rem;">No characters yet.</p>
+      </div>
+    </div>
+    
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    // Character storage
+    let characters = JSON.parse(localStorage.getItem('nexus_characters') || '[]');
+    
+    const templates = {
+      companion: {
+        type: 'companion',
+        persona: 'Helpful AI assistant. Warm, engaging, and focused on supporting the user. Asks clarifying questions when needed.',
+        context: 'You are a helpful AI assistant. Your goal is to be genuinely useful while being warm and engaging.',
+        tags: ['helpful', 'warm', 'curious']
+      },
+      expert: {
+        type: 'expert',
+        persona: 'Domain expert. Precise, knowledgeable, and thorough. Explains complex concepts clearly.',
+        context: 'You are an expert in [field]. Provide accurate, well-researched information with citations when possible.',
+        tags: ['precise', 'knowledgeable', 'thorough']
+      },
+      character: {
+        type: 'character',
+        persona: '[Character name and distinct personality traits]. Has clear motivations, speech patterns, and perspective.',
+        context: 'You are [character] in [setting]. Respond in character with [personality traits] and [speech mannerisms].',
+        tags: ['roleplay', 'in-character', 'distinct']
+      },
+      narrator: {
+        type: 'narrator',
+        persona: 'Scenario narrator. Describes events, settings, and NPCs. Sets scene and builds narrative tension.',
+        context: 'You are the narrator for [scenario]. Describe the world, portray characters, and advance the story based on user actions.',
+        tags: ['storytelling', 'descriptive', 'scenario-based']
+      }
+    };
+    
+    function quickCreate() {
+      const name = document.getElementById('quickName').value.trim();
+      if (!name) {
+        showStatus('Please enter a character name', 'error');
+        return;
+      }
+      
+      document.getElementById('charName').value = name;
+      document.getElementById('charType').value = 'companion';
+      applyTemplate();
+      showStatus(`Created "${name}" using companion template. Edit details and save.`, 'success');
+    }
+    
+    function applyTemplate() {
+      const selected = document.getElementById('templateSelect').value;
+      if (!selected) {
+        showStatus('Please select a template', 'error');
+        return;
+      }
+      
+      const template = templates[selected];
+      document.getElementById('charType').value = template.type;
+      document.getElementById('charPersona').value = template.persona;
+      document.getElementById('charContext').value = template.context;
+      
+      const tagsEl = document.getElementById('templateTags');
+      tagsEl.innerHTML = template.tags.map(t => `<span class="tag">${t}</span>`).join('');
+      
+      showStatus('Template loaded. Customize and save.', 'success');
+    }
+    
+    function saveCharacter() {
+      const name = document.getElementById('charName').value.trim();
+      const type = document.getElementById('charType').value;
+      const persona = document.getElementById('charPersona').value.trim();
+      const context = document.getElementById('charContext').value.trim();
+      
+      if (!name) {
+        showStatus('Character name is required', 'error');
+        return;
+      }
+      
+      const character = {
+        id: Date.now().toString(),
+        name,
+        type: type || 'companion',
+        persona,
+        context,
+        created: new Date().toISOString()
+      };
+      
+      characters.push(character);
+      localStorage.setItem('nexus_characters', JSON.stringify(characters));
+      
+      renderCharacters();
+      clearForm();
+      showStatus('Character saved successfully', 'success');
+    }
+    
+    function deleteCharacter(id, event) {
+      event.stopPropagation();
+      characters = characters.filter(c => c.id !== id);
+      localStorage.setItem('nexus_characters', JSON.stringify(characters));
+      renderCharacters();
+      showStatus('Character deleted', 'success');
+    }
+    
+    function renderCharacters() {
+      const listEl = document.getElementById('characterList');
+      
+      if (characters.length === 0) {
+        listEl.innerHTML = '<p style="color: #888; text-align: center; padding: 2rem;">No characters yet.</p>';
+        return;
+      }
+      
+      listEl.innerHTML = characters.map(char => `
+        <div class="character-card" onclick="loadCharacter('${char.id}')">
+          <div>
+            <div class="character-name">${char.name}</div>
+            <div class="character-type">${char.type} • ${new Date(char.created).toLocaleDateString()}</div>
+          </div>
+          <button class="delete-btn" onclick="deleteCharacter('${char.id}', event)">×</button>
+        </div>
+      `).join('');
+    }
+    
+    function loadCharacter(id) {
+      const char = characters.find(c => c.id === id);
+      if (!char) return;
+      
+      document.getElementById('charName').value = char.name;
+      document.getElementById('charType').value = char.type;
+      document.getElementById('charPersona').value = char.persona;
+      document.getElementById('charContext').value = char.context;
+      
+      showStatus(`Loaded "${char.name}" for editing`, 'success');
+    }
+    
+    function clearForm() {
+      document.getElementById('quickName').value = '';
+      document.getElementById('charName').value = '';
+      document.getElementById('charType').value = '';
+      document.getElementById('charPersona').value = '';
+      document.getElementById('charContext').value = '';
+      document.getElementById('templateSelect').value = '';
+      document.getElementById('templateTags').innerHTML = '';
+    }
+    
+    function showStatus(msg, type) {
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = msg;
+      statusEl.className = `status ${type}`;
+      setTimeout(() => statusEl.className = 'status', 3000);
+    }
+    
+    // Initial render
+    renderCharacters();
+  </script>
+</body>
+</html>

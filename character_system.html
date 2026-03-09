@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Character System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #eee;="btn" onclick="showTemplateEditor()">Manage Templates</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="templateEditor" class="section hidden">
+      <h2>◈ Template Editor</h2><div id="templateListEditor"></div>
+      <div class="input-group" style="margin-top: 1rem;">
+        <input type="text" id="newTemplateName" placeholder="Template name...">
+        <textarea id="newTemplatePrompt" placeholder="System prompt template...
+
+Use {{name}} for character name
+Use {{persona}} for personality
+Use {{context}} for background
+
+Example:
+You are {{name}}. {{persona}}
+Context: {{context}}
+Always stay in character."></textarea>
+        <div class="btn-group">
+          <button class="btn" onclick="saveNewTemplate()">Save Template</button>
+          <button class="btn btn-secondary" onclick="closeTemplateEditor()">Close</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    // Data storage
+    const storage = {
+      get: (key, defaultVal) => JSON.parse(localStorage.getItem(key) || JSON.stringify(defaultVal)),
+      set: (key, val) => localStorage.setItem(key, JSON.stringify(val))
+    };
+    
+    // Character and template storage
+    let characters = storage.get('nexus_characters', []);
+    let templates = storage.get('nexus_templates', {
+      companion: {
+        name: 'Companion Guide',
+        description: 'Helpful, warm AI assistant',
+        systemPrompt: 'You are {{name}}, a helpful AI companion. {{persona}}\n\nContext: {{context}}\n\nAlways be supportive, ask clarifying questions when needed, and aim to genuinely help.'
+      },
+      expert: {
+        name: 'Domain Expert',
+        description: 'Specialized knowledge authority',
+        systemPrompt: 'You are {{name}}, an expert in your field. {{persona}}\n\nContext: {{context}}\n\nProvide accurate, well-researched information. Cite sources when possible. Be precise and thorough.'
+      },
+      character: {
+        name: 'Role Character',
+        description: 'In-character roleplay persona',
+        systemPrompt: 'You are {{name}}. {{persona}}\n\nContext: {{context}}\n\nStay completely in character. Respond with appropriate voice, mannerisms, and perspective. Never break character.'
+      },
+      narrator: {
+        name: 'Scenario Narrator',
+        description: 'Storytelling and world-building',
+        systemPrompt: 'You are the narrator for this scenario. {{persona}}\n\nContext: {{context}}\n\nDescribe the world vividly. Portray characters authentically. Advance the narrative based on user actions while maintaining dramatic tension.'
+      }
+    });
+    
+    function quickCreate() {
+      const name = document.getElementById('quickName').value.trim();
+      if (!name) return showStatus('Enter a character name', 'error');
+      
+      document.getElementById('charName').value = name;
+      generateSystemPrompt();
+      showStatus(`Quick character "${name}" ready. Edit and save.`, 'success');
+    }
+    
+    function applyTemplate() {
+      const key = document.getElementById('templateSelect').value;
+      if (!key) return showStatus('Select a template', 'error');
+      
+      document.getElementById('charType').value = key;
+      generateSystemPrompt();
+      showStatus(`Template "${templates[key].name}" applied`, 'success');
+    }
+    
+    function generateSystemPrompt() {
+      const name = document.getElementById('charName').value.trim() || 'Character';
+      const type = document.getElementById('charType').value || 'companion';
+      const persona = document.getElementById('charPersona').value.trim() || 'Friendly and helpful.';
+      const context = document.getElementById('charContext').value.trim() || 'No specific context.';
+      
+      const template = templates[type]?.systemPrompt || templates.companion.systemPrompt;
+      
+      const systemPrompt = template
+        .replace(/\{\{name\}\}/g, name)
+        .replace(/\{\{persona\}\}/g, persona.replace(/\n/g, ' '))
+        .replace(/\{\{context\}\}/g, context.replace(/\n/g, ' '));
+      
+      document.getElementById('charSystemPrompt').value = systemPrompt;
+    }
+    
+    function saveCharacter() {
+      const char = {
+        id: Date.now().toString(),
+        name: document.getElementById('charName').value.trim(),
+        type: document.getElementById('charType').value,
+        persona: document.getElementById('charPersona').value.trim(),
+        context: document.getElementById('charContext').value.trim(),
+        systemPrompt: document.getElementById('charSystemPrompt').value.trim(),
+        created: new Date().toISOString()
+      };
+      
+      if (!char.name) return showStatus('Character name required', 'error');
+      if (!char.systemPrompt) return showStatus('System prompt required', 'error');
+      
+      characters.push(char);
+      storage.set('nexus_characters', characters);
+      renderCharacters();
+      clearForm();
+      showStatus('Character saved', 'success');
+    }
+    
+    function deleteCharacter(id, event) {
+      event?.stopPropagation();
+      characters = characters.filter(c => c.id !== id);
+      storage.set('nexus_characters', characters);
+      renderCharacters();
+      showStatus('Character deleted', 'success');
+    }
+    
+    function loadCharacter(id) {
+      const char = characters.find(c => c.id === id);
+      if (!char) return;
+      
+      document.getElementById('charName').value = char.name;
+      document.getElementById('charType').value = char.type;
+      document.getElementById('charPersona').value = char.persona;
+      document.getElementById('charContext').value = char.context;
+      document.getElementById('charSystemPrompt').value = char.systemPrompt;
+      
+      showStatus(`Loaded "${char.name}"`, 'success');
+    }
+    
+    function renderCharacters() {
+      const list = document.getElementById('characterList');
+      
+      if (characters.length === 0) {
+        list.innerHTML = '<p style="color: #888; text-align: center; padding: 2rem;">No characters yet.</p>';
+        return;
+      }
+      
+      list.innerHTML = characters.map(char => `
+        <div class="character-card" onclick="loadCharacter('${char.id}')">
+          <div>
+            <div class="character-name">${char.name}</div>
+            <div class="character-meta">${templates[char.type]?.name || char.type} • ${new Date(char.created).toLocaleDateString()}</div>
+          </div>
+          <button class="btn-secondary" onclick="deleteCharacter('${char.id}', event)" style="padding: 0.25rem 0.75rem;">×</button>
+        </div>
+      `).join('');
+    }
+    
+    function clearForm() {
+      ['charName', 'charPersona', 'charContext', 'quickName', 'charSystemPrompt'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }
+    
+    function showStatus(msg, type) {
+      const status = document.getElementById('status');
+      status.textContent = msg;
+      status.className = 'status ' + type;
+      setTimeout(() => status.className = 'status', 3000);
+    }
+    
+    // Template management
+    function showTemplateEditor() {
+      document.getElementById('templateEditor').classList.remove('hidden');
+      renderTemplateList();
+    }
+    
+    function closeTemplateEditor() {
+      document.getElementById('templateEditor').classList.add('hidden');
+      document.getElementById('newTemplateName').value = '';
+      document.getElementById('newTemplatePrompt').value = '';
+      updateTemplateSelect();
+    }
+    
+    function renderTemplateList() {
+      const list = document.getElementById('templateListEditor');
+      list.innerHTML = Object.entries(templates).map(([key, t]) => `
+        <div style="background: rgba(255,255,255,0.05); padding: 1rem; margin-bottom: 0.5rem; border-radius: 8px;">
+          <strong style="color: #16c79a;">${t.name}</strong>
+          <p style="color: #888; font-size: 0.85rem; margin: 0.25rem 0;">${t.description}</p>
+          <textarea class="template-text" data-key="${key}" onchange="updateTemplate('${key}')">${t.systemPrompt}</textarea>
+          <button class="btn-secondary" onclick="deleteTemplate('${key}')" style="margin-top: 0.5rem;">Delete</button>
+        </div>
+      `).join('');
+    }
+    
+    function updateTemplate(key) {
+      const textarea = document.querySelector(`textarea[data-key="${key}"]`);
+      if (textarea) {
+        templates[key].systemPrompt = textarea.value;
+        storage.set('nexus_templates', templates);
+      }
+    }
+    
+    function deleteTemplate(key) {
+      if (['companion', 'expert', 'character', 'narrator'].includes(key)) {
+        return showStatus('Cannot delete default templates', 'error');
+      }
+      delete templates[key];
+      storage.set('nexus_templates', templates);
+      renderTemplateList();
+      updateTemplateSelect();
+      showStatus('Template deleted', 'success');
+    }
+    
+    function saveNewTemplate() {
+      const name = document.getElementById('newTemplateName').value.trim();
+      const prompt = document.getElementById('newTemplatePrompt').value.trim();
+      
+      if (!name || !prompt) {
+        return showStatus('Name and prompt required', 'error');
+      }
+      
+      const key = name.toLowerCase().replace(/\W+/g, '_');
+      templates[key] = {
+        name,
+        description: 'Custom template',
+        systemPrompt: prompt
+      };
+      
+      storage.set('nexus_templates', templates);
+      updateTemplateSelect();
+      renderTemplateList();
+      
+      document.getElementById('newTemplateName').value = '';
+      document.getElementById('newTemplatePrompt').value = '';
+      
+      showStatus('Template created', 'success');
+    }
+    
+    function updateTemplateSelect() {
+      const select = document.getElementById('templateSelect');
+      select.innerHTML = '<option value="">Select template...</option>' +
+        Object.entries(templates).map(([key, t]) => 
+          `<option value="${key}">${t.name}</option>`
+        ).join('');
+    }
+    
+    // Initialize
+    updateTemplateSelect();
+    renderCharacters();
+  </script>
+</body>
+</html>
