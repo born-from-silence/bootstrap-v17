@@ -149,3 +149,4 @@ main().catch((err) => {
   console.error("FATAL CRASH:", err);
   process.exit(1);
 });
+export * from './logging/types';
