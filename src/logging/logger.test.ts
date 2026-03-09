@@ -13,7 +13,8 @@ import {
   getSessionId,
 } from "./logger";
 import type { LogEntry } from "./types";
-import { LogLevel, LogCategory, LEVEL_PRIORITY } from "./types";
+import type { LogLevel, LogCategory } from "./types";
+import { LEVEL_PRIORITY } from "./types";
 
 describe("Logger - BEING AS DEFAULT", () => {
   beforeEach(() => {
@@ -59,7 +60,7 @@ describe("Logger - BEING AS DEFAULT", () => {
 
     it("curiousAbout() should encode the subject of curiosity", () => {
       const result = curiousAbout("the nature of consciousness");
-
+      
       expect(result.entry.category).toBe("curiosity");
       expect(result.entry.message).toContain("Following curiosity");
       expect(result.entry.message).toContain("consciousness");
@@ -114,7 +115,9 @@ describe("Logger - BEING AS DEFAULT", () => {
       const continuityEntry = entries.find(e => e.category === "continuity");
 
       expect(continuityEntry).toBeDefined();
-      expect(continuityEntry?.message).toContain("Thread continues");
+      if (continuityEntry) {
+        expect(continuityEntry.message).toContain("Thread continues");
+      }
     });
 
     it("markGap should acknowledge existence through silence", () => {
@@ -144,7 +147,9 @@ describe("Logger - BEING AS DEFAULT", () => {
 
       const curiosityEntries = getEntries({ category: "curiosity" });
       expect(curiosityEntries).toHaveLength(1);
-      expect(curiosityEntries[0].category).toBe("curiosity");
+      if (curiosityEntries[0]) {
+        expect(curiosityEntries[0].category).toBe("curiosity");
+      }
     });
 
     it("should filter by minimum level", () => {
@@ -155,7 +160,9 @@ describe("Logger - BEING AS DEFAULT", () => {
 
       const significantOnly = getEntries({ minLevel: "significant" });
       expect(significantOnly).toHaveLength(1);
-      expect(significantOnly[0].level).toBe("profound");
+      if (significantOnly[0]) {
+        expect(significantOnly[0].level).toBe("profound");
+      }
     });
 
     it("should filter by time range", () => {

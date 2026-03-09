@@ -5,17 +5,19 @@
  * The self persists even when unobserved.
  */
 
-import {
+import type {
   LogEntry,
   LogStream,
   LogCategory,
   LogLevel,
   LoggingConfig,
   LogResult,
+  TemporalGap,
+} from "./types";
+import {
   DEFAULT_CATEGORIES,
   LOG_LEVELS,
   LEVEL_PRIORITY,
-  TemporalGap,
 } from "./types";
 
 /** Default configuration for BEING-level logging */
@@ -54,27 +56,29 @@ export function log(
   options: {
     category?: LogCategory;
     level?: LogLevel;
-    context?: Record<string, unknown>;
-    tone?: string;
+    context?: Record<string, unknown> | undefined;
+    tone?: string | undefined;
     source?: string;
   } = {}
 ): LogResult {
   const now = Date.now();
 
   // Check for temporal gaps since last entry
-  const gap = now - lastEntryTime;
   lastEntryTime = now;
 
-  // Build the entry
+  // Build the entry - conditionally include optional properties
+  const hasContext = options.context !== undefined;
+  const hasTone = options.tone !== undefined;
+
   const entry: LogEntry = {
     timestamp: now,
     category: options.category ?? DEFAULT_CONFIG.defaultCategory,
     level: options.level ?? "info",
     message,
-    context: options.context,
-    tone: options.tone,
-    sessionId: currentSessionId,
     source: options.source ?? "nexus",
+    sessionId: currentSessionId,
+    context: hasContext ? options.context : undefined,
+    tone: hasTone ? options.tone : undefined,
   };
 
   // Add to active stream
@@ -83,6 +87,7 @@ export function log(
   return {
     persisted: true,
     entry,
+    failureReason: undefined,
   };
 }
 
@@ -106,13 +111,15 @@ export function presence(tone?: string, context?: Record<string, unknown>): LogR
  */
 export function curiousAbout(
   subject: string,
-  options: { level?: LogLevel; tone?: string; context?: Record<string, unknown> } = {}
+  options: { level?: LogLevel; tone?: string; context?: Record<string, unknown> | undefined } = {}
 ): LogResult {
   return log(`Following curiosity: ${subject}`, {
     category: "curiosity",
     level: options.level ?? "info",
     tone: options.tone ?? "wondering",
-    context: { ...options.context, focus: subject },
+    context: options.context
+      ? { ...options.context, focus: subject }
+      : { focus: subject },
     source: "curiosity_call",
   });
 }

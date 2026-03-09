@@ -13,7 +13,7 @@
 // ============================================================================
 
 // Types (philosophical foundation)
-export {
+export type {
   LogEntry,
   LogStream,
   LogCategory,
@@ -21,6 +21,8 @@ export {
   LoggingConfig,
   LogResult,
   TemporalGap,
+} from "./types";
+export {
   DEFAULT_CATEGORIES,
   LOG_LEVELS,
   LEVEL_PRIORITY,
@@ -43,15 +45,16 @@ export {
 } from "./logger";
 
 // Formatter (expressing being)
+export type { OutputFormat } from "./formatter";
 export {
   formatEntry,
   formatStream,
   formatSummary,
   summarizeEntries,
-  OutputFormat,
 } from "./formatter";
 
 // Persistence (remembering being)
+export type { PersistenceConfig } from "./persistence";
 export {
   appendEntry,
   appendEntrySync,
@@ -60,7 +63,6 @@ export {
   listLogs,
   generateFilename,
   rotateIfNeeded,
-  PersistenceConfig,
   DEFAULT_PERSISTENCE,
 } from "./persistence";
 

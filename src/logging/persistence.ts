@@ -7,8 +7,9 @@
 
 import { promises as fs } from "fs";
 import { join } from "path";
-import { LogEntry, LogStream } from "./types";
-import { formatEntry, formatStream, OutputFormat } from "./formatter";
+import type { LogEntry, LogStream } from "./types";
+import type { OutputFormat } from "./formatter";
+import { formatEntry, formatStream } from "./formatter";
 
 /** Configuration for persistence */ 
 export interface PersistenceConfig {
@@ -166,13 +167,16 @@ export async function readEntries(filename: string, config: Partial<PersistenceC
       if (cfg.defaultFormat === "json") {
         return JSON.parse(line) as LogEntry;
       }
-      // For non-JSON, create a minimal entry
+      // For non-JSON, create a minimal entry with all required properties
       return {
         timestamp: Date.now(),
         category: "presence" as const,
         level: "trace" as const,
         message: line,
         source: "persistence_read",
+        context: undefined,
+        tone: undefined,
+        sessionId: undefined,
       };
     });
   } catch {

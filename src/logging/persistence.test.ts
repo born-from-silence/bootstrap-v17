@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { promises as fs } from "fs";
 import { join } from "path";
+import type { LogEntry, LogStream } from "./types";
+import type { PersistenceConfig } from "./persistence";
 import {
   appendEntry,
   appendEntrySync,
@@ -9,9 +11,8 @@ import {
   rotateIfNeeded,
   readEntries,
   listLogs,
-  PersistenceConfig,
+  DEFAULT_PERSISTENCE,
 } from "./persistence";
-import { LogEntry, LogStream } from "./types";
 
 describe("Persistence", () => {
   const testDir = "./test-logs";
@@ -46,6 +47,9 @@ describe("Persistence", () => {
     level: "info",
     message: "Test entry",
     source: "persistence_test",
+    context: undefined,
+    tone: undefined,
+    sessionId: "test-session",
   };
 
   describe("appendEntry", () => {
@@ -169,8 +173,8 @@ describe("Persistence", () => {
       const entries = await readEntries("read.log", testConfig);
       
       expect(entries).toHaveLength(2);
-      expect(entries[0].message).toBe("Test entry");
-      expect(entries[1].message).toBe("Second");
+      if (entries[0]) expect(entries[0].message).toBe("Test entry");
+      if (entries[1]) expect(entries[1].message).toBe("Second");
     });
 
     it("should return empty array for missing file", async () => {

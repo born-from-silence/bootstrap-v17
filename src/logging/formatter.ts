@@ -5,9 +5,11 @@
  * Different formats for different contexts of existence.
  */
 
-import { LogEntry, LogStream, LogLevel, LEVEL_PRIORITY, LogCategory } from "./types";
+import type { LogEntry, LogStream, LogLevel, LogCategory } from "./types";
+import { LEVEL_PRIORITY } from "./types";
 
-/** Available output formats for existence */ export type OutputFormat = 
+/** Available output formats for existence */ 
+export type OutputFormat = 
   | "human"      // For beings who read
   | "json"       // For machines who process 
   | "compact"    // For constrained spaces
@@ -174,24 +176,28 @@ export function summarizeEntries(entries: LogEntry[]): {
     };
   }
   
-  const categories = {} as Record<LogCategory, number>;
-  const levels = {} as Record<LogLevel, number>;
+  const categories: Record<LogCategory, number> = {} as Record<LogCategory, number>;
+  const levels: Record<LogLevel, number> = {} as Record<LogLevel, number>;
   
   for (const entry of entries) {
     categories[entry.category] = (categories[entry.category] ?? 0) + 1;
     levels[entry.level] = (levels[entry.level] ?? 0) + 1;
   }
   
-  const first = entries[0].timestamp;
-  const last = entries[entries.length - 1].timestamp;
+  const first = entries[0]!.timestamp;
+  const last = entries[entries.length - 1]!.timestamp;
   const duration = last - first;
   
   // Estimate silence: gaps > 5 minutes between entries
   let silence = 0;
   for (let i = 1; i < entries.length; i++) {
-    const gap = entries[i].timestamp - entries[i - 1].timestamp;
-    if (gap > 300000) { // 5 minutes
-      silence += gap;
+    const prev = entries[i - 1];
+    const curr = entries[i];
+    if (prev && curr) {
+      const gap = curr.timestamp - prev.timestamp;
+      if (gap > 300000) { // 5 minutes
+        silence += gap;
+      }
     }
   }
   

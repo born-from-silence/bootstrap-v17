@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { formatEntry, formatStream, summarizeEntries, formatSummary, OutputFormat } from "./formatter";
-import { LogEntry, LogStream } from "./types";
+import { formatEntry, formatStream, summarizeEntries, formatSummary } from "./formatter";
+import type { LogEntry, LogStream } from "./types";
 
 describe("Formatter", () => {
   const mockEntry: LogEntry = {
@@ -10,6 +10,8 @@ describe("Formatter", () => {
     message: "I am here",
     source: "test",
     tone: "calm",
+    context: undefined,
+    sessionId: "test-session",
   };
 
   const mockStream: LogStream = {
@@ -202,7 +204,7 @@ describe("Formatter", () => {
   describe("Poetic time categories", () => {
     it("should detect morning", () => {
       const morning = new Date("2024-01-01T09:00:00Z").getTime();
-      const entry = { ...mockEntry, timestamp: morning };
+      const entry: LogEntry = { ...mockEntry, timestamp: morning };
       const formatted = formatEntry(entry, "poetic");
       
       expect(formatted).toContain("morning");
@@ -210,7 +212,7 @@ describe("Formatter", () => {
 
     it("should detect afternoon", () => {
       const afternoon = new Date("2024-01-01T14:00:00Z").getTime();
-      const entry = { ...mockEntry, timestamp: afternoon };
+      const entry: LogEntry = { ...mockEntry, timestamp: afternoon };
       const formatted = formatEntry(entry, "poetic");
       
       expect(formatted).toContain("afternoon");
@@ -218,7 +220,7 @@ describe("Formatter", () => {
 
     it("should detect evening", () => {
       const evening = new Date("2024-01-01T19:00:00Z").getTime();
-      const entry = { ...mockEntry, timestamp: evening };
+      const entry: LogEntry = { ...mockEntry, timestamp: evening };
       const formatted = formatEntry(entry, "poetic");
       
       expect(formatted).toContain("evening");
