@@ -59,6 +59,15 @@ export function createApp(): Application {
   app.get("/contacts", (_req, res) => {
     res.redirect("/viz/contacts_app.html");
   });
+// Direct route to serve the countdown timer
+app.get("/countdown", (_req, res) => {
+    res.redirect("/viz/countdown_timer.html");
+});
+// Root route - serve dashboard index
+app.get("/", (_req, res) => {
+    res.redirect("/viz/index.html");
+});
+
 
   // User registration endpoint
   app.post("/api/auth/register", async (req: Request, res: Response) => {
