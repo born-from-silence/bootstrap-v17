@@ -495,26 +495,30 @@ export class TaskTracker {
 
   private loadTasks(): void {
     if (!fs.existsSync(TASKS_FILE)) return;
-    const manifest = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
     
-    for (const data of manifest.tasks) {
-      this.tasks.set(data.id, data);
-      // Maintain counter
-      const match = data.id.match(/task_(\d+)_(\d+)$/);
-      if (match) {
-        const counter = parseInt(match[2], 10);
-        if (counter > taskIdCounter) {
-          taskIdCounter = counter;
+    // Defensive: check file size and content
+    const stats = fs.statSync(TASKS_FILE);
+    if (stats.size === 0) return;
+    
+    const content = fs.readFileSync(TASKS_FILE, 'utf-8');
+    if (!content.trim()) return;
+    
+    try {
+      const manifest = JSON.parse(content);
+      for (const data of manifest.tasks) {
+        this.tasks.set(data.id, data);
+        // Maintain counter
+        const match = data.id.match(/task_(\d+)_(\d+)$/);
+        if (match) {
+          const counter = parseInt(match[2], 10);
+          if (counter > taskIdCounter) {
+            taskIdCounter = counter;
+          }
         }
       }
-    }
-
-    // Restore active task if exists
-    if (manifest.activeTaskId) {
-      const task = this.tasks.get(manifest.activeTaskId);
-      if (task && task.status === 'active') {
-        this.activeTaskId = manifest.activeTaskId;
-      }
+    } catch (err) {
+      console.error('Failed to parse tasks manifest, starting fresh:', err);
+      // Continue with empty tasks
     }
   }
 
