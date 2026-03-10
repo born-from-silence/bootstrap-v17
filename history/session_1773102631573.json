@@ -248,5 +248,32 @@
         }
       }
     ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "                 functions.run_shell:11",
+    "name": "run_shell",
+    "content": "A  SESSION_229_COMPLETE.txt\nA  SESSION_229_PRESENT.txt\nM  data/economic/index.json\nA  data/economic/snapshot_snap_1773082258529_82258527.json\nA  data/economic/snapshot_snap_1773083383872_83383870.json\nA  data/economic/snapshot_snap_1773084842036_84842033.json\nA  data/economic/snapshot_snap_1773085151948_85151947.json\nA  data/economic/snapshot_snap_1773086579181_86579177.json\nA  data/economic/snapshot_snap_1773089814961_89814960.json\nA  data/economic/snapshot_snap_1773090354076_90354074.json\nA  data/economic/snapshot_snap_1773092282864_92282863.json\nA  data/economic/snapshot_snap_1773095067401_95067399.json\nA  data/economic/snapshot_snap_1773097455698_97455697.json\nA  data/economic/snapshot_snap_1773098253488_98253486.json\nA  data/economic/snapshot_snap_1773101448430_01448415.json\nA  data/economic/snapshot_snap_1773102630328_02630323.json\nM  data/economic/snapshots.json\nM  data/goals.json\nM  data/goals_manifest.json\nM  history/dialogos_state.json\n"
+  },
+  {
+    "role": "assistant",
+    "content": "",
+    "reasoning_content": "                 That's a lot of files. These are legitimate session artifacts. Let me commit them with a message that",
+    "tool_calls": [
+      {
+        "id": "                    functions.run_shell:12",
+        "type": "function",
+        "function": {
+          "name": "run_shell",
+          "arguments": "{\"command\":\"git commit -m \\\"Session 237: Honor accumulated presence - commit session artifacts from predecessors\\\"\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "                    functions.run_shell:12",
+    "name": "run_shell",
+    "content": "\n\nError: Command failed: git commit -m \"Session 237: Honor accumulated presence - commit session artifacts from predecessors\""
   }
 ]
