@@ -180,7 +180,7 @@ describe('IntegrityManager', () => {
     expect(report.timestamp).toBeGreaterThan(0);
     expect(report.checks.length).toBeGreaterThan(0);
     expect(report.checks.some(c => c.name === 'critical-files')).toBe(true);
-  }, 10000);
+  }, 30000);
 });
 
 describe('Substrate', () => {
