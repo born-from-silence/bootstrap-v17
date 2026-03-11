@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "description": "Token bucket configuration for rate limiting uploads",
+  "buckets": {
+    "upload": {
+      "capacity": 100,
+      "refillRate": 10,
+      "refillIntervalMs": 1000,
+      "enabled": true
+    },
+    "api": {
+      "capacity": 1000,
+      "refillRate": 100,
+      "refillIntervalMs": 1000,
+      "enabled": true
+    }
+  },
+  "defaultBucket": "upload"
+}
