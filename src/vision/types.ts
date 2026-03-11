@@ -15,11 +15,11 @@ export type DetailLevel = 'low' | 'high' | 'auto';
 export interface VisionMetadata {
   // Technical properties
   format: ImageFormat;
-  width?: number;
-  height?: number;
+  width?: number | undefined;
+  height?: number | undefined;
   sizeBytes: number;
   detailLevel: DetailLevel;
-  sourceUrl?: string;
+  sourceUrl?: string | undefined;
   
   // Contextual properties
   capturedAt: string; // ISO timestamp
@@ -64,7 +64,7 @@ export interface PerceptionSnapshot {
   elements: VisualElement[];
   
   // Dominant colors (if analyzable)
-  dominantColors?: string[];
+  dominantColors?: string[] | undefined;
   
   // Atmosphere/mood
   atmosphere: Atmosphere[];
@@ -79,7 +79,7 @@ export interface PerceptionSnapshot {
   lens: PerceptionLens;
   
   // Emotional/subjective resonance
-  resonance?: string;
+  resonance?: string | undefined;
 }
 
 export interface ReflectionLayer {
@@ -87,7 +87,7 @@ export interface ReflectionLayer {
   meaning: string;
   
   // What this reveals about the observer
-  selfRevelation?: string;
+  selfRevelation?: string | undefined;
   
   // Metaphors or connections made
   associations: string[];
@@ -96,7 +96,7 @@ export interface ReflectionLayer {
   questions: string[];
   
   // Longitudinal pattern (if any)
-  patternReference?: string; // ID of related observation
+  patternReference?: string | undefined; // ID of related observation
 }
 
 export interface VisionJournalEntry {
@@ -113,9 +113,9 @@ export interface VisionJournalEntry {
   
   // Cross-session continuity
   continuity?: {
-    previousVisionId?: string;
-    themeTag?: string;
-    revisits?: string[]; // IDs of later entries referencing this
+    previousVisionId?: string | undefined;
+    themeTag?: string | undefined;
+    revisits?: string[] | undefined; // IDs of later entries referencing this
   };
   
   // Timestamp
@@ -127,7 +127,7 @@ export interface VisionQuery {
   elements?: VisualElement[];
   atmosphere?: Atmosphere[];
   lens?: PerceptionLens;
-  themeTag?: string;
+  themeTag?: string | undefined;
   sessionId?: string;
   dateRange?: { start: string; end: string };
   hasReflection?: boolean;

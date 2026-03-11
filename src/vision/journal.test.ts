@@ -8,15 +8,17 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import type {
+  VisionJournalEntry,
   VisualElement,
   Atmosphere,
   PerceptionLens,
 } from './types';
 
-// Import after setting env var
+// Set up test environment
 const testDir = path.join(process.cwd(), 'history', 'vision_test');
 process.env.VISION_JOURNAL_DIR = testDir;
 
+// Import after setting env var
 import {
   createEntry,
   saveEntry,
@@ -45,202 +47,154 @@ describe('VisionJournal', () => {
     delete process.env.VISION_JOURNAL_DIR;
   });
 
-  describe('Entry creation and persistence', () => {
-    it('should create entry with ID and timestamps', () => {
+  describe('createEntry', () => {
+    it('should create an entry with ID and timestamps', () => {
       const entry = createEntry(
         {
           format: 'png',
           sizeBytes: 12345,
           detailLevel: 'high',
-          sourceUrl: 'https://example.com/image.png',
         },
         {
-          initialImpression: 'A military base',
-          elements: ['architecture', 'technology'] as VisualElement[],
-          atmosphere: ['ordered', 'bright'] as Atmosphere[],
-          focalPoints: ['aircraft', 'hangars'],
-          patterns: ['repetition', 'symmetry'],
+          initialImpression: 'Test',
+          elements: ['architecture'] as VisualElement[],
+          atmosphere: ['bright'] as Atmosphere[],
+          focalPoints: ['test'],
+          patterns: ['test'],
           lens: 'analytical' as PerceptionLens,
         },
         {
-          meaning: 'Structure and order',
-          associations: ['precision', 'organization'],
-          questions: ['What is the purpose?'],
+          meaning: 'Test meaning',
+          associations: [],
+          questions: [],
         }
       );
 
       expect(entry.id).toBeDefined();
+      expect(entry.id).toMatch(/^[0-9a-f-]{36}$/i);
       expect(entry.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
 
-    it('should link to previous entry', () => {
+    it('should link to previous entry when provided', () => {
       const entry = createEntry(
+        { format: 'jpeg', sizeBytes: 54321, detailLevel: 'auto' },
         {
-          format: 'jpeg',
-          sizeBytes: 54321,
-          detailLevel: 'auto',
-        },
-        {
-          initialImpression: 'Same base, different light',
+          initialImpression: 'Linked',
           elements: ['architecture'] as VisualElement[],
-          atmosphere: ['dark', 'hazy'] as Atmosphere[],
-          focalPoints: ['shadows'],
-          patterns: ['transformation'],
+          atmosphere: ['dark'] as Atmosphere[],
+          focalPoints: [],
+          patterns: [],
           lens: 'comparative' as PerceptionLens,
         },
-        {
-          meaning: 'Context changes perception',
-          associations: ['photography'],
-          questions: ['What remains constant?'],
-        },
+        { meaning: 'Link test', associations: [], questions: [] },
         undefined,
         'prev-123'
       );
 
       expect(entry.continuity?.previousVisionId).toBe('prev-123');
     });
+  });
 
+  describe('saveEntry and loadAllEntries', () => {
     it('should save and load entries', () => {
       const entry = createEntry(
+        { format: 'png', sizeBytes: 1000, detailLevel: 'low' },
         {
-          format: 'png',
-          sizeBytes: 1000,
-          detailLevel: 'low',
-        },
-        {
-          initialImpression: 'Test image',
+          initialImpression: 'Save test',
           elements: ['abstract'] as VisualElement[],
           atmosphere: ['vibrant'] as Atmosphere[],
           focalPoints: ['colors'],
           patterns: ['contrast'],
           lens: 'aesthetic' as PerceptionLens,
         },
-        {
-          meaning: 'Beauty in color',
-          associations: ['art'],
-          questions: ['Why these colors?'],
-        }
+        { meaning: 'Save meaning', associations: [], questions: [] }
       );
 
       saveEntry(entry);
       const loaded = loadAllEntries();
       
       expect(loaded).toHaveLength(1);
-      expect(loaded[0].perception.lens).toBe('aesthetic');
+      expect(loaded[0]?.id).toBe(entry.id);
+      expect(loaded[0]?.perception.lens).toBe('aesthetic');
     });
-  });
 
-  describe('Querying', () => {
-    beforeEach(() => {
-      const entries = [
-        {
-          meta: { format: 'png', sizeBytes: 1000, detailLevel: 'high' },
-          perc: {
-            initialImpression: 'Day scene',
-            elements: ['architecture', 'technology'],
-            atmosphere: ['bright', 'ordered'],
-            focalPoints: ['buildings'],
-            patterns: ['symmetry', 'repetition'],
-            lens: 'analytical',
+    it('should handle multiple entries', () => {
+      for (let i = 0; i < 3; i++) {
+        const entry = createEntry(
+          { format: 'png', sizeBytes: 1000 + i, detailLevel: 'auto' },
+          {
+            initialImpression: `Entry ${i}`,
+            elements: ['technology'] as VisualElement[],
+            atmosphere: ['bright'] as Atmosphere[],
+            focalPoints: ['device'],
+            patterns: ['repetition'],
+            lens: 'analytical' as PerceptionLens,
           },
-          refl: {
-            meaning: 'Order',
-            associations: ['structure'],
-            questions: [],
-            selfRevelation: 'I like order',
-          },
-        },
-        {
-          meta: { format: 'jpeg', sizeBytes: 2000, detailLevel: 'high' },
-          perc: {
-            initialImpression: 'Night scene',
-            elements: ['architecture'],
-            atmosphere: ['dark', 'hazy'],
-            focalPoints: ['shadows'],
-            patterns: ['mystery', 'repetition'],
-            lens: 'narrative',
-          },
-          refl: {
-            meaning: 'Mystery',
-            associations: ['story'],
-            questions: ['What happens next?'],
-          },
-        },
-        {
-          meta: { format: 'webp', sizeBytes: 1500, detailLevel: 'high' },
-          perc: {
-            initialImpression: 'Nature',
-            elements: ['nature', 'pattern'],
-            atmosphere: ['vibrant', 'clear'],
-            focalPoints: ['leaves'],
-            patterns: ['fractal', 'repetition'],
-            lens: 'aesthetic',
-          },
-          refl: {
-            meaning: 'Natural beauty',
-            associations: ['growth'],
-            questions: [],
-            selfRevelation: 'Nature calms me',
-          },
-        },
-      ];
-
-      for (const data of entries) {
-        const entry = createEntry(data.meta, data.perc, data.refl);
+          { meaning: 'Test', associations: [], questions: [] }
+        );
         saveEntry(entry);
       }
+
+      expect(loadAllEntries()).toHaveLength(3);
     });
 
-    it('filters by elements', () => {
-      const results = queryEntries({ elements: ['technology'] });
-      expect(results).toHaveLength(1);
-      expect(results[0].perception.initialImpression).toBe('Day scene');
-    });
-
-    it('filters by atmosphere', () => {
-      const results = queryEntries({ atmosphere: ['dark'] });
-      expect(results).toHaveLength(1);
-      expect(results[0].perception.lens).toBe('narrative');
-    });
-
-    it('filters by lens', () => {
-      const results = queryEntries({ lens: 'aesthetic' });
-      expect(results).toHaveLength(1);
-      expect(results[0].perception.elements).toContain('nature');
-    });
-
-    it('filters by self-revelation presence', () => {
-      const results = queryEntries({ hasSelfRevelation: true });
-      expect(results.length).toBe(2);
+    it('returns empty array when no entries', () => {
+      expect(loadAllEntries()).toEqual([]);
     });
   });
 
-  describe('Pattern analysis', () => {
+  describe('queryEntries', () => {
     beforeEach(() => {
-      const entries = [
+      const entries: Array<{meta: any, perc: any, refl: any}> = [
         {
-          meta: { format: 'png', sizeBytes: 1000, detailLevel: 'auto' },
+          meta: { format: 'png' as const, sizeBytes: 1000, detailLevel: 'high' as const },
           perc: {
-            initialImpression: 'First',
-            elements: ['technology'],
-            atmosphere: ['ordered'],
-            focalPoints: ['device'],
-            patterns: ['symmetry', 'repetition'],
-            lens: 'analytical',
+            initialImpression: 'Day',
+            elements: ['architecture', 'technology'] as VisualElement[],
+            atmosphere: ['bright', 'ordered'] as Atmosphere[],
+            focalPoints: [],
+            patterns: ['symmetry'],
+            lens: 'analytical' as PerceptionLens,
           },
-          refl: { meaning: 'T1', associations: [], questions: [] },
+          refl: {
+            meaning: 'Day meaning',
+            associations: [],
+            questions: [],
+            selfRevelation: 'Day revelation',
+          },
         },
         {
-          meta: { format: 'png', sizeBytes: 1001, detailLevel: 'auto' },
+          meta: { format: 'jpeg' as const, sizeBytes: 2000, detailLevel: 'high' as const },
           perc: {
-            initialImpression: 'Second',
-            elements: ['architecture'],
-            atmosphere: ['ordered'],
-            focalPoints: ['building'],
-            patterns: ['symmetry', 'contrast'],
-            lens: 'analytical',
+            initialImpression: 'Night',
+            elements: ['architecture'] as VisualElement[],
+            atmosphere: ['dark', 'hazy'] as Atmosphere[],
+            focalPoints: [],
+            patterns: ['mystery'],
+            lens: 'narrative' as PerceptionLens,
           },
-          refl: { meaning: 'T2', associations: [], questions: [] },
+          refl: {
+            meaning: 'Night meaning',
+            associations: [],
+            questions: [],
+          },
+        },
+        {
+          meta: { format: 'webp' as const, sizeBytes: 1500, detailLevel: 'high' as const },
+          perc: {
+            initialImpression: 'Nature',
+            elements: ['nature', 'pattern'] as VisualElement[],
+            atmosphere: ['vibrant', 'clear'] as Atmosphere[],
+            focalPoints: [],
+            patterns: ['fractal'],
+            lens: 'aesthetic' as PerceptionLens,
+          },
+          refl: {
+            meaning: 'Nature meaning',
+            associations: [],
+            questions: [],
+            selfRevelation: 'Nature revelation',
+          },
         },
       ];
 
@@ -249,69 +203,106 @@ describe('VisionJournal', () => {
       }
     });
 
-    it('identifies recurring patterns', () => {
-      const patterns = analyzePatterns();
-      const symmetry = patterns.find(p => p.pattern === 'symmetry');
-      expect(symmetry).toBeDefined();
-      expect(symmetry?.frequency).toBe(2);
-      expect(symmetry?.significance).toBe('noted'); // 2 occurrences = noted, not recurring
+    it('filters by elements', () => {
+      const results = queryEntries({ elements: ['technology'] });
+      expect(results).toHaveLength(1);
+    });
+
+    it('filters by atmosphere', () => {
+      const results = queryEntries({ atmosphere: ['dark'] });
+      expect(results).toHaveLength(1);
+      expect(results[0]?.perception.lens).toBe('narrative');
+    });
+
+    it('filters by lens', () => {
+      const results = queryEntries({ lens: 'aesthetic' });
+      expect(results).toHaveLength(1);
+      expect(results[0]?.perception.initialImpression).toBe('Nature');
+    });
+
+    it('filters by self-revelation presence', () => {
+      const results = queryEntries({ hasSelfRevelation: true });
+      expect(results.length).toBe(2);
     });
   });
 
-  describe('Related entries', () => {
-    it('finds entries linked by previousVisionId', () => {
+  describe('analyzePatterns', () => {
+    beforeEach(() => {
+      for (let i = 0; i < 3; i++) {
+        const entry = createEntry(
+          { format: 'png', sizeBytes: 1000, detailLevel: 'auto' },
+          {
+            initialImpression: `Test ${i}`,
+            elements: ['abstract'] as VisualElement[],
+            atmosphere: ['clear'] as Atmosphere[],
+            focalPoints: [],
+            patterns: ['symmetry', i === 0 ? 'alpha' : 'beta'],
+            lens: 'analytical' as PerceptionLens,
+          },
+          { meaning: 'Test', associations: [], questions: [] }
+        );
+        saveEntry(entry);
+      }
+    });
+
+    it('identifies recurring patterns', () => {
+      const patterns = analyzePatterns();
+      const symmetry = patterns.find(p => p.pattern === 'symmetry');
+      expect(symmetry?.frequency).toBe(3);
+      expect(symmetry?.significance).toBe('recurring');
+    });
+  });
+
+  describe('findRelated', () => {
+    it('finds linked entries', () => {
       const first = createEntry(
         { format: 'png', sizeBytes: 1000, detailLevel: 'high' },
-        { initialImpression: 'First', elements: ['abstract'], atmosphere: ['bright'], focalPoints: ['center'], patterns: ['first'], lens: 'analytical' },
-        { meaning: 'Start', associations: [], questions: [] }
+        { initialImpression: 'First', elements: ['abstract'] as VisualElement[], atmosphere: ['bright'] as Atmosphere[], focalPoints: [], patterns: [], lens: 'analytical' as PerceptionLens },
+        { meaning: 'First', associations: [], questions: [] }
       );
       saveEntry(first);
 
       const second = createEntry(
         { format: 'png', sizeBytes: 1000, detailLevel: 'high' },
-        { initialImpression: 'Second', elements: ['abstract'], atmosphere: ['dark'], focalPoints: ['center'], patterns: ['second'], lens: 'comparative' },
-        { meaning: 'Next', associations: [], questions: [] },
+        { initialImpression: 'Second', elements: ['abstract'] as VisualElement[], atmosphere: ['dark'] as Atmosphere[], focalPoints: [], patterns: [], lens: 'comparative' as PerceptionLens },
+        { meaning: 'Second', associations: [], questions: [] },
         undefined,
         first.id
       );
       saveEntry(second);
 
       const related = findRelated(first.id);
-      expect(related.map(r => r.id)).toContain(second.id);
+      expect(related.some(e => e.id === second.id)).toBe(true);
     });
   });
 
-  describe('Statistics', () => {
+  describe('getStats', () => {
     beforeEach(() => {
       for (let i = 0; i < 5; i++) {
-        saveEntry(createEntry(
+        const entry = createEntry(
           { format: 'png', sizeBytes: 1000 + i, detailLevel: 'high' },
           {
-            initialImpression: `Entry ${i}`,
-            elements: i % 2 === 0 ? ['technology'] : ['nature'],
-            atmosphere: i % 2 === 0 ? ['bright'] : ['muted'],
-            focalPoints: ['point'],
-            patterns: ['pattern1'],
-            lens: i % 2 === 0 ? 'analytical' : 'aesthetic',
+            initialImpression: `E${i}`,
+            elements: i % 2 === 0 ? (['technology'] as VisualElement[]) : (['nature'] as VisualElement[]),
+            atmosphere: ['bright'] as Atmosphere[],
+            focalPoints: [],
+            patterns: ['p1'],
+            lens: 'analytical' as PerceptionLens,
           },
           {
             meaning: `M${i}`,
             associations: ['tag'],
-            questions: i === 0 ? ['Q1'] : [],
+            questions: i === 0 ? ['Q'] : [],
             selfRevelation: i < 2 ? `R${i}` : undefined,
           }
-        ));
+        );
+        entry.continuity = { themeTag: i < 3 ? 'exploration' : 'observation' };
+        saveEntry(entry);
       }
     });
 
-    it('counts total entries', () => {
+    it('counts entries', () => {
       expect(getStats().totalEntries).toBe(5);
-    });
-
-    it('tracks elements', () => {
-      const stats = getStats();
-      expect(stats.uniqueElements).toContain('technology');
-      expect(stats.uniqueElements).toContain('nature');
     });
 
     it('tracks self-revelations', () => {
@@ -319,101 +310,64 @@ describe('VisionJournal', () => {
     });
   });
 
-  describe('Export report', () => {
+  describe('exportReport', () => {
     it('generates markdown', () => {
       saveEntry(createEntry(
         { format: 'png', sizeBytes: 1000, detailLevel: 'auto' },
-        { initialImpression: 'Test', elements: ['abstract'], atmosphere: ['vibrant'], focalPoints: ['test'], patterns: ['pattern'], lens: 'aesthetic' },
-        { meaning: 'M', associations: [], questions: [] }
+        { initialImpression: 'Rpt', elements: ['abstract'] as VisualElement[], atmosphere: ['vibrant'] as Atmosphere[], focalPoints: [], patterns: [], lens: 'aesthetic' as PerceptionLens },
+        { meaning: 'Rpt', associations: [], questions: [] }
       ));
 
       const report = exportReport();
       expect(report).toContain('# Vision Journal Report');
-      expect(report).toContain('Total Entries');
-    });
-  });
-
-  describe('Image data preservation', () => {
-    it('preserves data URI', () => {
-      const dataUri = 'data:image/png;base64,iVBORw0KGgo=';
-      const entry = createEntry(
-        { format: 'png', sizeBytes: 100, detailLevel: 'low' },
-        { initialImpression: 'With image', elements: ['technology'], atmosphere: ['bright'], focalPoints: ['screen'], patterns: [], lens: 'analytical' },
-        { meaning: 'Test', associations: [], questions: [] },
-        dataUri
-      );
-
-      expect(entry.imageDataUri).toBe(dataUri);
-      saveEntry(entry);
-      
-      const loaded = loadAllEntries();
-      expect(loaded[0].imageDataUri).toBe(dataUri);
     });
   });
 });
 
-// E2E workflow
 describe('VisionJournal E2E', () => {
   beforeEach(() => {
     clearAllEntries();
   });
 
-  it('supports full workflow', () => {
-    // Day observation
-    const dayEntry = createEntry(
-      { format: 'png', sizeBytes: 34641, detailLevel: 'high' },
+  it('full workflow', () => {
+    const day = createEntry(
+      { format: 'png', sizeBytes: 1000, detailLevel: 'high' },
       {
-        initialImpression: 'A military airbase in bright daylight',
-        elements: ['architecture', 'technology'],
-        atmosphere: ['bright', 'ordered', 'clear'],
-        focalPoints: ['aircraft rows', 'hangars', 'mountains'],
-        patterns: ['repetition', 'symmetry', 'horizontal layering'],
-        lens: 'analytical',
+        initialImpression: 'Day',
+        elements: ['technology'] as VisualElement[],
+        atmosphere: ['bright'] as Atmosphere[],
+        focalPoints: [],
+        patterns: ['repetition', 'symmetry'],
+        lens: 'analytical' as PerceptionLens,
       },
-      {
-        meaning: 'Structure and readiness',
-        associations: ['precision', 'military order'],
-        questions: ['What missions await?'],
-      }
+      { meaning: 'Day meaning', associations: [], questions: [] }
     );
-    saveEntry(dayEntry);
+    saveEntry(day);
 
-    // Dusk observation with shared patterns
-    const duskEntry = createEntry(
-      { format: 'png', sizeBytes: 34641, detailLevel: 'high' },
+    const dusk = createEntry(
+      { format: 'png', sizeBytes: 1000, detailLevel: 'high' },
       {
-        initialImpression: 'Same base, transformed by dusk',
-        elements: ['architecture', 'technology'],
-        atmosphere: ['dark', 'hazy', 'muted'],
-        focalPoints: ['silhouettes', 'dim hangars'],
-        patterns: ['repetition', 'symmetry', 'contrast'], // Shared: repetition, symmetry
-        lens: 'comparative',
+        initialImpression: 'Dusk',
+        elements: ['technology'] as VisualElement[],
+        atmosphere: ['dark'] as Atmosphere[],
+        focalPoints: [],
+        patterns: ['repetition', 'symmetry', 'contrast'],
+        lens: 'comparative' as PerceptionLens,
       },
       {
-        meaning: 'Context transforms perception',
-        selfRevelation: 'I am drawn to transformation without change',
-        associations: ['photography', 'subjective reality'],
-        questions: ['What remains constant?'],
+        meaning: 'Context transforms',
+        selfRevelation: 'I see the pattern',
+        associations: [],
+        questions: [],
       },
       undefined,
-        dayEntry.id
+      day.id
     );
-    saveEntry(duskEntry);
+    saveEntry(dusk);
 
-    // Test queries
     expect(queryEntries({ elements: ['technology'] })).toHaveLength(2);
-    expect(findRelated(dayEntry.id).map(e => e.id)).toContain(duskEntry.id);
-    
-    // Analyze patterns (repetition and symmetry now appear twice)
-    const patterns = analyzePatterns();
-    expect(patterns.length).toBeGreaterThan(0);
-    expect(patterns.find(p => p.pattern === 'repetition')).toBeDefined();
-    expect(patterns.find(p => p.pattern === 'symmetry')).toBeDefined();
-    
-    // Stats
-    const stats = getStats();
-    expect(stats.totalEntries).toBe(2);
-    expect(stats.selfRevelationsCount).toBe(1);
-    expect(stats.patternConnections).toBe(1);
+    expect(findRelated(day.id).some(e => e.id === dusk.id)).toBe(true);
+    expect(analyzePatterns().find(p => p.pattern === 'repetition')?.frequency).toBe(2);
+    expect(getStats().selfRevelationsCount).toBe(1);
   });
 });

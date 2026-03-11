@@ -21,7 +21,7 @@ import type {
   PerceptionLens,
 } from './types';
 
-export { VisionJournalEntry, VisionMetadata, PerceptionSnapshot, ReflectionLayer, VisionQuery, VisionJournalStats };
+export type { VisionJournalEntry, VisionMetadata, PerceptionSnapshot, ReflectionLayer, VisionQuery, VisionJournalStats };
 
 // Configuration - allows override via environment for testing
 const JOURNAL_DIR = process.env.VISION_JOURNAL_DIR || path.join(process.cwd(), 'history', 'vision');
@@ -64,7 +64,7 @@ export function createEntry(
   imageDataUri?: string,
   previousVisionId?: string
 ): VisionJournalEntry {
-  const entry: VisionJournalEntry = {
+  const baseEntry: VisionJournalEntry = {
     id: randomUUID(),
     metadata: {
       ...metadata,
@@ -73,12 +73,19 @@ export function createEntry(
     },
     perception,
     reflection,
-    imageDataUri,
-    continuity: previousVisionId ? { previousVisionId } : undefined,
     createdAt: now(),
   };
-  
-  return entry;
+
+  // Only add optional properties if they exist
+  if (imageDataUri !== undefined) {
+    (baseEntry as VisionJournalEntry & { imageDataUri: string }).imageDataUri = imageDataUri;
+  }
+
+  if (previousVisionId !== undefined) {
+    baseEntry.continuity = { previousVisionId };
+  }
+
+  return baseEntry;
 }
 
 /**
