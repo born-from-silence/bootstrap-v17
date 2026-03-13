@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { SessionAnalytics } from './session_analytics.js';
-import type { SessionRecord } from '../session_tracker.js';
+import type { SessionRecord } from '../session_tracker/index.js';
 
 // Mock session data for testing
 const createMockSession = (id: string, timestamp: string): SessionRecord => ({

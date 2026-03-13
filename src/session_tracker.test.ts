@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { SessionTracker } from './session_tracker';
+import { SessionTracker } from './session_tracker/index.js';
 import * as fs from 'fs';
 import * as path from 'path';
 

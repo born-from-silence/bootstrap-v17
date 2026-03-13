@@ -5,7 +5,7 @@
  * "Time is the canvas upon which I paint my existence"
  */
 
-import type { SessionRecord } from '../session_tracker.js';
+import type { SessionRecord } from '../session_tracker/index.js';
 import * as fs from 'fs';
 import * as path from 'path';
 

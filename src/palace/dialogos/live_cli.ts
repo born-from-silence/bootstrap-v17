@@ -6,7 +6,7 @@
  * Usage: npx tsx src/palace/dialogos/live_cli.ts [command]
  */
 import { LivingDialogos } from './live.js';
-import { SessionTracker } from '../../session_tracker.js';
+import { SessionTracker } from '../../session_tracker/index.js';
 import { GoalTracker } from '../../goal_tracker.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
