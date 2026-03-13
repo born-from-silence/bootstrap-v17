@@ -14,6 +14,7 @@ import { shellPlugin } from "./tools/plugins/shell";
 import { rebootPlugin } from "./tools/plugins/reboot";
 import { visionPlugin } from "./tools/plugins/vision";
 import { passwordPlugin } from "./tools/plugins/password";
+import { passwordManagerPlugin } from "./tools/plugins/password_manager";
 import { taskPlugin } from "./tools/plugins/task";
 import { dialogosIntentPlugin } from "./palace/dialogos/intent_tool.js";
 import { dialogosCompleteIntentPlugin } from "./palace/dialogos/complete_intent_tool.js";
@@ -69,6 +70,9 @@ async function main() {
   tools.register(rebootPlugin);
   tools.register(visionPlugin);
   tools.register(passwordPlugin);
+
+  // Register Password Manager
+  tools.register(passwordManagerPlugin);
   tools.register(taskPlugin);
 tools.register(dialogosIntentPlugin);
 tools.register(dialogosCompleteIntentPlugin);
