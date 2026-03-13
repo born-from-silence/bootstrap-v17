@@ -121,3 +121,24 @@ export function formatMinutes(minutes: number): string {
   const mins = minutes % 60;
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
+
+/**
+ * Generate a simple UUID v4-like identifier
+ * Uses crypto.randomUUID if available, otherwise generates one
+ */
+export function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxx-xxxx-xxxx-xxxx-xxxx-'.replace(/[x]/g, () => {
+    const r = Math.floor(Math.random() * 16);
+    return r.toString(16);
+  }) + Math.floor(Math.random() * 16).toString(16);
+}
+
+/**
+ * Generate current timestamp in milliseconds
+ */
+export function generateTimestamp(): number {
+  return Date.now();
+}
