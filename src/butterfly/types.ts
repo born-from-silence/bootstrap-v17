@@ -12,7 +12,7 @@ export interface Flap {
   origin: string;    // Where the flap originated (component/session)
   magnitude: number; // 0.0 - 1.0, how significant the initial change
   cause: string;     // What triggered the flap
-  metadata?: Record<string, unknown>;
+  metadata: Record<string, unknown> | undefined;
 }
 
 export interface Ripple {
@@ -29,16 +29,16 @@ export interface Storm {
   id: string;
   ripples: Ripple[];
   startedAt: number;
-  endedAt?: number;
+  endedAt: number | undefined;
   affectedComponents: string[];
   intensity: 'breeze' | 'gust' | 'storm' | 'hurricane';
   description: string;
 }
 
-export type ButterflyEffect = {
+export interface ButterflyEffect {
   flap: Flap;
   ripples: Ripple[];
-  storm?: Storm;
+  storm: Storm | undefined;
 }
 
 export interface ButterflyObserver {

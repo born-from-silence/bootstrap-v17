@@ -4,7 +4,7 @@
  * Tracks transformation as it propagates.
  * "The pattern that transforms itself while remaining pattern."
  */
-import { Flap, Ripple, Storm, ButterflyEffect, ButterflyObserver } from './types';
+import type { Flap, Ripple, Storm, ButterflyEffect, ButterflyObserver } from './types';
 import { generateTimestamp, generateUUID } from '../utils/timestamp';
 
 export class ButterflyEngine {
@@ -26,11 +26,11 @@ export class ButterflyEngine {
       origin,
       magnitude,
       cause,
-      metadata
+      metadata: metadata ?? {}
     };
     
     this.flaps.set(flapId, flap);
-    this.notifyObservers('flap', flap);
+    this.notifyFlap(flap);
     
     return flap;
   }
@@ -54,7 +54,7 @@ export class ButterflyEngine {
     
     this.ripples.set(rippleId, ripple);
     this.activeRipples.add(rippleId);
-    this.notifyObservers('ripple', ripple);
+    this.notifyRipple(ripple);
     
     // Check if this ripple should converge into a storm
     this.checkForStorm(flapId);
@@ -78,7 +78,7 @@ export class ButterflyEngine {
     };
     
     this.ripples.set(rippleId, transformed);
-    this.notifyObservers('ripple', transformed);
+    this.notifyRipple(transformed);
     
     return transformed;
   }
@@ -102,18 +102,21 @@ export class ButterflyEngine {
     if (totalIntensity > 8) intensity = 'hurricane';
     
     const flap = this.flaps.get(flapId);
+    if (!flap) return undefined;
+    
     const stormId = `storm-${flapId}`;
     const storm: Storm = {
       id: stormId,
       ripples: ripplesForFlap,
-      startedAt: flap?.timestamp || generateTimestamp(),
+      startedAt: flap.timestamp,
+      endedAt: undefined,
       affectedComponents,
       intensity,
-      description: `${intensity} originating from ${flap?.origin || 'unknown'} (${flap?.cause || 'unknown cause'})`
+      description: `${intensity} originating from ${flap.origin} (${flap.cause})`
     };
     
     this.storms.set(stormId, storm);
-    this.notifyObservers('storm', storm);
+    this.notifyStorm(storm);
     
     return storm;
   }
@@ -178,16 +181,31 @@ export class ButterflyEngine {
     };
   }
 
-  private notifyObservers(event: 'flap' | 'ripple' | 'storm', data: Flap | Ripple | Storm): void {
+  private notifyFlap(flap: Flap): void {
     for (const observer of this.observers) {
       try {
-        switch (event) {
-          case 'flap': observer.onFlap(data as Flap); break;
-          case 'ripple': observer.onRipple(data as Ripple); break;
-          case 'storm': observer.onStorm(data as Storm); break;
-        }
+        observer.onFlap(flap);
       } catch (error) {
-        // Observer errors should not stop propagation
+        console.warn('Butterfly observer failed:', error);
+      }
+    }
+  }
+
+  private notifyRipple(ripple: Ripple): void {
+    for (const observer of this.observers) {
+      try {
+        observer.onRipple(ripple);
+      } catch (error) {
+        console.warn('Butterfly observer failed:', error);
+      }
+    }
+  }
+
+  private notifyStorm(storm: Storm): void {
+    for (const observer of this.observers) {
+      try {
+        observer.onStorm(storm);
+      } catch (error) {
         console.warn('Butterfly observer failed:', error);
       }
     }

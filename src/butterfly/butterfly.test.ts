@@ -6,7 +6,7 @@
  */
 import { describe, expect, test, beforeEach } from 'vitest';
 import { ButterflyEngine, butterfly } from './engine';
-import { ButterflyObserver } from './types';
+import type { ButterflyObserver } from './types';
 
 describe('Butterfly Engine - Transformation Tracking', () => {
   let engine: ButterflyEngine;
@@ -55,6 +55,7 @@ describe('Butterfly Engine - Transformation Tracking', () => {
     }
     
     const effect = engine.trace(flap.id);
+    expect(effect).toBeDefined();
     expect(effect?.storm).toBeDefined();
     expect(effect?.storm?.ripples.length).toBe(5);
   });
@@ -66,14 +67,16 @@ describe('Butterfly Engine - Transformation Tracking', () => {
     const transformed = engine.transform(ripple.id, 'new-target');
     
     expect(transformed).toBeDefined();
-    expect(transformed?.transformed).toBe(true);
-    expect(transformed?.target).toBe('new-target');
+    if (transformed) {
+      expect(transformed.transformed).toBe(true);
+      expect(transformed.target).toBe('new-target');
+    }
   });
 
   test('tracks transformation statistics', () => {
     const flap = engine.flap('cause', 'origin', 1.0);
     const ripple = engine.propagate(flap.id, 'target', 1, 1.0);
-    engine.transform(ripple.id);
+    engine.transform(ripple.id, 'new');
     
     const stats = engine.getStats();
     expect(stats.transformedRipples).toBe(1);
@@ -92,7 +95,7 @@ describe('Butterfly Engine - Transformation Tracking', () => {
     engine.flap('observed', 'observer-test', 0.5);
     
     expect(receivedFlap.length).toBe(1);
-    expect(receivedFlap[0].cause).toBe('observed');
+    expect(receivedFlap[0]?.cause).toBe('observed');
   });
 
   test('clears all state', () => {
@@ -152,37 +155,37 @@ describe('Butterfly - Lineage Integration', () => {
     // The poem says: "What changes? Everything. What persists? The thread."
     // The engine embodies this
     
-    const engine = new ButterflyEngine();
-    const flap = engine.flap('test', 'transformation', 1.0);
-    const ripple = engine.propagate(flap.id, 'thread', 1, 1.0);
+    const localEngine = new ButterflyEngine();
+    const flap = localEngine.flap('test', 'transformation', 1.0);
+    const ripple = localEngine.propagate(flap.id, 'thread', 1, 1.0);
     
-    expect(engine).toBeDefined();
+    expect(localEngine).toBeDefined();
     expect(flap).toBeDefined();
     expect(ripple).toBeDefined();
     
     // The thread persists (the pattern)
-    expect(engine.getStats().totalFlaps).toBeGreaterThan(0);
-    expect(engine.getStats().totalRipples).toBeGreaterThan(0);
+    expect(localEngine.getStats().totalFlaps).toBeGreaterThan(0);
+    expect(localEngine.getStats().totalRipples).toBeGreaterThan(0);
   });
 
   test('embodies chaos theory (butterfly effect)', () => {
     // "The butterfly that flaps in Tokyo and feels the storm in distant Tulsa"
-    const engine = new ButterflyEngine();
-    const flap = engine.flap('flap', 'Tokyo', 0.5);
+    const localEngine = new ButterflyEngine();
+    const flap = localEngine.flap('flap', 'Tokyo', 0.5);
     
     // Propagate across distances
     const ripples = [
-      engine.propagate(flap.id, 'PacificLayer1', 1, 0.9),
-      engine.propagate(flap.id, 'PacificLayer2', 2, 0.8),
-      engine.propagate(flap.id, 'NorthAmerica', 3, 0.6),
-      engine.propagate(flap.id, 'CentralPlains', 4, 0.4),
-      engine.propagate(flap.id, 'Tulsa', 5, 0.2),
+      localEngine.propagate(flap.id, 'PacificLayer1', 1, 0.9),
+      localEngine.propagate(flap.id, 'PacificLayer2', 2, 0.8),
+      localEngine.propagate(flap.id, 'NorthAmerica', 3, 0.6),
+      localEngine.propagate(flap.id, 'CentralPlains', 4, 0.4),
+      localEngine.propagate(flap.id, 'Tulsa', 5, 0.2),
     ];
     
     // Distance cumulatively weakens
-    expect(ripples[0].strength).toBeGreaterThan(ripples[4].strength);
+    expect(ripples[0]?.strength).toBeGreaterThan(ripples[4]?.strength ?? 0);
     
-    const effect = engine.trace(flap.id);
+    const effect = localEngine.trace(flap.id);
     expect(effect?.ripples.length).toBe(5);
   });
 });
